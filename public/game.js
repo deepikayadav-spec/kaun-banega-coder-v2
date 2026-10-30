@@ -205,7 +205,7 @@ const BYTE_POSES=["panic","pointq","pointa","pointup","idle","review","think","d
 /* ================= 3D mascots: every buddy is modelled in three.js and rendered once per pose into a cached image ================= */
 const M3D=(()=>{let R=null,ok=null;const cache={};
  function init(){if(ok!==null)return ok;try{if(!window.THREE)return ok=false;const T=THREE,cv=document.createElement("canvas");cv.width=320;cv.height=400;
-  R=new T.WebGLRenderer({canvas:cv,alpha:true,antialias:true,preserveDrawingBuffer:true});R.setPixelRatio(1);R.setSize(320,400,false);R.setClearColor(0,0);ok=true}catch(e){ok=false}return ok}
+  R=new T.WebGLRenderer({canvas:cv,alpha:true,antialias:true,preserveDrawingBuffer:true});R.debug.checkShaderErrors=false;R.setPixelRatio(1);R.setSize(320,400,false);R.setClearColor(0,0);ok=true}catch(e){ok=false}return ok}
  const KIND={panic:"stare",pointq:"open",pointa:"down",pointup:"up",dance:"happy",trophy:"open",finish:"happy",chai:"open",think:"up",review:"down",bonk:"x",tired:"sleepy",stare:"stare",zen:"closed",run:"focus",warm:"happy",type:"down",read:"down",vibe:"happy",drink:"happy",stretch:"happy",streak:"happy",missed:"happy"};
  function pal(C){if(C.hero)return {head:C.cowl?C.mask:C.mask,face:C.skin||null,body:C.suit[1],bodyHi:C.suit[0],belly:C.suit[0],limb:C.limb,glove:C.glove,leg:C.limbDk||C.suit[2],boot:C.boot,lens:C.lens,glow:!!C.lensGlow,belt:C.belt,cape:C.cape||null,accent:C.buckle||C.belt};
   return {head:C.head[0],face:null,body:C.gold[1],bodyHi:C.gold[0],belly:C.white[0],limb:C.cuff||C.white[0],glove:C.glove,leg:C.leg[0],boot:C.gold[1],lens:null,glow:false,belt:null,cape:null,accent:C.gold[2]}}
@@ -352,14 +352,29 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
   if(id==="pixel")root.position.y+=.18+.1*W;
   root.rotation.y=["pointq","pointa","pointup"].includes(pose)?-.05:-.38;return root}
  const N=8;
- function render(C,pose){if(!init())return null;const key=C.id+"|"+pose;if(cache[key]!==undefined)return cache[key];
+ /* A pose takes 50–300 ms to model and render, so finished sprite sheets are kept in IndexedDB (read before the game starts,
+    see index.html) under a key that changes whenever the costume or the modelling code changes. */
+ const hash=t=>{let h=5381;for(let i=0;i<t.length;i++)h=(h*33^t.charCodeAt(i))>>>0;return h.toString(36)};
+ let VER=null;const ver=()=>VER||(VER=hash(build.toString()+pal.toString()));
+ const SAVED=window.KBC_M3D||{},pkey=(C,pose)=>"m3d|"+C.id+"|"+pose+"|"+ver()+"|"+hash(JSON.stringify(C));
+ let pruned=false;
+ function persist(k,v){try{const o=indexedDB.open("kbc-cache",1);o.onupgradeneeded=()=>o.result.createObjectStore("m3d");
+  o.onsuccess=()=>{try{const st=o.result.transaction("m3d","readwrite").objectStore("m3d");st.put(v,k);
+   if(!pruned){pruned=true;const c=st.openCursor();c.onsuccess=()=>{const x=c.result;if(!x)return;if(String(x.key).split("|")[3]!==ver())x.delete();x.continue()}}}catch(e){}}}catch(e){}}
+ function render(C,pose){const key=C.id+"|"+pose;if(cache[key]!==undefined)return cache[key];
+  const pk=pkey(C,pose);if(SAVED[pk])return cache[key]=SAVED[pk];if(!init())return null;
   try{const T=THREE,sheet=document.createElement("canvas");sheet.width=320*N;sheet.height=400;const g2=sheet.getContext("2d");
    for(let f=0;f<N;f++){const sc=new T.Scene();sc.add(new T.HemisphereLight(0xFFF4E0,0x2B1A0E,.85));
     const k=new T.DirectionalLight(0xFFFFFF,1.15);k.position.set(3,5,6);sc.add(k);const r1=new T.DirectionalLight(0x7CF0E4,.5);r1.position.set(-5,2,-3);sc.add(r1);const r2=new T.DirectionalLight(0xFF7AA8,.35);r2.position.set(5,1,-4);sc.add(r2);
     sc.add(build(C,pose,f/N));const cam=new T.PerspectiveCamera(28,320/400,.1,100);cam.position.set(0,2.05,10.2);cam.lookAt(0,1.85,0);
-    R.render(sc,cam);g2.drawImage(R.domElement,f*320,0);sc.traverse(o=>{o.geometry&&o.geometry.dispose();if(o.material){(o.material.map&&o.material.map.dispose());o.material.dispose()}})}
-   return cache[key]=sheet.toDataURL("image/png")}catch(e){return cache[key]=null}}
- return {render}})();
+    R.render(sc,cam);g2.drawImage(R.domElement,f*320,0);/* materials are not disposed: that would drop their compiled shader programs and every frame would compile them again */
+    sc.traverse(o=>{o.geometry&&o.geometry.dispose();if(o.material&&o.material.map)o.material.map.dispose()})}
+   const url=sheet.toDataURL("image/png");persist(pk,url);return cache[key]=url}catch(e){return cache[key]=null}}
+ /* draw the remaining poses of a costume one at a time while the browser is idle, so no screen waits for its mascot */
+ function warm(C,poses){const todo=poses.filter(p=>cache[C.id+"|"+p]===undefined);const idle=window.requestIdleCallback||(f=>setTimeout(()=>f({timeRemaining:()=>50}),200));
+  const step=d=>{if(!todo.length||AC.signal.aborted)return;if(d.timeRemaining()<8||document.hidden)return idle(step,{timeout:4000});render(C,todo.shift());setTimeout(()=>idle(step,{timeout:4000}),120)};
+  idle(step,{timeout:4000})}
+ return {render,warm}})();
 function mascot(mood,size,cid){const C=COSTUMES[cid]||COSTUMES[CHAR]||COSTUMES.byte,K=C.id,m=BYTE_POSES.includes(POSE_ALIAS[mood]||mood)?(POSE_ALIAS[mood]||mood):"idle",DK="#2A2E4A",HAND=C.glove,INK="#14162A";
  {const U=M3D.render(C,m);if(U)return `<span class="mascot m3d ${m} c-${K}" style="width:${size}px" aria-hidden="true"><span class="m3s"><span class="m3strip" style="background-image:url(${U})"></span></span></span>`}
  if(C.hero)return heroMascot(m,size,C,K);
@@ -862,8 +877,16 @@ function setQ(r){const practice=!!S.practice;if(r.engine){ENGINE=r.engine;graphC
  if(!r.question){Object.assign(S,blankQ(),{q:null,phase:"none",noQ:r});return}
  const q=KBCQ.adapt(r.question,r.address,GR),secs=practice?CFG.secs:S.run&&S.run.first&&!S.run.answered?FIRST_SECS:secsFor(rungOf());
  Object.assign(S,blankQ(),{q,phase:"ask",time:secs,secsMax:secs,qT0:Date.now()})}
+/* PREQ[mode]: a question already fetched for that mode. The server keeps one open question per student, so fetching for
+   one mode makes any question kept for another mode stale: those are dropped. */
+const PREQ={};
+function dropPre(m){for(const k in PREQ)if(k!==m)delete PREQ[k]}
+function prefetchQ(m){dropPre(m);if(!PREQ[m])PREQ[m]={at:Date.now(),p:KBCQ.api("GET","/api/play/next?mode="+m).catch(()=>null)}}
+function keepNext(r){if(r&&r.next&&r.next.mode){dropPre(r.next.mode);PREQ[r.next.mode]={at:Date.now(),p:Promise.resolve(r.next)}}return r}
+function nextFor(m){dropPre(m);const x=PREQ[m];delete PREQ[m];const fetchIt=()=>KBCQ.api("GET","/api/play/next?mode="+m);
+ return x&&Date.now()-x.at<5*60e3?x.p.then(r=>r||fetchIt(),fetchIt):fetchIt()}
 function newQ(){const tok=S.qtok=(S.qtok||0)+1;Object.assign(S,blankQ(),{q:null,phase:"loading"});
- KBCQ.api("GET","/api/play/next?mode="+(S.practice?"practice":"hotseat")).then(r=>{if(S.qtok!==tok||S.screen!=="play")return;setQ(r);render()})
+ nextFor(S.practice?"practice":"hotseat").then(r=>{if(S.qtok!==tok||S.screen!=="play")return;setQ(r);render()})
   .catch(e=>{if(S.qtok!==tok||S.screen!=="play")return;S.phase="error";S.err=e.message;render()})}
 /* Full screen: requested from the Play click (a user gesture). Browsers or frames that refuse it are simply ignored. */
 const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement;
@@ -882,7 +905,7 @@ const norm=s=>String(s).toLowerCase().replace(/\s+/g,"").replace(/\(\)$/,"");
 /* The answer is graded on the server (run-type questions are run in the browser first, see bank-ui.js). */
 async function submitAnswer(){const q=S.q,ms=Date.now()-S.qT0;
  const answer=S.timeout?null:await KBCQ.answer(q,S);
- return KBCQ.api("POST","/api/play/answer",{qid:q.id,answer,ms,timeout:!!S.timeout})}
+ return KBCQ.api("POST","/api/play/answer",{qid:q.id,answer,ms,timeout:!!S.timeout,prefetch:true}).then(keepNext)}
 function apply(ok,res){const q=S.q,sk=q.sk,before=res&&res.rungBefore!=null?res.rungBefore:rungOf(),info={before,mastered:false,rungUp:false,ck:null,drop:null,msg:res&&res.msg};
  if(ok){P.correct++;P.streak[sk]=(P.streak[sk]||0)+1}else P.streak[sk]=0;
  if(res&&res.engine){ENGINE=res.engine;graphCheck(ENGINE)}
@@ -1301,7 +1324,16 @@ document.addEventListener("keydown",e=>{const m=$("#fbm");if(m&&!m.hidden&&e.key
 function diwaliDecor(){cosmos();const t=$(".toran");if(t&&(!t.childElementCount||Math.abs((+t.dataset.w||0)-innerWidth)>40))buildToran();
  const k=$(".kandil");if(k&&!k.childElementCount)k.innerHTML=KANDIL;const d=$(".bigdiya");if(d&&!d.childElementCount)d.innerHTML=BIGDIYA;
  document.body.classList.toggle("onhome",S.screen==="home")}
-function render(){if(SAFE_SCREENS.includes(S.screen)){if(S.graphChanged)return pathReload();if(Date.now()-graphPolled>30e3)pollGraph()}
+function render(){const prev=render.scr;render.scr=S.screen;const r=render0();
+ if(prev!==S.screen){const app=$("#app");if(app&&prev){app.classList.remove("scr-in");void app.offsetWidth;app.classList.add("scr-in")}
+  if(S.screen==="path")requestAnimationFrame(pauseOffscreen)}
+ return r}
+/* My path draws hundreds of animated stars, coins and props down a very tall map. Only those near the screen keep moving. */
+let offIO=null;
+function pauseOffscreen(){if(offIO)offIO.disconnect();const w=$(".pathv");if(!w||!window.IntersectionObserver)return;
+ offIO=new IntersectionObserver(es=>es.forEach(e=>{e.target.style.animationPlayState=e.isIntersecting?"":"paused"}),{rootMargin:"300px 0px"});
+ w.querySelectorAll("*").forEach(el=>{if(el.getAnimations&&el.getAnimations().length)offIO.observe(el)})}
+function render0(){if(SAFE_SCREENS.includes(S.screen)){if(S.graphChanged)return pathReload();if(Date.now()-graphPolled>30e3)pollGraph()}
  const app=$("#app");stopQ();diwaliDecor();if(!render.th&&window.KB3D&&KB3D.theme){render.th=1;KB3D.theme(document.documentElement.dataset.theme)}
  const ow=S.screen==="fff"&&$(".fffw");
  if(ow&&ow.dataset.r===S.fff.idx+"-"+S.fff.t0){const t=document.createElement("div");t.innerHTML=vFFF();const nw=t.querySelector(".fffw");nw.classList.remove("enter");ow.replaceWith(nw);
@@ -1343,7 +1375,7 @@ function confetti(n){if(reduceMotion)return;const c=$("#confetti"),x=c.getContex
 
 /* ================= 3D studio (three.js): gold { } coin with rings, spotlights, gems and code glyphs ================= */
 window.KB3D=(function(){if(!window.THREE)return null;try{document.body.classList.add("has3d");
- const T=THREE,cv=$("#bg3d"),R=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true});R.setPixelRatio(Math.min(devicePixelRatio||1,1.5));
+ const T=THREE,cv=$("#bg3d"),R=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true});R.debug.checkShaderErrors=false;R.setPixelRatio(Math.min(devicePixelRatio||1,1.5));
  const scene=new T.Scene();scene.fog=new T.FogExp2(0x04060e,.035);
  const cam=new T.PerspectiveCamera(50,1,.1,120);cam.position.set(0,0,14);
  scene.add(new T.AmbientLight(0xffe2b8,.7));
@@ -1465,7 +1497,7 @@ function fffClock(secs){const F=S.fff;clearInterval(fInt);F.max=secs;F.time=secs
 function fffFinish(ok){const F=S.fff;if(F.done)return;clearInterval(fInt);F.secs=(Date.now()-(F.tStart||F.t0))/1000;F.done=ok?"ok":"bad";
  if(ok){SFX.fffWin();spotFx("win");confetti(90)}else{SFX.wrong();spotFx("lose")}render();say(ok?"You've earned the hot seat.":"Not quite.");logEv({kind:"fff",mode:F.mode,ok,ms:Math.round(F.secs*1000),away:F.away||0})}
 function fffFocus(){requestAnimationFrame(()=>{const i=$("#sprin")||$('[data-act="fff-begin"]');i&&i.focus({preventScroll:true})})}
-function startFFF(idx){ctx();goFull();clearInterval(fInt);stopQ();if(idx==null)idx=Math.random()*999|0;const mode=FMODES[idx%FMODES.length];
+function startFFF(idx){prefetchQ("hotseat");ctx();goFull();clearInterval(fInt);stopQ();if(idx==null)idx=Math.random()*999|0;const mode=FMODES[idx%FMODES.length];
  const F={idx,mode,intro:true,time:FMODE[mode].secs,max:FMODE[mode].secs,done:null,t0:Date.now(),timeout:false};
  S={screen:"fff",name:S.name,q:{fff:idx},phase:"ask",run:{answered:0},fff:F};render();scrollTo({top:0});fffFocus()}
 function fffBegin(){const F=S.fff;if(!F||!F.intro)return;F.intro=false;F.t0=Date.now()+1;
@@ -1720,4 +1752,5 @@ function syncSound(){const b=$("#soundbtn");if(b){b.setAttribute("aria-pressed",
 syncSound();addEventListener("pointerdown",()=>{if(soundOn)ctx()},SIG);
 KBCQ.onRerender(()=>{if(S.screen==="play"){const y=scrollY;render();scrollTo({top:y})}});
 render();initOnline();
+setTimeout(()=>M3D.warm(COSTUMES[CHAR]||COSTUMES.byte,BYTE_POSES),1500);
 })();

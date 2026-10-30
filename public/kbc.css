@@ -2226,3 +2226,8 @@ body.nobuddy .fffgrid{grid-template-columns:minmax(0,880px)!important}
 #buddybtn[aria-pressed="true"]{color:var(--cy,#5EEAD4)!important}
 body.nobuddy .fffsp{display:none!important}
 @media (min-width:1001px){body.nobuddy .home4 .h-hero{grid-column:2}}
+
+/* Screen change: the new screen fades in (opacity only, so fixed-position sheets inside #app are not affected) */
+@keyframes kbcScrIn{from{opacity:0}}
+#app.scr-in{animation:kbcScrIn .26s cubic-bezier(.2,.8,.2,1)}
+@media (prefers-reduced-motion:reduce){#app.scr-in{animation:none}}

@@ -59,3 +59,16 @@
 .h-who{margin:8px 0 0;text-align:center;font-size:13px;color:var(--muted)}
 .bq-line:disabled,.bq-line[disabled]{background:var(--surface)!important;color:var(--fg)!important;opacity:.85}
 .bq-line.ok:disabled{background:rgba(74,222,128,.14)!important}.bq-line.no:disabled{background:rgba(251,113,133,.14)!important}
+/* the final game skin (kbc.css, "HUD" layer) uses --hud2/--hl/--tx for cards; the widgets follow it */
+.bqw .mrow,.bqw .tile,.bqw .bq-line,.bqw .bq-gap td,.bq-spec,.bqw .built{background:var(--hud2)!important;border:1px solid var(--hl)!important;color:var(--tx)!important;box-shadow:none!important}
+.bqw .mrow code,.bqw .tile code,.bqw .bq-line code,.bqw .bq-gap code,.bqw .tile{color:var(--tx)!important}
+.bqw .mchip{background:transparent;border:1px solid var(--hl);color:var(--tx)}
+.bqw .mchip.on{background:linear-gradient(180deg,#FFE08A,#FFC83D 45%,#FF9F1C);color:#241500;border-color:transparent}
+.bqw .mchip.ok{background:#3DD16F;color:#06210F}.bqw .mchip.no{background:#FF5468;color:#fff}
+.bqw .mrow.right,.bqw .bq-line.ok{border-color:#3DD16F!important}.bqw .mrow.wrong,.bqw .bq-line.no{border-color:#FF5468!important}
+.bqw .bq-line.on{border-color:#FFC83D!important}
+.bqw .tile.picked{opacity:.45}
+.bq-legend,.bq-note,.bqw .muted{color:var(--tx2)!important}
+.bq-legend code{color:var(--tx)}
+.bq-ta,.bq-code,.bq-gap select,.bq-tok select,.bq-probe input{background:#0B1222;color:#E2E8F0;border-color:var(--hl)}
+html[data-theme="light"] .bq-ta,html[data-theme="light"] .bq-code{background:#0F172A;color:#E2E8F0}

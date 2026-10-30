@@ -1388,7 +1388,7 @@ window.KB3D=(function(){if(!window.THREE)return null;try{document.body.classList
  const cam=new T.PerspectiveCamera(50,1,.1,120);cam.position.set(0,0,14);
  scene.add(new T.AmbientLight(0xffe2b8,.7));
  const key=new T.PointLight(0xffc83d,2.4,60);key.position.set(5,6,9);scene.add(key);
- const rim=new T.PointLight(0xff4f8b,1.4,60);rim.position.set(-8,-4,6);scene.add(rim);
+ const rim=new T.PointLight(0xfff1d6,1.1,60);rim.position.set(-8,-4,6);scene.add(rim);
  const dl=new T.DirectionalLight(0xffffff,.55);dl.position.set(0,4,10);scene.add(dl);
  const gold=new T.MeshStandardMaterial({color:0xffc83d,metalness:.55,roughness:.28,emissive:0x5a3500,emissiveIntensity:.35});
  const tc=document.createElement("canvas");tc.width=tc.height=512;const g=tc.getContext("2d");
@@ -1401,15 +1401,15 @@ window.KB3D=(function(){if(!window.THREE)return null;try{document.body.classList
  const coin=new T.Mesh(new T.CylinderGeometry(2.1,2.1,.34,72),[gold,face,face]);coin.rotation.x=Math.PI/2;hero.add(coin);
  const ring1=new T.Mesh(new T.TorusGeometry(3,.12,24,140),gold);hero.add(ring1);
  const ring2=new T.Mesh(new T.TorusGeometry(3.7,.05,16,160),new T.MeshStandardMaterial({color:0xffd66b,metalness:.6,roughness:.3,emissive:0x704000,emissiveIntensity:.4,transparent:true,opacity:.8}));ring2.rotation.x=1.15;hero.add(ring2);
- const ring3=new T.Mesh(new T.TorusGeometry(4.3,.035,12,160),new T.MeshStandardMaterial({color:0xa78bfa,metalness:.3,roughness:.4,emissive:0x3b1a8a,emissiveIntensity:.6,transparent:true,opacity:.7}));ring3.rotation.y=1.1;hero.add(ring3);
+ const ring3=new T.Mesh(new T.TorusGeometry(4.3,.035,12,160),new T.MeshStandardMaterial({color:0xf5e6c8,metalness:.7,roughness:.25,emissive:0x3a2a10,emissiveIntensity:.6,transparent:true,opacity:.7}));ring3.rotation.y=1.1;hero.add(ring3);
  scene.add(hero);
  const bc=document.createElement("canvas");bc.width=32;bc.height=256;const bx=bc.getContext("2d");const lg=bx.createLinearGradient(0,0,0,256);lg.addColorStop(0,"rgba(255,255,255,1)");lg.addColorStop(.3,"rgba(255,255,255,.4)");lg.addColorStop(1,"rgba(255,255,255,0)");bx.fillStyle=lg;bx.fillRect(0,0,32,256);
  const beamTex=new T.CanvasTexture(bc),beams=[];
- [[-11,0xffffff,-.42],[-4.5,0xf0abfc,-.14],[4.5,0xc4b5fd,.14],[11,0xffffff,.42]].forEach(([x,c,r],i)=>{const bg=new T.ConeGeometry(2.6,32,40,1,true);bg.translate(0,-16,0);
+ [[-11,0xffffff,-.42],[-4.5,0xfff1d6,-.14],[4.5,0xfff1d6,.14],[11,0xffffff,.42]].forEach(([x,c,r],i)=>{const bg=new T.ConeGeometry(2.6,32,40,1,true);bg.translate(0,-16,0);
   const m=new T.Mesh(bg,new T.MeshBasicMaterial({map:beamTex,color:c,transparent:true,opacity:.16,blending:T.AdditiveBlending,depthWrite:false,side:T.DoubleSide,fog:false}));m.position.set(x,13,-12);m.rotation.z=r;m.userData={r,ph:i*1.7,cur:r};scene.add(m);beams.push(m)});
- const ac=document.createElement("canvas");ac.width=ac.height=256;const ax=ac.getContext("2d");const ag=ax.createRadialGradient(128,128,8,128,128,128);ag.addColorStop(0,"rgba(255,200,255,.95)");ag.addColorStop(.28,"rgba(217,70,239,.6)");ag.addColorStop(.6,"rgba(124,58,237,.22)");ag.addColorStop(1,"rgba(124,58,237,0)");ax.fillStyle=ag;ax.fillRect(0,0,256,256);
+ const ac=document.createElement("canvas");ac.width=ac.height=256;const ax=ac.getContext("2d");const ag=ax.createRadialGradient(128,128,8,128,128,128);ag.addColorStop(0,"rgba(255,244,214,.9)");ag.addColorStop(.28,"rgba(245,190,80,.45)");ag.addColorStop(.6,"rgba(180,120,30,.16)");ag.addColorStop(1,"rgba(180,120,30,0)");ax.fillStyle=ag;ax.fillRect(0,0,256,256);
  const aura=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(ac),transparent:true,blending:T.AdditiveBlending,depthWrite:false,fog:false}));aura.scale.set(12,12,1);aura.position.z=-1.2;hero.add(aura);
- const gemMat=new T.MeshStandardMaterial({color:0x8b5cf6,metalness:.55,roughness:.18,flatShading:true,emissive:0x2a0a6b,emissiveIntensity:.35,transparent:true,opacity:.85});
+ const gemMat=new T.MeshStandardMaterial({color:0xeaf6ff,metalness:.85,roughness:.06,flatShading:true,emissive:0x23384d,emissiveIntensity:.45,transparent:true,opacity:.92});
  const floaters=[],geos=[new T.IcosahedronGeometry(.55,0),new T.OctahedronGeometry(.55,0)];
  for(let i=0;i<5;i++){const m=new T.Mesh(geos[i%2],gemMat);const side=i%2?1:-1;m.position.set(side*(8+Math.random()*8),(Math.random()-.5)*16,-6-Math.random()*10);m.scale.setScalar(.5+Math.random()*.7);
   m.userData={vy:.002+Math.random()*.003,rx:(Math.random()-.5)*.01,ry:(Math.random()-.5)*.012};scene.add(m);floaters.push(m)}
@@ -1445,7 +1445,7 @@ window.KB3D=(function(){if(!window.THREE)return null;try{document.body.classList
   floaters.forEach(m=>{const u=m.userData;m.rotation.x+=u.rx*dt*(1+boost*4)*k;m.rotation.y+=u.ry*dt*(1+boost*4)*k;m.position.y+=u.vy*dt*(1+boost*5)*k;if(m.position.y>9)m.position.y=-9});
   glyphs.forEach(gl=>{const u=gl.userData;gl.position.y+=u.v*dt*(1+boost*5)*k;gl.position.x+=Math.sin(t*.5+u.ph)*.004*dt*k;if(gl.position.y>13)gl.position.y=-13;u.cur=Math.min(u.o,(u.cur||0)+.01*dt);gl.material.opacity=u.cur*(still?0:1)});
   minis.forEach(m=>{const u=m.userData;m.position.y+=u.vy*dt*(1+boost*5)*k;m.rotation.z+=u.s*dt*(1+boost*4)*k;m.rotation.x=Math.PI/2+Math.sin(t+u.ph)*.5*k;if(m.position.y>11)m.position.y=-11});
-  const bare=still||S.screen==="home";minis.forEach(m=>m.visible=!bare);floaters.forEach(m=>m.visible=!bare);pts.visible=S.screen!=="home";
+  minis.forEach(m=>m.visible=!still);floaters.forEach(m=>m.visible=!still);pts.visible=S.screen!=="home";
   pts.rotation.y+=.0006*dt*(1+boost*8)*k;
   cam.position.x+=(mx*1.6*k-cam.position.x)*.03*dt;cam.position.y+=(-my*k-cam.position.y)*.03*dt;cam.lookAt(0,0,-4);
   beams.forEach(b=>{b.visible=S.screen!=="path"&&S.screen!=="home";const u=b.userData;if(aimOn){const tg=Math.atan2(aimPt.x-b.position.x,-(aimPt.y-b.position.y));u.cur+=(tg-u.cur)*.12*dt;b.rotation.z=u.cur;b.material.opacity=.24*(1+boost*.6)}else{u.cur+=(u.r-u.cur)*.05*dt;b.rotation.z=u.cur+Math.sin(t*.5+u.ph)*.06*k;b.material.opacity=(still?.05:.17)*(1+boost)}});
@@ -1619,9 +1619,14 @@ const TOUR=[
  {sel:"#themebtn",t:"Light or dark",d:"Switch the look whenever you like."},
  {sel:'header [data-act="logout"]',t:"Log out",d:"Done for the day? Log out here. Your progress is saved."}];
 let TI=-1;
+/* Top bar: one menu button (three lines) holds every option */
+function setMenu(on){document.body.classList.toggle("menu-open",on);const b=$("#menubtn");if(b){b.setAttribute("aria-expanded",on);b.setAttribute("aria-label",on?"Close menu":"Menu")}}
+document.addEventListener("click",e=>{if(document.body.classList.contains("menu-open")&&!e.target.closest("#menu,#menubtn,#tour"))setMenu(false)});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.body.classList.contains("menu-open")){setMenu(false);$("#menubtn")?.focus()}});
 function tourStart(){if(S.screen!=="home"){S={screen:"home",name:S.name};render();scrollTo({top:0})}TI=0;tourShow();logEv({kind:"tour",step:"start"})}
 const vis=el=>{if(!el||el.hidden)return false;const r=el.getBoundingClientRect();return r.width>0&&r.height>0};
 function tourShow(dir){let o=$("#tour");if(!o){o=document.createElement("div");o.id="tour";o.innerHTML='<div class="t-hole"></div><div class="t-card" role="dialog" aria-modal="true" aria-labelledby="t-h"></div>';document.body.appendChild(o)}
+ setMenu(TI>=0&&TI<TOUR.length&&!!document.querySelector("#menu "+TOUR[TI].sel.replace(/^header /,"")));
  while(TI>=0&&TI<TOUR.length&&!vis(document.querySelector(TOUR[TI].sel)))TI+=dir||1;
  if(TI<0)TI=0;if(TI>=TOUR.length){tourEnd();return}
  const st=TOUR[TI],el=document.querySelector(st.sel);const r0=el.getBoundingClientRect();if(r0.top<70||r0.bottom>innerHeight-200)scrollBy({top:r0.top-innerHeight*.35,behavior:"instant"});const r=el.getBoundingClientRect(),pad=8,h=o.querySelector(".t-hole"),c=o.querySelector(".t-card");
@@ -1631,7 +1636,7 @@ function tourShow(dir){let o=$("#tour");if(!o){o=document.createElement("div");o
  const cw=Math.min(320,innerWidth-24),below=r.bottom+14+170<innerHeight;c.style.width=cw+"px";
  c.style.left=Math.max(12,Math.min(innerWidth-cw-12,r.left+r.width/2-cw/2))+"px";c.style.top=(below?r.bottom+14:Math.max(12,r.top-14-c.offsetHeight))+"px";
  o.hidden=false;setTimeout(()=>{const nb=c.querySelector('[data-act="tour-next"]');nb&&nb.focus({preventScroll:true})},30)}
-function tourEnd(){const o=$("#tour");if(o)o.remove();TI=-1;store.set("kbc-tour-"+ME.roll,true);logEv({kind:"tour",step:"end"})}
+function tourEnd(){setMenu(false);const o=$("#tour");if(o)o.remove();TI=-1;store.set("kbc-tour-"+ME.roll,true);logEv({kind:"tour",step:"end"})}
 addEventListener("resize",()=>{if(TI>=0)tourShow()},SIG);
 /* "Coder" types itself out on Home, and a little Python prompt keeps typing lines underneath */
 const TERM=['while not crorepati: level_up()','if answer == correct: prize += 1','print("Namaste, coder!")','for q in range(15): stay_calm()','import confidence'];
@@ -1695,6 +1700,8 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="fame"){if(S.screen==="play"){endRun("stop")}S={screen:"fame",name:S.name};render();scrollTo({top:0});loadFame(FQ.scope,FQ.uni);return}
  if(a==="team"){if(!TEAM)return;if(S.screen==="play")endRun("stop");S={screen:"team",name:S.name};render();loadDash();scrollTo({top:0});return}
  if(a==="dash-refresh"){loadDash();return}
+ if(a==="menu"){setMenu(!document.body.classList.contains("menu-open"));return}
+ if(b.closest("#menu"))setMenu(false);
  if(a==="buddy-toggle"){store.set("kbc-hide-buddy",!store.get("kbc-hide-buddy",false));syncBuddy();const y=scrollY;render();scrollTo({top:y});return}
  if(a==="fb-open"){FB.trigger="";fbOpen();return}
  if(a==="fb-close"){$("#fbm").hidden=true;return}

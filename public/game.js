@@ -4,6 +4,9 @@ const AC=new AbortController();window.__kbcR1=AC;const SIG={signal:AC.signal};
 
 /* ================= Config ================= */
 const CFG={mastery:2,secs:60,dropAfterCheckpoint:false,variants:10,lockMs:1300};
+/* a student's very first hot-seat question gets extra time: they are still finding their way around the screen */
+const FIRST_SECS=70;
+const seatSecsNote=()=>!P.runs?`Your first hot-seat question gives you <b>${FIRST_SECS} seconds</b> (60 after that)`:`<b>60 seconds</b> for each hot-seat question`;
 /* 15 rungs: one per skill group of the CT skill graph (14 groups), and the last for finishing every group. */
 /* one rung per skill group plus the finale, sized by the server from the live skill graph */
 const LADDER=(window.KBC_BOOT&&KBC_BOOT.graph&&KBC_BOOT.graph.ladder)||[10,20,50,100,200,500,1000,5000,10000,1e5,1e6,5e6,1e7,3e7,7e7];
@@ -16,7 +19,7 @@ const ROWS=GR.groups.map(g=>({id:g.id,c:g.cp,name:g.name,skills:GR.skills.filter
 const SK={};ROWS.forEach((r,i)=>r.skills.forEach(s=>{s.row=i;SK[s.id]=s}));
 /* checkpoint labels sit on the rung of the last group of each checkpoint */
 const CK={};ROWS.forEach((r,i)=>{if(!ROWS[i+1]||ROWS[i+1].c!==r.c)CK[i]=r.c});CK[LADDER.length-1]="FIN";
-const TAG={[Math.round(LADDER.length*2/3)]:"Silver",[LADDER.length-1]:"Gold"};
+const TAG={};
 const OPEN=LADDER.length;
 /* Rung count reached at the last checkpoint at or below r (checkpoints sit at rung indexes in CK) */
 const lastCkOf=r=>Object.keys(CK).map(Number).filter(i=>i+1<=r).reduce((m,i)=>Math.max(m,i+1),0);
@@ -846,7 +849,7 @@ function pollGraph(){graphPolled=Date.now();KBCQ.api("GET","/api/version").then(
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pollGraph()});
 function setQ(r){const practice=!!S.practice;if(r.engine){ENGINE=r.engine;graphCheck(ENGINE)}
  if(!r.question){Object.assign(S,blankQ(),{q:null,phase:"none",noQ:r});return}
- const q=KBCQ.adapt(r.question,r.address,GR),secs=practice?CFG.secs:secsFor(rungOf());
+ const q=KBCQ.adapt(r.question,r.address,GR),secs=practice?CFG.secs:S.run&&S.run.first&&!S.run.answered?FIRST_SECS:secsFor(rungOf());
  Object.assign(S,blankQ(),{q,phase:"ask",time:secs,secsMax:secs,qT0:Date.now()})}
 function newQ(){const tok=S.qtok=(S.qtok||0)+1;Object.assign(S,blankQ(),{q:null,phase:"loading"});
  KBCQ.api("GET","/api/play/next?mode="+(S.practice?"practice":"hotseat")).then(r=>{if(S.qtok!==tok||S.screen!=="play")return;setQ(r);render()})
@@ -859,8 +862,8 @@ function goFull(manual){try{const d=document.documentElement;if(fsEl())return;co
  const p=req.call(d,{navigationUI:"hide"});if(p&&p.catch)p.catch(()=>{if(manual)fsToast("Your browser blocked full screen here. Press F11 (Fn+F11 on some laptops) instead.")})}catch(e){if(manual)fsToast("Your browser blocked full screen here. Press F11 instead.")}}
 function toggleFull(){try{if(fsEl()){const ex=document.exitFullscreen||document.webkitExitFullscreen;const p=ex&&ex.call(document);p&&p.catch&&p.catch(()=>{})}else goFull(true)}catch(e){}}
 document.addEventListener("fullscreenchange",()=>{const b=$("#fsbtn");if(b){b.setAttribute("aria-pressed",!!fsEl());b.title=fsEl()?"Exit full screen":"Full screen"}});
-function startRun(fromFFF){ctx();goFull();if(!fromFFF)SFX.start();clearInterval(qInt);clearInterval(fInt);P.rung=0;
- S={screen:"play",name:S.name,used:{},run:{t0:Date.now(),answered:0,correct:0,startRung:0,peak:0,fb:0,en:100,cs:0},practice:false};P.runs++;
+function startRun(fromFFF){ctx();goFull();if(!fromFFF)SFX.start();clearInterval(qInt);clearInterval(fInt);P.rung=0;const first=!P.runs;
+ S={screen:"play",name:S.name,used:{},run:{t0:Date.now(),answered:0,correct:0,startRung:0,peak:0,fb:0,en:100,cs:0,first},practice:false};P.runs++;
  logEv({kind:"run_start",rung:rungOf()});newQ();render();scrollTo({top:0})}
 
 /* ================= Grading and progress rules ================= */
@@ -922,8 +925,10 @@ function countUpChip(a,b,d){const el=$("#wchip b"),ch=$("#wchip");if(!el)return;
 /* ================= Views ================= */
 function boardHTML(r,compact){const rows=[];for(let i=LADDER.length-1;i>=0;i--){
   const soon=i>=OPEN,cls=["rung",CK[i]?"ck":"",i<r?"done":"",i===r&&!soon?"next":"",soon?"soon":""].join(" ");
-  rows.push(`<div class="${cls}"><span class="no">${i+1}</span><span class="amtc">${boardNote(LADDER[i])}${fmtR(LADDER[i])}</span>${CK[i]?`<span class="tg">${stg(CK[i])}${TAG[i]?" · "+TAG[i]:""}</span>`:TAG[i]?`<span class="tg">${TAG[i]}</span>`:soon?"":"<span></span>"}</div>`)}
- return `<aside class="board card" aria-label="Money board"><h2>Money board<small>${LADDER.length} rungs · ${Object.values(CK).filter(c=>c!=="FIN").length} checkpoints</small></h2>${rows.join("")}</aside>`}
+  rows.push(`<div class="${cls}"><span class="no">${i+1}</span><span class="amtc">${boardNote(LADDER[i])}₹ ${fmtR(LADDER[i])}</span>${CK[i]?`<span class="tg">${stg(CK[i])}${TAG[i]?" · "+TAG[i]:""}</span>`:TAG[i]?`<span class="tg">${TAG[i]}</span>`:soon?"":"<span></span>"}</div>`)}
+ const min=boardMin();return `<aside class="board card ${min?"min":""}" aria-label="Money board"><h2>Money board<small>${LADDER.length} rungs · ${Object.values(CK).filter(c=>c!=="FIN").length} checkpoints</small><button class="bmin" data-act="board-min" aria-pressed="${min}" aria-label="${min?"Show the whole money board":"Minimise the money board"}" title="${min?"Show all rungs":"Minimise"}">${min?"＋":"−"}</button></h2>${rows.join("")}</aside>`}
+/* the money board can be folded down to the rung being played; the choice is remembered on this device */
+const boardMin=()=>!!store.get("kbc-board-min",false);
 function stripHTML(r){return `<div class="strip" aria-hidden="true">${LADDER.map((v,i)=>`<i class="${i<r?"done":i===r?"next":""} ${i>=OPEN?"soon":""}"></i>`).join("")}</div>`}
 function syncChip(){const c=$("#wchip");if(c){c.innerHTML=`<span class="coinlogo" style="width:20px;height:20px;font-size:7px" aria-hidden="true">{ }</span><b>${fmtR(P.coins||0)}</b>`;c.setAttribute("aria-label","Wallet "+fmtR(P.coins||0))}}
 /* Contextual buddy pose on Home (mirrors the reference pose rules) */
@@ -956,7 +961,7 @@ function vHome(){const best=P.best||0,coins=P.coins||0;
 <ol class="steps3"><li><b>1</b><span><strong>Win Fastest Finger</strong></span></li><li><b>2</b><span><strong>Take the hot seat</strong></span></li><li><b>3</b><span><strong>Clear your path</strong></span></li></ol>
 <div class="pill hello" role="group" aria-label="Start a game"><span class="hi">👋 Namaste, <b>${esc(String(S.name||"").split(" ")[0])}</b></span><button class="btn gold glow" type="button" data-act="play">Play Fastest Finger →</button></div>
 <div class="hmeta"><span class="hlive"><i class="ldot"></i><b class="livenum">${LIVE}</b> playing now</span><button class="btn quiet sm" data-act="tour">✨ Take a quick tour</button></div>
-<div class="h-sub"><small class="hint" id="namehint"></small><button class="btn quiet sm" data-act="practice">Practice (no stakes)</button></div>
+
 <div class="h4-stats"><span>Wallet <b>${fmtR(coins)}</b></span><span>Best <b>${best?fmtR(amountOf(best)):"—"}</b></span><span>Every game starts at <b>10</b></span></div>
 </div>
 ${(()=>{const g=curGroup(),sk=curSkill(g),pct=Math.round(gDone(g)/gTotal(g)*100);const top=(fameRows().rows||[]).sort((a,b)=>(b.coins||0)-(a.coins||0)).slice(0,3);
@@ -1152,7 +1157,7 @@ function vPath(){const g0=curGroup(),gi=g0.idx,s0=curSkill(g0),open=S.open&&SK[S
    if(it.k==="pz")return `<div class="mprize fogged" style="${st}"><div class="chest"><b class="q">?</b></div></div>`;
    return `<div class="mnode fogged" style="${st};--nc:#6B6052"><span class="mb"><b>?</b></span></div>`}
   if(it.k==="ck"){const pc=PLC[it.c]||PLC.C1;return `<button class="ckplanet ${["C2","C4","C6"].includes(it.c)?"ring":""} ${S.openCk===it.c?"sel":""}" data-act="pathck" data-c="${it.c}" aria-label="${stg(it.c)}: ${CKNAME[it.c]}. Show its topics" style="left:${it.x}%;top:${it.top}px;--p1:${pc[0]};--p2:${pc[1]};--cc:${CKCOL[it.c]}"><span class="pl"></span><span class="pt"><b>${stg(it.c)}</b>${CKNAME[it.c]}</span></button>`}
-  if(it.k==="pz"){const g=it.g,s=g.idx<gi?"won":g.idx===gi?"cur":"lock";return `<div class="mprize ${s}" style="${st}">${s==="won"?`<span class="crown">★</span>`:""}<div class="chest">${boardNote(g.prize)}<b>${fmtR(g.prize)}</b></div>${s==="won"?`<span class="mp-tag">Won</span>`:""}</div>`}
+  if(it.k==="pz"){const g=it.g,s=g.idx<gi?"won":g.idx===gi?"cur":"lock";return `<div class="mprize ${s}" style="${st}">${s==="won"?`<span class="crown">★</span>`:""}<div class="chest">${boardNote(g.prize)}<b>${fmtR(g.prize)}</b></div>${s==="won"?`<span class="mp-tag">Won</span>`:`<span class="mp-l">Clear ${esc(g.name)} to win</span>`}</div>`}
   const s=it.s,g=it.g,col=CKCOL[g.c];
   if(s.ph)return `<div class="mnode soon" style="${st};--nc:${col}"><span class="mb"><b>${it.no}</b><i class="lk">${LOCKI}</i></span><small>Level ${it.no}</small></div>`;
   const n=barOf(s.id),es=engSk(s.id),done=n>=BPS,now=s===s0,stt=done?"done":now?"now":"soon";
@@ -1165,7 +1170,9 @@ function vPath(){const g0=curGroup(),gi=g0.idx,s0=curSkill(g0),open=S.open&&SK[S
  /* checkpoint gates stay visible above the fog, so students see where the next stage begins */
  const gates=items.filter(it=>it.k==="ck"&&it.fog).map(it=>`<div class="ckgate" style="top:${it.top}px;--cc:${CKCOL[it.c]}"><span class="cg-line"></span><div class="cg-tag"><i class="cgp" style="--p1:${(PLC[it.c]||PLC.C1)[0]};--p2:${(PLC[it.c]||PLC.C1)[1]}"></i><b>${stg(it.c)}</b><span>${CKNAME[it.c]}</span><em>starts here</em></div><span class="cg-line"></span></div>`).join("");
  return `<section class="pathv pfull">
-<div class="phud"><span class="ph-diw" aria-hidden="true">${DIYA}</span><div class="ph-prize"><small>Next prize</small><b>${fmtR(g0.prize)}</b></div><div class="ph-prog"><div class="ph-t"><b>${pct}%</b> to the next prize <span>· ${stg(g0.c)}: ${esc(g0.name)}</span></div><div class="pbar"><i style="width:${pct}%"></i></div></div><div class="ph-ct" title="GRIT Computational Thinking readiness">${gritRing(40)}<span><small>CT ready</small><b>${gritReady()}%</b></span></div><button class="ph-me" data-act="pathjump" aria-label="Jump to my level">◎ Me</button></div>
+<div class="ptop"><div class="pnext"><span class="pn-k">Your next topic</span><b>${s0?esc(s0.name):"More topics coming soon"}</b><span class="pn-s">${s0?`Clear it in the hot seat. Every topic in <i>${esc(g0.name)}</i> cleared wins <b>₹ ${fmtR(g0.prize)}</b>.`:""}</span>${s0?`<button class="btn gold sm" data-act="fffgo">Play →</button>`:""}</div>
+<div class="plegend" aria-label="What the map shows"><span><i class="lg now"></i>You are here</span><span><i class="lg done">✓</i>Cleared</span><span><i class="lg lock">🔒</i>Locked: clear the topics before it</span><span><i class="lg prize">₹</i>Prize for clearing a group of topics</span><span><i class="lg planet"></i>Stage: tap it to list its topics</span></div>
+<div class="phud"><span class="ph-diw" aria-hidden="true">${DIYA}</span><div class="ph-prize"><small>Next prize</small><b>${fmtR(g0.prize)}</b></div><div class="ph-prog"><div class="ph-t"><b>${pct}%</b> to the next prize <span>· ${stg(g0.c)}: ${esc(g0.name)}</span></div><div class="pbar"><i style="width:${pct}%"></i></div></div><div class="ph-ct" title="GRIT Computational Thinking readiness">${gritRing(40)}<span><small>CT ready</small><b>${gritReady()}%</b></span></div><button class="ph-me" data-act="pathjump" aria-label="Jump to my level">◎ Me</button></div></div>
 <div class="pworld diw univ" style="height:${H}px">${spaceHTML(zones,H)}${DW.far}<div class="deco" aria-hidden="true">${deco}</div>
 <div class="map" style="height:${H}px">${DW.near}<div class="deco" aria-hidden="true">${props}</div><svg class="mroad mshadow" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" class="r-shadow"/></svg><div class="mlayer"><svg class="mroad" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" class="r-base"/><path d="${d}" class="r-edge"/><path d="${d}" class="r-top"/><path d="${dDone}" class="r-done"/><path d="${dDone}" class="r-flow"/><path d="${d}" class="r-dash"/><path d="${dDone}" class="r-dash done"/></svg>${items.map(node).join("")}</div></div>
 ${fogTop!=null?`<div class="fog" style="height:${fogTop+110}px"><div class="fog-msg"><b>More levels ahead</b><span>They appear as you climb. Keep going.</span></div></div>`:""}${gates}</div>${sheet}</section>`}
@@ -1268,7 +1275,7 @@ function render(){if(SAFE_SCREENS.includes(S.screen)){if(S.graphChanged)return p
  if(ow&&ow.dataset.r===S.fff.idx+"-"+S.fff.t0){const t=document.createElement("div");t.innerHTML=vFFF();const nw=t.querySelector(".fffw");nw.classList.remove("enter");ow.replaceWith(nw);
   const ob=$(".fffbot"),nb=t.querySelector(".fffbot");if(ob&&nb&&ob.dataset.m!==nb.dataset.m)ob.replaceWith(nb);
   const nf=nw.querySelector('[data-act="fff-add"]:not([disabled])')||nw.querySelector('[data-act="fff-submit"]:not([disabled])')||nw.querySelector("[data-act=hotseat],[data-act=fff-next]");nf&&nf.focus({preventScroll:true})}
- else app.innerHTML=S.screen==="home"?vHome():S.screen==="play"?vPlay():S.screen==="result"?vResult():S.screen==="fame"?vFame():S.screen==="team"?vTeam():S.screen==="path"?vPath():S.screen==="fff"?vFFF():S.screen==="guide"?vGuide():S.screen==="wallet"?vWallet():S.screen==="buddy"?vBuddy():vHome();
+ else app.innerHTML=S.screen==="home"?vHome():S.screen==="play"?vPlay():S.screen==="result"?vResult():S.screen==="fame"?vFame():S.screen==="team"?vTeam():S.screen==="path"?vPath():S.screen==="fff"?vFFF():S.screen==="seat"?vSeat():S.screen==="guide"?vGuide():S.screen==="wallet"?vWallet():S.screen==="buddy"?vBuddy():vHome();
  if(S.screen==="play"&&S.phase==="ask")startQ();syncChip();syncTeam();setTimeout(botTalk,250);
  document.body.classList.toggle("qscreen",S.screen==="play"||S.screen==="fff");if(S.screen!=="home")document.body.classList.remove("homespot");if(S.screen!=="fff")clearInterval(fInt);requestAnimationFrame(placeSpot);
  document.body.classList.toggle("inplay",S.screen==="play"||S.screen==="result");document.body.classList.toggle("inteam",S.screen==="team");
@@ -1442,11 +1449,25 @@ function fffHead(F){const M=FMODE[F.mode];return `<div class="qcard card fffhead
 <h2 class="qtext">${M.icon} ${M.name}</h2><p class="fhow">${esc(M.how.join(" · "))}</p></div>`}
 function fffVerdict(F,expl){return F.done==="ok"?`<div class="verdict card good"><div><b>Done in ${F.secs.toFixed(1)} seconds! 🎉</b><span class="muted">You've earned the hot seat.</span></div><button class="btn gold" data-act="hotseat">Take the hot seat →</button></div>${expl}`
  :F.done?`<div class="verdict card bad"><div><b>${F.timeout?"Time's up.":"Not quite."}</b><span class="muted">Win a round to reach the hot seat. The next round is a different puzzle.</span></div><button class="btn gold" data-act="fff-next">Try another →</button></div>${expl}`:""}
+/* Looping demos (pure HTML/CSS, like a short GIF): a pointer solves a tiny version of each puzzle */
+const PTR='<span class="dptr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 2l14 10-6 1.5 3.5 7-2.6 1.3-3.5-7L5 19z" fill="#fff" stroke="#111" stroke-width="1.4" stroke-linejoin="round"/></svg></span>';
+function fffDemo(mode){
+ if(mode==="sprint")return `<div class="dm dm-sprint"><div class="dm-q"><span class="dm-p">&gt;&gt;&gt;</span> 7 × 8 =</div><div class="dm-in"><span class="dm-type">56</span><i class="dm-car"></i></div><div class="dm-ok">✓ next sum</div><div class="dm-pips"><i></i><i></i><i></i><i></i><i></i></div></div>`;
+ if(mode==="maze")return `<div class="dm dm-maze"><div class="dm-t">target <b>15</b></div><div class="dm-grid">${[3,4,9,2,5,1,8,6,7].map((v,i)=>`<span class="c${i}">${v}</span>`).join("")}</div><div class="dm-sum">4 + 5 + 6 = <b>15</b> ✓</div>${PTR}</div>`;
+ return `<div class="dm dm-cross"><div class="dm-x"><span>3</span><span>+</span><span class="blank"><em>5</em></span><span>=</span><span class="r">8</span></div><div class="dm-tiles"><span>2</span><span class="mv">5</span><span>7</span></div><div class="dm-sum">3 + 5 = 8 ✓</div>${PTR}</div>`}
+function seatDemo(){return `<div class="dm dm-seat"><div class="dm-qc">What does this print?<code>print(7 // 2)</code></div><div class="dm-opts"><span>A · 3.5</span><span class="pk">B · 3</span><span>C · 4</span><span>D · 2</span></div><div class="dm-lock">Lock answer</div><div class="dm-sol">💡 Reveal solution</div>${PTR}</div>`}
+/* Between winning Fastest Finger and the first question: what happens in the hot seat, with a demo */
+function vSeat(){const first=!P.runs;
+ return `<div class="fffgrid"><aside class="fffbot"><p class="say">You made it! Read this, then take your seat.</p>${mascot("finish",200)}</aside><section class="fffw enter"><div class="qcard card fffhead fintro seatin"><span class="chip gold">The hot seat</span><div class="fi-ic" aria-hidden="true">🪑</div><h2 class="qtext">How the hot seat works</h2>
+<div class="fi-cols"><div><ol class="fi-steps"><li style="--i:0"><b>1</b><span>Read the question and the code</span></li><li style="--i:1"><b>2</b><span>Answer it the way the question asks: pick, tap, type or put in order</span></li><li style="--i:2"><b>3</b><span>Press <strong>Lock answer</strong>. Then tap <strong>Reveal solution</strong> to see the working</span></li></ol>
+<div class="fi-meta"><span>⏱ ${seatSecsNote()}</span><span>⚡ A miss costs energy; 3 right in a row gives some back</span><span>🛟 Stuck? Use a lifeline: 50:50, Ask the mentor or Flip</span></div></div>
+<figure class="demo" aria-label="How it looks: a short looping demo"><figcaption>Watch how it works</figcaption>${seatDemo()}</figure></div>
+<div class="fi-go"><button class="btn gold glow" data-act="seat-go">${first?"I'm ready, start →":"Start the hot seat →"}</button></div><small class="muted">or press Enter</small></div></section><div class="fffsp"></div></div>`}
 function vFFFIntro(F){const M=FMODE[F.mode];
  return `<div class="qcard card fffhead fintro"><span class="chip gold">Fastest Finger First</span><div class="fi-ic" aria-hidden="true">${M.icon}</div><h2 class="qtext">${M.name}</h2><p class="muted">Quick rules. The clock starts when you press Play.</p>
-<ol class="fi-steps">${M.how.map((h,i)=>`<li style="--i:${i}"><b>${i+1}</b><span>${esc(h)}</span></li>`).join("")}</ol>
-<div class="fi-demo"><span>Example</span><code>${M.demo}</code></div>
-<div class="fi-meta"><span>⏱ <b>${M.secs} seconds</b></span><span>🏆 Win it → <b>take the hot seat</b></span></div>
+<div class="fi-cols"><div><ol class="fi-steps">${M.how.map((h,i)=>`<li style="--i:${i}"><b>${i+1}</b><span>${esc(h)}</span></li>`).join("")}</ol>
+<div class="fi-meta"><span>⏱ <b>${M.secs} seconds</b> for this puzzle</span><span>🏆 Win it → <b>take the hot seat</b></span><span>🪑 ${seatSecsNote()}</span></div></div>
+<figure class="demo" aria-label="How it looks: a short looping demo"><figcaption>Watch how it works</figcaption>${fffDemo(F.mode)}</figure></div>
 <div class="fi-go"><button class="btn gold glow" data-act="fff-begin">Play →</button><button class="btn quiet sm" data-act="fff-next">Try a different puzzle</button></div><small class="muted">or press Enter</small></div>`}
 function vSprint(F){const pips=[0,1,2,3,4].map(k=>`<i class="${k<F.solved?"on":""}"></i>`).join("");
  const body=F.done?"":`<div class="sprc card mathc"><div class="spr-top"><span class="fl">Quick maths</span><span class="spips" aria-label="${F.solved} of 5 solved">${pips}<b>${F.solved}/5</b></span></div>
@@ -1492,7 +1513,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
 },SIG);
 document.addEventListener("input",e=>{if(e.target.id!=="sprin"||S.screen!=="fff")return;const F=S.fff;if(!F||F.done||F.intro)return;
  if(e.target.value.trim()===F.cur.a){F.log.push({q:F.cur.q,a:F.cur.a,st:"ok"});F.solved++;SFX.pick();if(F.solved>=5){F.timeoutSeen=true;fffFinish(true);return}F.cur=sprintQ();render();fffFocus()}},SIG);
-document.addEventListener("keydown",e=>{if(S.screen!=="fff"||!S.fff)return;const F=S.fff;
+document.addEventListener("keydown",e=>{if(S.screen==="seat"&&e.key==="Enter"&&!e.target.matches("button,input,textarea,select")){e.preventDefault();startRun(true);return}if(S.screen!=="fff"||!S.fff)return;const F=S.fff;
  if(F.intro&&e.key==="Enter"&&!e.target.matches("button,input,textarea,select")){e.preventDefault();fffBegin();return}
  if(F.done||e.key!=="Enter"||e.target.id!=="sprin")return;e.preventDefault();const a=e.target,fb=$("#sprfb");a.classList.remove("shake");void a.offsetWidth;a.classList.add("shake");if(fb){fb.className="fb bad";fb.textContent="Not quite. Check your sum again."}},SIG);
 /* How to play: a visual flow, not paragraphs */
@@ -1506,16 +1527,14 @@ function vGuide(inOverlay){
  <li class="gstep" style="--i:1"><span class="gnum">2</span><div class="gdemo d-seat" aria-hidden="true"><i>A</i><i class="pk">B</i><i>C</i><i>D</i></div><b>Answer in the hot seat</b><small>Read the code, <b>pick</b> an option, then <b>lock</b> it. Right answers move you up. Tap <b>Reveal solution</b> to see the working.</small></li>
  <li class="gstep" style="--i:2"><span class="gnum">3</span><div class="gdemo d-path" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="me"></i><i></i><span class="dchest">₹</span></div><b>Climb your path, win prizes</b><small>Each topic you clear brings you closer to the next prize. Prize money goes straight into your wallet.</small></li>
 </ol>
-<div class="gsec card"><h3>🛟 Lifelines <small>one use each per game</small></h3><div class="glifes">${lifes}</div></div>
 <div class="vrules">
- <div class="vrule"><span class="vic sm">${GICON.clock}</span><b>60 seconds</b><small>for each hot-seat question</small></div>
+ <div class="vrule"><span class="vic sm">${GICON.clock}</span><b>60 seconds</b><small>for each hot-seat question (${FIRST_SECS} for your very first)</small></div>
  <div class="vrule"><span class="vic sm">${GICON.heart}</span><b>Energy</b><small>a miss costs 20%. 3 right in a row gives 10% back</small></div>
  <div class="vrule"><span class="vic sm">${GICON.door}</span><b>Stay in the game</b><small>leaving mid-game ends it. Your path progress is always saved</small></div>
  <div class="vrule"><span class="vic sm">${GICON.steps}</span><b>Learn from every answer</b><small>step-by-step working behind “Reveal solution”</small></div>
 </div>
-<div class="card vkeys"><span><kbd>A</kbd><kbd>B</kbd><kbd>C</kbd><kbd>D</kbd> pick</span><span><kbd>Enter</kbd> lock / next</span><span><kbd>Esc</kbd> close a window</span></div>
 ${inOverlay?"":quipHTML("guide")}
-<div class="ractions">${inOverlay?`<button class="btn gold" data-act="guide-close">Back to my game</button>`:`<button class="btn gold" data-act="play">Play Fastest Finger →</button><button class="btn quiet" data-act="tour">✨ Take the tour</button><button class="btn quiet" data-act="practice">Practice (no stakes)</button>`}</div></section>`}
+<div class="ractions">${inOverlay?`<button class="btn gold" data-act="guide-close">Back to my game</button>`:`<button class="btn gold" data-act="play">Play Fastest Finger →</button><button class="btn quiet" data-act="tour">✨ Take the tour</button>`}</div></section>`}
 /* ================= Product tour: spotlights each part of the home screen once, on a student's first visit ================= */
 const TOUR=[
  {sel:'.h-hero [data-act="play"]',t:"Start here",d:"Play Fastest Finger First: a quick maths puzzle. Win it to take the hot seat."},
@@ -1575,7 +1594,7 @@ document.addEventListener("click",e=>{const bl=e.target.closest(".bill3d");if(bl
 /* Leaving mid-game ends the game (the hot seat needs a fresh Fastest Finger win), so header links ask first */
 let PEND=null,LEAVE_OK=false;
 const LEAVES={home:1,fame:1,wallet:1,path:1,logout:1,buddy:1,tour:1};
-function inGame(){return S.screen==="play"||(S.screen==="fff"&&S.fff&&S.fff.done!=="bad")}
+function inGame(){return S.screen==="play"||S.screen==="seat"||(S.screen==="fff"&&S.fff&&S.fff.done!=="bad")}
 function askLeave(b){PEND=b;let m=$("#leavem");if(!m){m=document.createElement("div");m.id="leavem";m.className="modalx";document.body.appendChild(m)}
  const fff=S.screen==="fff";
  m.innerHTML=`<div class="mbox" role="alertdialog" aria-modal="true" aria-labelledby="lvh">${mascot("think",96)}<h3 id="lvh">Leave this game?</h3><p>${fff?"You'll lose this Fastest Finger round. To reach the hot seat you'll need to win one again.":S.practice?"Your practice round will end here.":"This game ends here and you keep what you've won so far. Next time you'll start again from Fastest Finger First."}</p><p class="muted">Your path progress is always saved.</p><div class="mbtns"><button class="btn gold" data-act="leave-stay">Keep playing</button><button class="btn quiet" data-act="leave-go">Leave game</button></div></div>`;
@@ -1621,8 +1640,9 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="hp"){const el=$("#pname");if(el)S.name=el.value.trim();S.hp=S.hp===b.dataset.p?"":b.dataset.p;render();return}
  if(a==="play"||a==="fffgo"){goPlay("fff");return}
  if(a==="seat"){goPlay("seat");return}
- if(a==="practice"){startPractice();return}
- if(a==="hotseat"){startRun(true);return}
+ if(a==="hotseat"){S={screen:"seat",name:S.name,fff:S.fff};render();scrollTo({top:0});setTimeout(()=>{const b=$('[data-act="seat-go"]');b&&b.focus({preventScroll:true})},60);return}
+ if(a==="seat-go"){startRun(true);return}
+ if(a==="board-min"){store.set("kbc-board-min",!boardMin());const y=scrollY;render();scrollTo({top:y});return}
  if(a==="fff-next"){startFFF(S.fff?S.fff.idx+1:null);return}
  if(a==="collect"){endRun("win");return}
  if(S.screen!=="play")return;

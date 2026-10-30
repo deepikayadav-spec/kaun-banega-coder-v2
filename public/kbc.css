@@ -2079,3 +2079,137 @@ html[data-theme="light"] .cklist .ck-n{background:#E2E8F0;color:#334155}
 #tour .t-btns{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
 html[data-theme="light"] #tour .t-card{background:#fff;border-color:#0D9488;color:#0F172A}html[data-theme="light"] #tour h3{color:#0F172A}html[data-theme="light"] #tour p{color:#334155}
 @media (prefers-reduced-motion:reduce){#tour .t-hole,#tour .t-card{transition:none}.fi-ic,.codefloat i,.caret,.d-seat i.pk,.d-fff .dclock,.d-path i.me,.dchest{animation:none!important}}
+
+/* ===== Round 3 feedback ===== */
+/* "Coder" on Home: only the typed word and its caret (the shared .tw table class made it scrollable) */
+.ttl b .tw{overflow:visible!important}
+/* Home fits one screen: sizes follow the window height */
+.home4{padding-top:clamp(6px,1.6vh,22px)!important}
+.home4 .hlogo{--s:min(124px,12vh)!important;margin:0!important}
+.home4 .h-hero{gap:min(12px,1.35vh)!important}
+.home4 .h-hero .ttl b{font-size:clamp(44px,10.5vh,108px)!important}
+.home4 .wish3{padding-block:4px!important}
+.home4 .term{min-height:0;padding-block:6px}
+.home4 .ctready{padding-block:clamp(6px,1.2vh,14px)!important}
+.home4 .h4-bot .mascot{height:clamp(150px,36vh,320px)!important}
+@media (max-height:760px){.home4 .wish3 span:not(.wd3){display:none}.home4 .steps3{display:none}}
+/* Money board: ₹ on every rung, and a minimise button */
+.board h2{position:relative;padding-right:40px}
+.bmin{position:absolute;right:0;top:50%;translate:0 -50%;width:30px;height:30px;border-radius:9px;border:1px solid var(--hl,#334155);background:rgba(15,23,42,.9);color:var(--tx,#E2E8F0);font:800 16px/1 var(--f-mono);cursor:pointer}
+.bmin:hover{border-color:var(--cy,#5EEAD4)}
+.board.min .rung:not(.next){display:none}
+.board.min{align-self:start}
+.board.min h2 small{display:none}
+html[data-theme="light"] .bmin{background:#fff;color:#0F172A;border-color:#CBD5E1}
+/* Rules card (Fastest Finger and the hot seat): steps on the left, a looping demo on the right */
+.fi-cols{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px;align-items:center;width:100%;text-align:left}
+@media (max-width:760px){.fi-cols{grid-template-columns:1fr}}
+.fi-cols .fi-steps{width:100%}
+.fi-cols .fi-meta{flex-direction:column;align-items:flex-start;gap:6px;margin-top:10px}
+.fintro{gap:8px!important;padding:18px 22px!important}
+.fintro .fi-ic{font-size:40px}
+.demo{margin:0;display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.demo figcaption{font:700 11px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:#5EEAD4;text-align:center}
+.dm{position:relative;height:210px;border-radius:16px;background:#060B18;border:1px solid rgba(94,234,212,.35);box-shadow:0 0 30px rgba(94,234,212,.12) inset;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#E2E8F0;font-family:var(--f-mono)}
+.dptr{position:absolute;width:26px;height:26px;z-index:3;filter:drop-shadow(0 3px 4px rgba(0,0,0,.6));pointer-events:none}
+.dptr svg{width:100%;height:100%}
+/* sprint: the answer types itself, a tick shows, pips fill */
+.dm-q{font:800 26px var(--f-mono)}.dm-p{color:#5EEAD4;font-size:.6em}
+.dm-in{min-width:120px;height:44px;border-radius:12px;border:1.5px solid #5EEAD4;display:flex;align-items:center;justify-content:center;font:800 24px var(--f-mono);color:#FDE68A}
+.dm-type{display:inline-block;overflow:hidden;white-space:nowrap;width:0;animation:dmType 4s steps(2) infinite}
+@keyframes dmType{0%,20%{width:0}35%,100%{width:2ch}}
+.dm-car{width:2px;height:24px;background:#5EEAD4;margin-left:2px;animation:caret 1s steps(1) infinite}
+.dm-ok{font:700 14px var(--f-body);color:#4ADE80;opacity:0;animation:dmShow 4s infinite}
+@keyframes dmShow{0%,40%{opacity:0;transform:translateY(6px)}50%,90%{opacity:1;transform:none}100%{opacity:0}}
+.dm-pips{display:flex;gap:6px}.dm-pips i{width:22px;height:6px;border-radius:3px;background:#1E293B}
+.dm-pips i:first-child{animation:dmPip 4s infinite}
+@keyframes dmPip{0%,45%{background:#1E293B}50%,100%{background:#5EEAD4}}
+/* maze: the pointer taps three touching numbers that add to the target */
+.dm-t{font:700 13px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:#5EEAD4}.dm-t b{font:900 26px var(--f-display);color:#FDE68A;letter-spacing:0}
+.dm-grid{display:grid;grid-template-columns:repeat(3,40px);gap:6px}
+.dm-grid span{height:40px;border-radius:10px;display:grid;place-items:center;background:#16213A;border:1.5px solid #334155;font:800 18px var(--f-mono)}
+.dm-maze .c1{animation:dmCell 5s infinite .9s}.dm-maze .c4{animation:dmCell 5s infinite 1.7s}.dm-maze .c7{animation:dmCell 5s infinite 2.5s}
+@keyframes dmCell{0%{background:#16213A;color:#E2E8F0}6%,62%{background:#F59E0B;color:#1A1205;border-color:#FDE68A}70%,100%{background:#16213A;color:#E2E8F0}}
+.dm-sum{font:700 14px var(--f-mono);color:#4ADE80;opacity:0;animation:dmShow2 5s infinite}
+@keyframes dmShow2{0%,62%{opacity:0}66%,92%{opacity:1}100%{opacity:0}}
+.dm-maze .dptr{animation:dmPtrMaze 5s infinite}
+@keyframes dmPtrMaze{0%{left:85%;top:85%}16%,20%{left:calc(50% + 2px);top:44%}32%,36%{left:calc(50% + 2px);top:calc(44% + 46px)}48%,54%{left:calc(50% + 2px);top:calc(44% + 92px)}80%,100%{left:85%;top:85%}}
+/* cross: a tile flies into the blank */
+.dm-x{display:flex;gap:8px;align-items:center;font:800 22px var(--f-mono)}
+.dm-x>span{min-width:40px;height:44px;border-radius:10px;display:grid;place-items:center}
+.dm-x>span:not(.blank):not(.r){color:#94A3B8}.dm-x .r{color:#FDE68A}
+.dm-x .blank{border:2px dashed #5EEAD4;color:transparent;position:relative}
+.dm-x .blank em{font-style:normal;color:#1A1205;background:#F59E0B;border-radius:8px;position:absolute;inset:2px;display:grid;place-items:center;opacity:0;animation:dmFill 5s infinite}
+@keyframes dmFill{0%,48%{opacity:0}52%,92%{opacity:1}100%{opacity:0}}
+.dm-tiles{display:flex;gap:8px}.dm-tiles span{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:#1E293B;border:1.5px solid #475569;font:800 18px var(--f-mono)}
+.dm-tiles .mv{animation:dmTile 5s infinite}
+@keyframes dmTile{0%,30%{opacity:1}36%,92%{opacity:.25}100%{opacity:1}}
+.dm-cross .dm-sum{animation-name:dmShow3}
+@keyframes dmShow3{0%,55%{opacity:0}60%,92%{opacity:1}100%{opacity:0}}
+.dm-cross .dptr{animation:dmPtrCross 5s infinite}
+@keyframes dmPtrCross{0%{left:80%;top:85%}22%,32%{left:calc(50% + 6px);top:62%}46%,52%{left:calc(50% + 8px);top:36%}80%,100%{left:80%;top:85%}}
+/* hot seat: pick B, lock it, it turns green, then Reveal solution */
+.dm-seat{justify-content:flex-start;padding-top:14px}
+.dm-qc{display:flex;flex-direction:column;align-items:center;gap:4px;font:600 13px var(--f-body);color:#CBD5E1}.dm-qc code{font:700 15px var(--f-mono);color:#FDE68A}
+.dm-opts{display:grid;grid-template-columns:repeat(2,110px);gap:6px}
+.dm-opts span{height:30px;border-radius:9px;display:grid;place-items:center;background:#16213A;border:1px solid #334155;font:600 12.5px var(--f-mono)}
+.dm-opts .pk{animation:dmPick 7s infinite}
+@keyframes dmPick{0%,18%{background:#16213A;color:#E2E8F0;border-color:#334155}22%,45%{background:#1E293B;border-color:#FDE68A;color:#FDE68A}50%,62%{background:#F59E0B;color:#1A1205}66%,94%{background:#22C55E;color:#03200D;border-color:#86EFAC}100%{background:#16213A;color:#E2E8F0}}
+.dm-lock{padding:6px 14px;border-radius:9px;background:linear-gradient(180deg,#FDE68A,#F59E0B);color:#1A1205;font:800 12px var(--f-body);animation:dmPress 7s infinite}
+@keyframes dmPress{0%,38%{transform:none;opacity:1}42%{transform:scale(.92)}46%,62%{transform:none;opacity:1}66%,100%{opacity:0}}
+.dm-sol{position:absolute;bottom:12px;padding:6px 12px;border-radius:9px;border:1px solid #5EEAD4;color:#5EEAD4;font:700 12px var(--f-body);opacity:0;animation:dmShow4 7s infinite}
+@keyframes dmShow4{0%,68%{opacity:0}74%,94%{opacity:1}100%{opacity:0}}
+.dm-seat .dptr{animation:dmPtrSeat 7s infinite}
+@keyframes dmPtrSeat{0%{left:85%;top:90%}14%,24%{left:calc(50% + 60px);top:96px}36%,44%{left:calc(50% + 4px);top:140px}60%{left:85%;top:90%}76%,84%{left:calc(50% + 10px);top:182px}100%{left:85%;top:90%}}
+@media (prefers-reduced-motion:reduce){.dm *{animation:none!important}.dm-type{width:2ch}.dm-ok,.dm-sum,.dm-sol{opacity:1}}
+html[data-theme="light"] .dm{background:#0F172A}
+/* How to play fits one screen */
+.guide.g2{gap:12px!important}
+.guide.g2 .ghead{margin:0}
+.guide.g2 .gstep{padding:16px 16px 14px}
+/* My path: what to do next, and what everything on the map means */
+.pnext{position:relative;z-index:6;display:flex;align-items:center;gap:12px;flex-wrap:wrap;max-width:min(980px,calc(100% - 32px));margin:8px auto 6px;padding:12px 16px;border-radius:16px;background:rgba(9,14,28,.92);border:1px solid rgba(253,230,138,.45);box-shadow:0 0 30px rgba(245,158,11,.15)}
+.pnext .pn-k{font:700 11px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:#FDE68A}
+.pnext>b{font:800 17px var(--f-display);color:#F8FAFC}
+.pnext .pn-s{flex:1 1 260px;font-size:14px;color:#CBD5E1}.pnext .pn-s b{color:#FDE68A}
+.plegend{position:relative;z-index:6;display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:center;max-width:min(980px,calc(100% - 32px));margin:0 auto 6px;padding:8px 14px;border-radius:12px;background:rgba(9,14,28,.85);border:1px solid #1E293B;font:600 13px var(--f-body);color:#CBD5E1}
+.plegend span{display:inline-flex;align-items:center;gap:7px}
+.lg{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font:800 11px var(--f-mono);font-style:normal;flex:none}
+.lg.now{background:radial-gradient(circle,#2DD4BF 45%,#0F766E);box-shadow:0 0 0 3px rgba(253,230,138,.7)}
+.lg.done{background:#134E4A;color:#5EEAD4}.lg.lock{background:#1E293B;font-size:10px}
+.lg.prize{border-radius:6px;background:linear-gradient(180deg,#FDE68A,#F59E0B);color:#3A1D00}
+.lg.planet{background:radial-gradient(circle at 35% 30%,#99F6E4,#0F766E)}
+.mprize .mp-l{max-width:150px;text-align:center;font:700 11px var(--f-body);color:#FDE68A;background:rgba(9,14,28,.85);border:1px solid rgba(253,230,138,.4);border-radius:8px;padding:3px 8px}
+.pworld .prop,.pworld .stk,.pworld .fcoin,.pworld .fgem,.pworld .blob,.pworld .star,.pworld .shoot{display:none!important}
+html[data-theme="light"] .pnext,html[data-theme="light"] .plegend{background:rgba(255,255,255,.95);border-color:#CBD5E1;color:#334155}
+html[data-theme="light"] .pnext>b{color:#0F172A}html[data-theme="light"] .pnext .pn-s{color:#334155}html[data-theme="light"] .pnext .pn-s b,html[data-theme="light"] .pnext .pn-k{color:#B45309}
+html[data-theme="light"] .mprize .mp-l{background:#fff;color:#B45309}
+.fi-steps strong{color:#FDE68A;font-weight:800}
+html[data-theme="light"] .fi-steps strong{color:#B45309}
+.seatin .fi-ic{display:none}
+.fintro .fi-steps li{padding:8px 12px}
+/* a minimised money board shrinks to its header and the rung being played, and gives its width back to the question */
+.board.min{flex:none!important;height:auto!important}
+.board.min .rung{flex:none!important;height:auto!important}
+.side:has(.board.min){height:auto!important}
+.play:has(.board.min){grid-template-columns:minmax(0,200px) minmax(0,1fr) minmax(0,250px)!important}
+/* the full board squeezes its rungs so the hot seat fits one screen */
+.side .board:not(.min) .rung{min-height:0}
+/* the hot seat and the Fastest Finger screens sit flush with the bottom of the window (no stray scroll) */
+body.qscreen .wrap{padding-bottom:0!important}
+.side .board:not(.min) .rung{padding-block:2px!important}
+body.qscreen .side{max-height:calc(100vh - 84px)}
+body.qscreen .side .board:not(.min){max-height:100%;min-height:0}
+body.qscreen .side .board:not(.min) .rung{flex:1 1 0!important;min-height:0!important;overflow:hidden}
+/* My path: progress bar, next topic and legend stay pinned while the map scrolls */
+.ptop{position:sticky;top:76px;z-index:20;display:flex;flex-direction:column;gap:6px;align-items:center;padding-top:6px}
+.ptop .phud{position:static!important;order:-1;margin:0 auto!important}
+.ptop .pnext,.ptop .plegend{margin:0 auto!important}
+.ptop .pnext{padding:8px 14px}.ptop .plegend{padding:5px 12px;font-size:12.5px}
+@media (max-width:700px){.ptop .plegend{display:none}}
+/* How to play fits one screen */
+.guide.g2{margin-top:0!important;padding-top:clamp(4px,1.2vh,16px)!important}
+.guide.g2 .ghead .mascot{width:72px!important;height:auto!important}
+.guide.g2 .ghead h2{font-size:clamp(26px,4.2vh,40px)}
+.guide.g2 .gdemo{height:58px}
+@media (max-height:800px){.guide.g2>.quip{display:none}}

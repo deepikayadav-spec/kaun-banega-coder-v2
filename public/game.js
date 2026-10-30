@@ -1412,11 +1412,11 @@ window.KB3D=(function(){if(!window.THREE)return null;try{document.body.classList
   const m=new T.Mesh(bg,new T.MeshBasicMaterial({map:beamTex,color:c,transparent:true,opacity:.16,blending:T.AdditiveBlending,depthWrite:false,side:T.DoubleSide,fog:false}));m.position.set(x,13,-12);m.rotation.z=r;m.userData={r,ph:i*1.7,cur:r};scene.add(m);beams.push(m)});
  const ac=document.createElement("canvas");ac.width=ac.height=256;const ax=ac.getContext("2d");const ag=ax.createRadialGradient(128,128,8,128,128,128);ag.addColorStop(0,"rgba(255,244,214,.9)");ag.addColorStop(.28,"rgba(245,190,80,.42)");ag.addColorStop(.6,"rgba(180,120,30,.14)");ag.addColorStop(1,"rgba(180,120,30,0)");ax.fillStyle=ag;ax.fillRect(0,0,256,256);
  const aura=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(ac),transparent:true,blending:T.AdditiveBlending,depthWrite:false,fog:false}));aura.scale.set(12,12,1);aura.position.z=-1.2;hero.add(aura);
- const gemMat=new T.MeshStandardMaterial({color:0xf4f8ff,metalness:.25,roughness:.12,flatShading:true,emissive:0x6a7fe0,emissiveIntensity:.55,transparent:true,opacity:.9});
+ const gemMat=new T.MeshStandardMaterial({color:0xffb8d6,metalness:.25,roughness:.1,flatShading:true,emissive:0xff5aa5,emissiveIntensity:.65,transparent:true,opacity:.92});
  /* place a drifting prop anywhere across the visible screen at its depth (camera: fov 50, z 14) */
  const spread=(m,anyY)=>{const d=14-m.position.z,hh=Math.tan(25*Math.PI/180)*d,hw=hh*Math.max(1,innerWidth/Math.max(1,innerHeight));m.position.x=(Math.random()-.5)*2*hw*.94;m.position.y=anyY?(Math.random()-.5)*2*hh:-hh-1;m.userData.top=hh+1};
  const floaters=[],geos=[new T.IcosahedronGeometry(.55,0),new T.OctahedronGeometry(.55,0)];
- for(let i=0;i<0;i++){const m=new T.Mesh(geos[i%2],gemMat);m.position.z=-6-Math.random()*12;m.scale.setScalar(.5+Math.random()*.7);
+ for(let i=0;i<5;i++){const m=new T.Mesh(geos[i%2],gemMat);m.position.z=-6-Math.random()*12;m.scale.setScalar(.5+Math.random()*.7);
   m.userData={vy:.002+Math.random()*.003,rx:(Math.random()-.5)*.01,ry:(Math.random()-.5)*.012};spread(m,true);scene.add(m);floaters.push(m)}
  const N=520,pos=new Float32Array(N*3);for(let i=0;i<N;i++){pos[i*3]=(Math.random()-.5)*44;pos[i*3+1]=(Math.random()-.5)*26;pos[i*3+2]=-Math.random()*26+4}
  const pg=new T.BufferGeometry();pg.setAttribute("position",new T.BufferAttribute(pos,3));

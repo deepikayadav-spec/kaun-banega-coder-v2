@@ -1421,17 +1421,6 @@ window.KB3D=(function(){if(!window.THREE)return null;try{document.body.classList
  const N=520,pos=new Float32Array(N*3);for(let i=0;i<N;i++){pos[i*3]=(Math.random()-.5)*44;pos[i*3+1]=(Math.random()-.5)*26;pos[i*3+2]=-Math.random()*26+4}
  const pg=new T.BufferGeometry();pg.setAttribute("position",new T.BufferAttribute(pos,3));
  const pts=new T.Points(pg,new T.PointsMaterial({color:0xffe1a0,size:.045,transparent:true,opacity:.7}));scene.add(pts);
- /* Galaxy: a slow three-arm spiral far behind the coin; gold core, then magenta, violet and electric blue */
- const gdot=document.createElement("canvas");gdot.width=gdot.height=64;{const x=gdot.getContext("2d"),g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,"rgba(255,255,255,1)");g.addColorStop(.35,"rgba(255,255,255,.4)");g.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=g;x.fillRect(0,0,64,64)}
- const GN=innerWidth<760?3200:5200,GR=16,gp=new Float32Array(GN*3),gc=new Float32Array(GN*3),cA=new T.Color(0xffd27a),cB=new T.Color(0xff3fa4),cC=new T.Color(0x8b5cf6),cD=new T.Color(0x3b82f6),gtc=new T.Color();
- for(let i=0;i<GN;i++){const r=Math.pow(Math.random(),1.5)*GR,a=(i%3)*2*Math.PI/3+r*.42,j=()=>Math.pow(Math.random(),3)*(Math.random()<.5?1:-1)*(1+r*.16);
-  gp[i*3]=Math.cos(a)*r+j();gp[i*3+1]=j()*.35;gp[i*3+2]=Math.sin(a)*r+j();const t=r/GR;
-  if(t<.16)gtc.copy(cA).lerp(cB,t/.16);else if(t<.5)gtc.copy(cB).lerp(cC,(t-.16)/.34);else gtc.copy(cC).lerp(cD,Math.min(1,(t-.5)/.4));gc[i*3]=gtc.r;gc[i*3+1]=gtc.g;gc[i*3+2]=gtc.b}
- const gg=new T.BufferGeometry();gg.setAttribute("position",new T.BufferAttribute(gp,3));gg.setAttribute("color",new T.BufferAttribute(gc,3));
- const galaxy=new T.Points(gg,new T.PointsMaterial({size:1.05,map:new T.CanvasTexture(gdot),vertexColors:true,transparent:true,opacity:.6,blending:T.AdditiveBlending,depthWrite:false,fog:false}));
- galaxy.position.set(0,1.5,-32);galaxy.rotation.x=1.05;scene.add(galaxy);
- {const cc=document.createElement("canvas");cc.width=cc.height=256;const x=cc.getContext("2d"),g=x.createRadialGradient(128,128,0,128,128,128);g.addColorStop(0,"rgba(255,248,225,.95)");g.addColorStop(.18,"rgba(255,200,110,.6)");g.addColorStop(.45,"rgba(255,63,164,.18)");g.addColorStop(1,"rgba(59,130,246,0)");x.fillStyle=g;x.fillRect(0,0,256,256);
-  const core=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(cc),transparent:true,blending:T.AdditiveBlending,depthWrite:false,fog:false,opacity:.75}));core.scale.set(16,16,1);core.position.set(0,1.5,-31);scene.add(core);galaxy.userData.core=core}
  const GLYPHS=["{ }","</>","( )","[ ]","def","for","if","print()","==","#","x = 1","True","{ }","in","+="];
  const gtex={};function glyphTex(txt){if(gtex[txt])return gtex[txt];const c=document.createElement("canvas");c.width=256;c.height=128;const x=c.getContext("2d");const rupee=txt.includes("{");
   x.textAlign="center";x.textBaseline="middle";x.font=(rupee?"800 92px 'Plus Jakarta Sans',Arial,sans-serif":"700 64px 'JetBrains Mono',ui-monospace,monospace");
@@ -1462,7 +1451,7 @@ window.KB3D=(function(){if(!window.THREE)return null;try{document.body.classList
   glyphs.forEach(gl=>{const u=gl.userData;gl.position.y+=u.v*dt*(1+boost*5)*k;gl.position.x+=Math.sin(t*.5+u.ph)*.004*dt*k;if(gl.position.y>13)gl.position.y=-13;u.cur=Math.min(u.o,(u.cur||0)+.01*dt);gl.material.opacity=u.cur*(still?0:1)});
   minis.forEach(m=>{const u=m.userData;m.position.y+=u.vy*dt*(1+boost*5)*k;m.rotation.z+=u.s*dt*(1+boost*4)*k;m.rotation.x=Math.PI/2+Math.sin(t+u.ph)*.5*k;if(m.position.y>u.top)spread(m)});
   minis.forEach(m=>m.visible=!still);floaters.forEach(m=>m.visible=!still);pts.visible=S.screen!=="home";
-  pts.rotation.y+=.0006*dt*(1+boost*8)*k;galaxy.rotation.y-=.0007*dt*(1+boost*3);galaxy.visible=S.screen!=="path";galaxy.material.opacity=still?.25:.6;galaxy.userData.core.visible=galaxy.visible;galaxy.userData.core.material.opacity=still?.3:.75;
+  pts.rotation.y+=.0006*dt*(1+boost*8)*k;
   cam.position.x+=(mx*1.6*k-cam.position.x)*.03*dt;cam.position.y+=(-my*k-cam.position.y)*.03*dt;cam.lookAt(0,0,-4);
   beams.forEach(b=>{b.visible=S.screen!=="path";const u=b.userData;if(aimOn){const tg=Math.atan2(aimPt.x-b.position.x,-(aimPt.y-b.position.y));u.cur+=(tg-u.cur)*.12*dt;b.rotation.z=u.cur;b.material.opacity=.24*(1+boost*.6)}else{u.cur+=(u.r-u.cur)*.05*dt;b.rotation.z=u.cur+Math.sin(t*.5+u.ph)*.06*k;b.material.opacity=(still?.05:.17)*(1+boost)}});
   aura.material.opacity=(still?.35:.7)+Math.sin(t*1.6)*.18*k+boost*.3;aura.scale.setScalar(12+Math.sin(t*1.1)*.6*k);

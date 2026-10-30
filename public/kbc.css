@@ -2368,3 +2368,12 @@ header .tools#menu #buddybtn{opacity:1!important}
 }
 @media (max-width:380px){header .brand b span{display:none}}
 @media (max-width:600px){header .livechip{display:none!important}header{min-width:0!important}header .brand{min-width:0;overflow:hidden}}
+
+/* Pixel reacts on hover: the head turns with the cursor (set from JS), the screen glitches between expressions */
+.h4-bot .mascot,.mcol .mascot,.fffbot .mascot{pointer-events:auto;cursor:pointer}
+.mascot.m3d .m3s{transform-origin:50% 70%;will-change:transform}
+.mascot.pxg .m3s{animation:pxGlitch .22s steps(2) 1}
+@keyframes pxGlitch{0%{filter:drop-shadow(0 10px 14px rgba(0,0,0,.45)) hue-rotate(40deg) contrast(1.4) brightness(1.3);clip-path:inset(8% 0 30% 0)}
+ 50%{filter:drop-shadow(0 10px 14px rgba(0,0,0,.45)) hue-rotate(-30deg) saturate(1.6);clip-path:inset(40% 0 4% 0)}
+ 100%{filter:drop-shadow(0 10px 14px rgba(0,0,0,.45));clip-path:inset(0)}}
+@media (prefers-reduced-motion:reduce){.mascot.pxg .m3s{animation:none}}

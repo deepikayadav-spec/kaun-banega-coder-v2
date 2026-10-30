@@ -1632,6 +1632,33 @@ const TOUR=[
  {sel:"#themebtn",t:"Light or dark",d:"Switch the look whenever you like."},
  {sel:'header [data-act="logout"]',t:"Log out",d:"Done for the day? Log out here. Your progress is saved."}];
 let TI=-1;
+/* Pixel follows the cursor and reacts to it (reference: robot-heads reel). The head turns toward the pointer on a spring;
+   hovering makes Pixel hop and cycle through its screen-face expressions, with a one-line reaction in the speech bubble. */
+const PX_MOODS=[["dance","Hehe, that tickles!"],["think","Hmm… planning your next level"],["stare","I see you 👀"],["vibe","Vibing at 60 fps"],["panic","Whoa! Careful with that cursor!"],["zen","Deep breath. You've got this."]];
+const PXF={rx:0,ry:0,vrx:0,vry:0,trx:0,try:0,hy:0,vhy:0,raf:0,hov:null,i:0,base:null,say:null,timer:null};
+const pxEl=()=>document.querySelector(".h4-bot .mascot,.mcol .mascot,.fffbot .mascot");
+function pxTick(){const el=pxEl();if(!el){PXF.raf=0;return}const dt=1/60,F=PXF;
+ const sp=(x,v,t,k,c)=>{const a=k*(t-x)-c*v;v+=a*dt;return [x+v*dt,v]};
+ [F.rx,F.vrx]=sp(F.rx,F.vrx,F.trx,120,14);[F.ry,F.vry]=sp(F.ry,F.vry,F.try,120,14);[F.hy,F.vhy]=sp(F.hy,F.vhy,0,260,13);
+ const sq=Math.max(-.08,Math.min(.08,-F.vhy/5000));const s=el.querySelector(".m3s")||el.firstElementChild;
+ if(s)s.style.transform=`perspective(700px) translateY(${F.hy.toFixed(1)}px) rotateX(${F.rx.toFixed(2)}deg) rotateY(${F.ry.toFixed(2)}deg) scale(${(1-sq).toFixed(3)},${(1+sq).toFixed(3)})`;
+ const busy=F.hov||Math.abs(F.rx-F.trx)+Math.abs(F.ry-F.try)+Math.abs(F.vrx)+Math.abs(F.vry)+Math.abs(F.hy)+Math.abs(F.vhy)>.05;
+ PXF.raf=busy||F.trx||F.try?requestAnimationFrame(pxTick):0}
+const pxKick=()=>{if(reduceMotion)return;PXF.vhy=-520;if(!PXF.raf)PXF.raf=requestAnimationFrame(pxTick)};
+addEventListener("pointermove",e=>{if(reduceMotion||e.pointerType==="touch")return;const el=pxEl();if(!el)return;const r=el.getBoundingClientRect();if(!r.width)return;
+ const dx=(e.clientX-(r.left+r.width/2))/innerWidth,dy=(e.clientY-(r.top+r.height*.35))/innerHeight;
+ PXF.try=Math.max(-30,Math.min(30,dx*80));PXF.trx=Math.max(-20,Math.min(20,-dy*55));if(!PXF.raf)PXF.raf=requestAnimationFrame(pxTick)},SIG);
+document.addEventListener("pointerleave",()=>{PXF.trx=PXF.try=0},SIG);
+function pxPose(el,pose){if(!el||!el.classList.contains("m3d"))return;const U=M3D.render(COSTUMES[CHAR]||COSTUMES.pixel,pose);const st=el.querySelector(".m3strip");if(!U||!st)return;
+ BYTE_POSES.forEach(p=>el.classList.remove(p));el.classList.add(pose);st.style.backgroundImage=`url(${U})`;
+ el.classList.remove("pxg");void el.offsetWidth;el.classList.add("pxg")}
+function pxNext(){const el=PXF.hov;if(!el||!el.isConnected){pxLeave();return}const [pose,line]=PX_MOODS[PXF.i++%PX_MOODS.length];pxPose(el,pose);pxKick();
+ const say=el.parentElement&&el.parentElement.querySelector(".say");if(say){if(PXF.say===null)PXF.say=say.textContent;say.textContent=line}}
+function pxEnter(el){PXF.hov=el;PXF.base=BYTE_POSES.find(p=>el.classList.contains(p))||"idle";PXF.say=null;pxNext();clearInterval(PXF.timer);PXF.timer=setInterval(pxNext,1300)}
+function pxLeave(){clearInterval(PXF.timer);const el=PXF.hov;PXF.hov=null;if(el&&el.isConnected){pxPose(el,PXF.base);el.classList.remove("pxg");const say=el.parentElement&&el.parentElement.querySelector(".say");if(say&&PXF.say!==null)say.textContent=PXF.say}}
+document.addEventListener("pointerover",e=>{const m=e.target.closest&&e.target.closest(".h4-bot .mascot,.mcol .mascot,.fffbot .mascot");if(m&&PXF.hov!==m){if(PXF.hov)pxLeave();pxEnter(m)}},SIG);
+document.addEventListener("pointerout",e=>{const m=PXF.hov;if(m&&!(e.relatedTarget&&m.contains(e.relatedTarget))&&e.target.closest&&e.target.closest(".mascot")===m)pxLeave()},SIG);
+setTimeout(()=>{try{M3D.warm(COSTUMES[CHAR]||COSTUMES.pixel,PX_MOODS.map(m=>m[0]))}catch(e){}},2500);
 /* Top bar: one menu button (three lines) holds every option */
 /* a tour step can point inside the menu; the tour opens the menu for it */
 const inMenu=st=>!!document.querySelector("#menu "+st.sel.replace(/^header /,"")),tourOK=st=>inMenu(st)||vis(document.querySelector(st.sel));

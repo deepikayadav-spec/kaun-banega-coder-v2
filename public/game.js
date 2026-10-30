@@ -965,10 +965,8 @@ function vHome(){const best=P.best||0,coins=P.coins||0;
 <div class="h4-bot"><p class="say">${P.answered?greet:esc(`Hi! I'm ${buddyName()}, your quiz buddy. Win Fastest Finger First to take the hot seat!`)}</p>${mascot(ctxPose(),300)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your quiz buddy</small></span><button class="btn quiet sm" data-act="buddy">Change buddy</button></div>
 <div class="h-hero">
 <span class="emb hlogo" aria-hidden="true"><i class="er"></i><i class="er er2"></i><span class="ec">{ }</span></span>
-<div class="codefloat" aria-hidden="true"><i>{ }</i><i>&lt;/&gt;</i><i>def</i><i>for i in</i><i>==</i><i>[ ]</i><i>print()</i><i>True</i></div>
-<div class="wish3"><span class="wd3" aria-hidden="true">${DIYA}</span><div><b>Happy Diwali!</b><span>Wishes first, KBC next.</span></div><span class="wd3" aria-hidden="true">${DIYA}</span></div>
+<div class="wish3"><span class="wd3" aria-hidden="true">${DIYA}</span><div><b>Happy Diwali!</b><span class="wmsg">Wishes first, KBC Next!</span></div><span class="wd3" aria-hidden="true">${DIYA}</span></div>
 <h1 class="ttl"><span>Kaun Banega</span><b class="typed" aria-label="Coder"><em class="tw" aria-hidden="true">Coder</em><i class="caret" aria-hidden="true"></i></b></h1>
-<div class="term" aria-hidden="true"><span class="t-dots"><i></i><i></i><i></i></span><span class="t-p">&gt;&gt;&gt;</span><code class="t-l"></code><i class="caret sm"></i></div>
 <div class="ctready" aria-label="Your GRIT Computational Thinking readiness: ${gritReady()} percent"><div class="ct-ring" style="--v:${Math.min(100,parseFloat(gritReady()))}"><b>${gritReady()}<small>%</small></b></div><div class="ct-txt"><span class="ct-k">Your GRIT</span><strong>Computational Thinking readiness</strong><span class="ct-s">Rises with every level you clear</span></div></div>
 <ol class="steps3"><li><b>1</b><span><strong>Win Fastest Finger</strong></span></li><li><b>2</b><span><strong>Take the hot seat</strong></span></li><li><b>3</b><span><strong>Clear your path</strong></span></li></ol>
 <div class="pill hello" role="group" aria-label="Start a game"><span class="hi">👋 Namaste, <b>${esc(String(S.name||"").split(" ")[0])}</b></span><button class="btn gold glow" type="button" data-act="play">Play Fastest Finger →</button></div>
@@ -1604,10 +1602,10 @@ addEventListener("resize",()=>{if(TI>=0)tourShow()},SIG);
 /* "Coder" types itself out on Home, and a little Python prompt keeps typing lines underneath */
 const TERM=['while not crorepati: level_up()','if answer == correct: prize += 1','print("Namaste, coder!")','for q in range(15): stay_calm()','import confidence'];
 let typeT=null;
-function typeHome(){clearTimeout(typeT);const w=$(".ttl .tw"),l=$(".term .t-l");if(!w||!l)return;if(reduceMotion){w.textContent="Coder";l.textContent=TERM[0];return}
- let i=0,j=0,k=0,del=false;w.textContent="";l.textContent="";
+function typeHome(){clearTimeout(typeT);const w=$(".ttl .tw"),l=$(".term .t-l");if(!w)return;if(reduceMotion){w.textContent="Coder";if(l)l.textContent=TERM[0];return}
+ let i=0,j=0,k=0,del=false;w.textContent="";if(l)l.textContent="";
  const step=()=>{if(!document.body.contains(w))return;
-  if(i<5){w.textContent="Coder".slice(0,++i);typeT=setTimeout(step,i<5?150:500);return}
+  if(i<5){w.textContent="Coder".slice(0,++i);typeT=setTimeout(step,i<5?150:500);return}if(!l)return;
   const t=TERM[k%TERM.length];if(!del){l.textContent=t.slice(0,++j);if(j>=t.length){del=true;typeT=setTimeout(step,1800);return}typeT=setTimeout(step,55)}
   else{l.textContent=t.slice(0,--j);if(j<=0){del=false;k++;typeT=setTimeout(step,300);return}typeT=setTimeout(step,22)}};
  typeT=setTimeout(step,350)}

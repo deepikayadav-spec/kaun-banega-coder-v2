@@ -2250,3 +2250,6 @@ html[data-theme="light"] .pworld .chest b{color:#B45309!important;text-shadow:0 
 .pworld .chest b::before,.pworld.univ .chest b::before{content:none!important}
 .pworld.univ .mprize .chest,.pworld.univ .mprize.cur .chest,.pworld.univ .mprize.won .chest,.pworld.univ .mprize.lock .chest{box-shadow:none!important;background:none!important;border:0!important;animation:none!important}
 .pworld .chest .nthumb{box-shadow:none!important;background:none!important}
+
+/* Home: the Diwali wish line always shows, even on short screens */
+.home4 .wish3 span.wmsg{display:block!important}

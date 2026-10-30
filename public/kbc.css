@@ -2377,3 +2377,24 @@ header .tools#menu #buddybtn{opacity:1!important}
  50%{filter:drop-shadow(0 10px 14px rgba(0,0,0,.45)) hue-rotate(-30deg) saturate(1.6);clip-path:inset(40% 0 4% 0)}
  100%{filter:drop-shadow(0 10px 14px rgba(0,0,0,.45));clip-path:inset(0)}}
 @media (prefers-reduced-motion:reduce){.mascot.pxg .m3s{animation:none}}
+
+/* ===== Minimal palette: navy, gold, white. Smooth face changes on Pixel ===== */
+.mascot.m3d .m3ghost{animation:m3play 1.6s steps(8) infinite,m3out .45s ease forwards!important}
+.mascot.m3d .m3strip.m3in{animation-name:m3play,m3fadein;animation-duration:inherit,.45s;animation-timing-function:steps(8),ease;animation-iteration-count:infinite,1}
+@keyframes m3out{to{opacity:0}}
+@keyframes m3fadein{from{opacity:0}}
+.h4-bot .mascot::after,.mcol .mascot::after,.fffbot .mascot::after{background:radial-gradient(closest-side,rgba(0,0,0,.75),rgba(0,0,0,.25) 60%,transparent)!important}
+/* GRIT ring in gold */
+.ctready{background:linear-gradient(135deg,rgba(233,196,106,.10),rgba(5,8,20,.9) 60%)!important;border:1.5px solid rgba(233,196,106,.45)!important;box-shadow:0 0 30px rgba(233,196,106,.12)!important}
+.ct-ring{background:conic-gradient(#E9C46A calc(var(--v)*3.6deg),rgba(233,196,106,.15) 0)!important}
+.ct-ring b{color:#FFF8E7!important}.ct-ring b small,.ct-k{color:#E9C46A!important}
+.home4 .ctready::after{opacity:0!important}
+html[data-theme="light"] .ctready{background:linear-gradient(135deg,rgba(161,98,7,.08),#fff 60%)!important;border-color:rgba(161,98,7,.45)!important;box-shadow:0 8px 30px rgba(161,98,7,.12)!important}
+html[data-theme="light"] .ct-ring{background:conic-gradient(#A16207 calc(var(--v)*3.6deg),rgba(161,98,7,.15) 0)!important}
+html[data-theme="light"] .ct-ring b small,html[data-theme="light"] .ct-k{color:#A16207!important}
+/* live dot, logo ring, Diwali card */
+.ldot{background:#E9C46A!important;box-shadow:0 0 0 0 rgba(233,196,106,.6)!important}
+.livechip{background:rgba(233,196,106,.08)!important;border-color:rgba(233,196,106,.35)!important;color:#F5EEDC!important}
+.livechip b{color:#FDE68A!important}
+.er2{border-color:rgba(245,238,220,.7)!important;box-shadow:0 0 8px rgba(245,238,220,.4)!important}
+.wishc{background:rgba(9,12,22,.78)!important;border-color:rgba(233,196,106,.35)!important}

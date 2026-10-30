@@ -110,16 +110,21 @@ async function serveNext(roll, mode, { force = false } = {}) {
     if (!force && !stale && pending && pending.mode === mode && Date.now() - pending.servedAt < 6 * 3600e3) {
       return { question: pending.client, address: pending.address, engine: view(c, st), resumed: true };
     }
-    const act = activeSkill(c.G, c.avail, st);
-    if (!act.id) { await saveState(roll, st, null); return { question: null, engine: view(c, st), allDone: !!act.allDone, comingSoon: act.comingSoon || null }; }
-    const addr = address(c.G, c.avail, st, act.id, mode);
-    const q = addr && await loadQuestion(addr.skill, addr.level, addr.type, addr.difficulty, addr.variant);
-    if (!q) { await saveState(roll, st, null); return { question: null, engine: view(c, st), comingSoon: [act.id] }; }
-    const { client, key } = present(q);
-    const p = { qid: q.id, skill: addr.skill, type: addr.type, level: addr.level, r: addr.r, variant: addr.variant, mode, key, client, address: addr, servedAt: Date.now(), lifelines: [] };
+    const { pending: p, body } = await pickNext(c, st, mode);
     await saveState(roll, st, p);
-    return { question: client, address: addr, engine: view(c, st) };
+    return body;
   });
+}
+// The question at the student's address for this mode, as the pending question to store and the response to send.
+async function pickNext(c, st, mode) {
+  const act = activeSkill(c.G, c.avail, st);
+  if (!act.id) return { pending: null, body: { question: null, engine: view(c, st), allDone: !!act.allDone, comingSoon: act.comingSoon || null } };
+  const addr = address(c.G, c.avail, st, act.id, mode);
+  const q = addr && await loadQuestion(addr.skill, addr.level, addr.type, addr.difficulty, addr.variant);
+  if (!q) return { pending: null, body: { question: null, engine: view(c, st), comingSoon: [act.id] } };
+  const { client, key } = present(q);
+  const p = { qid: q.id, skill: addr.skill, type: addr.type, level: addr.level, r: addr.r, variant: addr.variant, mode, key, client, address: addr, servedAt: Date.now(), lifelines: [] };
+  return { pending: p, body: { question: client, address: addr, engine: view(c, st) } };
 }
 
 app.get('/api/play/next', requireStudent, wrap(async (req, res) => {
@@ -129,7 +134,7 @@ app.get('/api/play/next', requireStudent, wrap(async (req, res) => {
 
 app.post('/api/play/answer', requireStudent, jsonBody, wrap(async (req, res) => {
   const roll = req.student.roll_no, c = await content();
-  const { qid, answer, ms, timeout } = req.body || {};
+  const { qid, answer, ms, timeout, prefetch } = req.body || {};
   const out = await tx(async () => {
     const { st, pending } = await loadState(roll, c.G, true);
     if (!pending || pending.qid !== qid) return { status: 409, body: { error: 'This question is no longer open. Loading the next one.' } };
@@ -139,7 +144,9 @@ app.post('/api/play/answer', requireStudent, jsonBody, wrap(async (req, res) => 
     if (timeout) { g.correct = false; g.why = q.ok || g.why; }
     const before = view(c, st);
     const { transitions, msg } = applyAnswer(c.G, st, pending.skill, pending.type, g.correct);
-    await saveState(roll, st, null);
+    // prefetch: the next question is chosen now and sent with the result, so "Next" needs no second round trip
+    const next = prefetch ? await pickNext(c, st, pending.mode) : null;
+    await saveState(roll, st, next ? next.pending : null);
     const now = Date.now();
     await run(`INSERT INTO attempts (roll_no, university, question_id, skill, level, type, r, variant, mode, correct, timeout, answer, ms, lifelines, at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -148,7 +155,7 @@ app.post('/api/play/answer', requireStudent, jsonBody, wrap(async (req, res) => 
     for (const t of transitions) await run('INSERT INTO transitions (roll_no, skill, kind, detail, at) VALUES (?, ?, ?, ?, ?)', roll, t.skill || pending.skill, t.kind, json(t.detail), now);
     const after = view(c, st);
     return { status: 200, body: { correct: g.correct, show: g.show, why: g.why, ok: q.ok || '', detail: g.detail || null, msg, transitions,
-      rungBefore: rungOf(before), rungAfter: rungOf(after), engine: after } };
+      rungBefore: rungOf(before), rungAfter: rungOf(after), engine: after, next: next ? { ...next.body, mode: pending.mode } : undefined } };
   });
   res.status(out.status).json(out.body);
 }));

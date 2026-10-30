@@ -211,7 +211,13 @@ function reveal(q,res,S){S=S||{};q.show=res.show||"";
  if(q.kind==="mcq"){if(res.detail&&res.detail.right!=null)q.ans=res.detail.right;else if(q.type==="same")q.ans=res.correct?S.pick:(S.pick===0?1:0)}}
 
 /* ---------- boot: session check, then the game ---------- */
-async function boot(){try{window.KBC_BOOT=await api("GET","/api/boot")}catch(e){if(e.status!==401)document.body.insertAdjacentHTML("beforeend",`<p style="padding:24px;color:#fff">Could not load the game: ${esc(e.message)}. <a href="/" style="color:#ffc83d">Try again</a></p>`);return}
+/* index.html starts /api/boot and the saved-mascot read before any script loads; use those when they are there */
+async function bootData(){const p=window.__kbcBoot;window.__kbcBoot=null;let r=null;try{r=p&&await p}catch(e){}
+ if(!r)return api("GET","/api/boot");
+ if(r.status===401){location.href="/login";throw Object.assign(new Error("Please log in."),{status:401})}
+ let j=null;try{j=await r.json()}catch(e){}
+ if(!r.ok)throw Object.assign(new Error((j&&j.error)||"Request failed ("+r.status+")"),{status:r.status});return j}
+async function boot(){try{const both=await Promise.all([bootData(),window.__kbcM3D||{}]);window.KBC_BOOT=both[0];window.KBC_M3D=both[1]}catch(e){if(e.status!==401)document.body.insertAdjacentHTML("beforeend",`<p style="padding:24px;color:#fff">Could not load the game: ${esc(e.message)}. <a href="/" style="color:#ffc83d">Try again</a></p>`);return}
  const s=document.createElement("script");s.src="/game.js?v="+encodeURIComponent(window.KBC_VERSION||"1");document.body.appendChild(s)}
 let rerenderFn=null;
 window.KBCQ={api,adapt,above,render,ready,need,act,input,answer,reveal,runPy,warm,rerender:()=>rerenderFn&&rerenderFn(),onRerender:f=>{rerenderFn=f}};

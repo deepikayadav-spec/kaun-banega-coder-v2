@@ -83,8 +83,14 @@ test('play: next is stable until answered; answers are graded and stored; S1 can
       case 'golf': answer = { picks: p.tokens.map((t) => t.choices.find((x) => x !== t.now && !/^["']/.test(x))), stdout: p.target }; break;
       default: throw new Error('hot seat served ' + q.type);
     }
-    const a = await call('s', 'POST', '/api/play/answer', { qid: q.id, answer, ms: 1000 });
+    const a = await call('s', 'POST', '/api/play/answer', { qid: q.id, answer, ms: 1000, prefetch: true });
     assert.equal(a.body.correct, true, q.id + ' ' + a.body.why);
+    if (a.body.next && a.body.next.question) {
+      assert.equal(a.body.next.mode, 'hotseat');
+      assert.equal(JSON.stringify(a.body.next.question).includes('"correct"'), false, 'prefetched question carries no key');
+      const again = await call('s', 'GET', '/api/play/next?mode=hotseat');
+      assert.equal(again.body.question.id, a.body.next.question.id, 'the prefetched question is the open one');
+    }
     done = a.body.engine.skills.S1.status === 'done';
   }
   assert.ok(done, 'S1 finished');

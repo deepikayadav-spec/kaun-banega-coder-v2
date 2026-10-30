@@ -3,11 +3,25 @@
 <style>body{margin:0}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 <title>Kaun Banega Coder</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<script>
+/* Start the slow parts at once, in parallel with the styles and three.js: the player's data, and the mascot images
+   saved by an earlier visit (bank-ui.js waits for both before it starts the game). */
+window.__kbcBoot=fetch("/api/boot",{credentials:"same-origin"});
+window.__kbcM3D=new Promise(function(res){var done=function(v){res(v||{})};setTimeout(done,1500);
+ try{var o=indexedDB.open("kbc-cache",1);o.onupgradeneeded=function(){o.result.createObjectStore("m3d")};o.onerror=function(){done()};
+  o.onsuccess=function(){try{var out={},c=o.result.transaction("m3d","readonly").objectStore("m3d").openCursor();
+   c.onsuccess=function(){var x=c.result;if(x){out[x.key]=x.value;x.continue()}else done(out)};c.onerror=function(){done()}}catch(e){done()}}}catch(e){done()}});
+</script>
+<link rel="preload" href="/game.js?v=1" as="script">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Great+Vibes&display=swap">
 <link rel="stylesheet" href="/kbc.css">
 <link rel="stylesheet" href="/bank-ui.css">
+<link rel="stylesheet" href="/intro.css">
 </head><body>
+<script src="/intro.js"></script>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <radialGradient id="mgold" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#FFF4C2"/><stop offset=".45" stop-color="#FFC83D"/><stop offset="1" stop-color="#D98A0B"/></radialGradient>
 </defs></svg>

@@ -2264,3 +2264,8 @@ html[data-theme="light"] .fbx11{background:rgba(124,58,237,.06);border-color:rgb
 html[data-theme="light"] .fbopt{color:#6D28D9;border-color:rgba(109,40,217,.4)}
 html[data-theme="light"] .fbx11 .fbs.on{background:linear-gradient(180deg,#A78BFA,#6D28D9)!important;color:#fff!important}
 @media (max-width:420px){.fbx11 .fbs{width:32px!important;height:32px!important}}
+
+/* Screen change: the new screen fades in (opacity only, so fixed-position sheets inside #app are not affected) */
+@keyframes kbcScrIn{from{opacity:0}}
+#app.scr-in{animation:kbcScrIn .26s cubic-bezier(.2,.8,.2,1)}
+@media (prefers-reduced-motion:reduce){#app.scr-in{animation:none}}

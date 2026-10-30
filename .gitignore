@@ -4,3 +4,11 @@ data/
 .env.*
 !.env.example
 .vercel
+
+.vercel
+.env*
+
+# local tool files
+.agents/
+.claude/
+skills-lock.json

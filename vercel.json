@@ -3,7 +3,7 @@
   "framework": null,
   "buildCommand": "npm run build",
   "outputDirectory": "public",
-  "regions": ["bom1"],
+  "regions": ["sin1"],
   "functions": {
     "api/index.js": { "maxDuration": 60, "includeFiles": "server/content/**" }
   },

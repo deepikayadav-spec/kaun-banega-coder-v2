@@ -127,6 +127,9 @@ const spk=(x,y,s)=>`<path d="M${x} ${y-s}l${s*.3} ${s*.7} ${s*.7} ${s*.3}-${s*.7
 const pyr=c=>[0,1,2].map(k=>bun(2+k*19,18,17,9,c[k])).join("")+[0,1].map(k=>bun(11+k*19,9,17,9,c[3+k])).join("")+bun(20,0.5,17,8,c[5]);
 const MONEY={
  1000:mn(8,9,30,14,200,-12)+mn(20,7,30,14,500,8),
+ 2000:mn(4,11,27,13,500,-16)+mn(12,8,27,13,500,-6)+mn(21,8,27,13,500,5)+mn(29,11,27,13,500,15),
+ 50000:bun(4,12,26,12,500)+bun(30,12,26,12,500)+mn(17,2,26,11,200,-4),
+ 200000:bun(3,14,26,11,500)+bun(31,14,26,11,500)+bun(17,4,26,11,500)+gcoin(5,27,3)+gcoin(55,27,3),
  5000:mn(3,10,28,13,100,-16)+mn(15,7,28,13,200,0)+mn(27,9,28,13,500,14),
  10000:bun(13,10,34,15,500),
  100000:bun(3,11,26,13,200)+bun(31,11,26,13,500),
@@ -135,9 +138,15 @@ const MONEY={
  10000000:pyr([500,200,100,50,500,200]),
  30000000:pyr([200,500,50,100,200,500])+gcoin(4,26,3.5)+gcoin(56,26,3.5)+gcoin(9,27,3),
  70000000:pyr([500,100,200,500,50,200])+`<path d="M22 2l3-5 3 3 2-4 2 4 3-3 3 5z" fill="#FFC83D" stroke="#9A5A05" stroke-width=".7"/>`+spk(4,6,4)+spk(57,10,3.5)+gcoin(56,26,3.5)+gcoin(4,26,3.5)};
-function boardNote(v){if(NOTE[v])return `<span class="bnote">${noteThumb(v)}</span>`;return `<span class="bnote"><svg viewBox="0 -6 60 36" aria-hidden="true">${MONEY[v]||COINSTACK}</svg></span>`}
-/* any amount without its own banknote art (e.g. 2,000, 50,000, 2 lakh) still shows money: a small stack of coins */
-const COINSTACK=gcoin(18,22,7)+gcoin(30,22,7)+gcoin(42,22,7)+gcoin(24,14,7)+gcoin(36,14,7)+gcoin(30,6,7);
+function boardNote(v){if(NOTE[v])return `<span class="bnote">${noteThumb(v)}</span>`;return `<span class="bnote"><svg viewBox="0 -6 60 36" aria-hidden="true">${MONEY[v]||moneyArt(v)}</svg></span>`}
+/* Every amount on the board shows money. Amounts without their own art (a ladder an admin changes later) get notes,
+   bundles or a pile that grows with the amount. */
+function moneyArt(v){if(v<1000)return mn(16,8,28,14,v<=20?10:v<=100?50:v<=300?200:500,0);
+ if(v<10000)return mn(6,10,27,13,500,-12)+mn(16,8,27,13,500,0)+mn(26,10,27,13,500,12);
+ if(v<1e5)return bun(17,10,28,13,500);
+ if(v<1e6)return bun(4,12,26,12,500)+bun(30,12,26,12,500);
+ if(v<1e7)return bun(3,16,26,11,200)+bun(31,16,26,11,500)+bun(17,5,26,11,500);
+ return pyr([500,200,500,100,500,200])}
 
 /* Buddies: every character is the same rigged person in a different costume, so all poses and expressions work for each.
    All designs are original (no licensed characters). head/gold/white = gradient stops for helmet, suit and belly panel;
@@ -927,8 +936,8 @@ function countUpChip(a,b,d){const el=$("#wchip b"),ch=$("#wchip");if(!el)return;
 /* ================= Views ================= */
 function boardHTML(r,compact){const rows=[];for(let i=LADDER.length-1;i>=0;i--){
   const soon=i>=OPEN,cls=["rung",CK[i]?"ck":"",i<r?"done":"",i===r&&!soon?"next":"",soon?"soon":""].join(" ");
-  rows.push(`<div class="${cls}"><span class="no">${i+1}</span><span class="amtc">${boardNote(LADDER[i])}₹ ${fmtR(LADDER[i])}</span>${CK[i]?`<span class="tg">${stg(CK[i])}${TAG[i]?" · "+TAG[i]:""}</span>`:TAG[i]?`<span class="tg">${TAG[i]}</span>`:soon?"":"<span></span>"}</div>`)}
- const min=boardMin();return `<aside class="board card ${min?"min":""}" aria-label="Money board"><h2>Money board<small>${LADDER.length} rungs · ${Object.values(CK).filter(c=>c!=="FIN").length} checkpoints</small><button class="bmin" data-act="board-min" aria-pressed="${min}" aria-label="${min?"Show the whole money board":"Minimise the money board"}" title="${min?"Show all rungs":"Minimise"}">${min?"＋":"−"}</button></h2>${rows.join("")}</aside>`}
+  rows.push(`<div class="${cls}"><span class="no">${i+1}</span><span class="amtc">${boardNote(LADDER[i])}${fmtR(LADDER[i])}</span>${CK[i]?`<span class="tg">${stg(CK[i])}${TAG[i]?" · "+TAG[i]:""}</span>`:TAG[i]?`<span class="tg">${TAG[i]}</span>`:soon?"":"<span></span>"}</div>`)}
+ const min=boardMin();return `<aside class="board card ${min?"min":""}" aria-label="Money board"><h2>Money board<button class="bmin" data-act="board-min" aria-pressed="${min}" aria-label="${min?"Show the whole money board":"Minimise the money board"}" title="${min?"Show all rungs":"Minimise"}">${min?"＋":"−"}</button></h2>${rows.join("")}</aside>`}
 /* the money board can be folded down to the rung being played; the choice is remembered on this device */
 const boardMin=()=>!!store.get("kbc-board-min",false);
 function stripHTML(r){return `<div class="strip" aria-hidden="true">${LADDER.map((v,i)=>`<i class="${i<r?"done":i===r?"next":""} ${i>=OPEN?"soon":""}"></i>`).join("")}</div>`}

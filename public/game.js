@@ -991,10 +991,9 @@ function vHome(){const best=P.best||0,coins=P.coins||0;
 <span class="emb hlogo" aria-hidden="true"><i class="er"></i><i class="er er2"></i><span class="ec">{ }</span></span>
 <div class="wish3"><span class="wd3" aria-hidden="true">${DIYA}</span><div><b>Happy Diwali!</b><span class="wmsg">Wishes first, KBC Next!</span></div><span class="wd3" aria-hidden="true">${DIYA}</span></div>
 <h1 class="ttl"><span>Kaun Banega</span><b class="typed" aria-label="Coder"><em class="tw" aria-hidden="true">Coder</em><i class="caret" aria-hidden="true"></i></b></h1>
-<div class="ctready" aria-label="Your GRIT Computational Thinking readiness: ${gritReady()} percent"><div class="ct-ring" style="--v:${Math.min(100,parseFloat(gritReady()))}"><b>${gritReady()}<small>%</small></b></div><div class="ct-txt"><span class="ct-k">Your GRIT</span><strong>Computational Thinking readiness</strong><span class="ct-s">Rises with every level you clear</span></div></div>
-<ol class="steps3"><li><b>1</b><span><strong>Win Fastest Finger</strong></span></li><li><b>2</b><span><strong>Take the hot seat</strong></span></li><li><b>3</b><span><strong>Clear your path</strong></span></li></ol>
-<div class="pill hello" role="group" aria-label="Start a game"><span class="hi">👋 Namaste, <b>${esc(String(S.name||"").split(" ")[0])}</b></span><button class="btn gold glow" type="button" data-act="play">Play Fastest Finger →</button></div>
-<div class="hmeta"><span class="hlive"><i class="ldot"></i><b class="livenum">${LIVE}</b> playing now</span><button class="btn quiet sm" data-act="tour">✨ Take a quick tour</button></div>
+<p class="hhey">hey ${esc(String(S.name||"").split(" ")[0]||"coder")} 👋 your seat is waiting</p>
+<button class="hplay" type="button" data-act="play"><span>Play Fastest Finger</span><i aria-hidden="true">→</i></button>
+<div class="hmeta3"><span class="hlive"><i class="ldot"></i><b class="livenum">${LIVE}</b> playing now</span><span class="hdot" aria-hidden="true"></span><span title="Your GRIT Computational Thinking readiness. It rises with every level you clear.">CT ready <b>${gritReady()}%</b></span><span class="hdot" aria-hidden="true"></span><button class="hlink" type="button" data-act="tour">Quick tour</button></div>
 
 <div class="h4-stats"><span>Wallet <b>${fmtR(coins)}</b></span><span>Best <b>${best?fmtR(amountOf(best)):"—"}</b></span><span>Every game starts at <b>10</b></span></div>
 </div>
@@ -1301,7 +1300,6 @@ function fbHTML(sent){if(sent)return `<div class="fbbox" role="dialog" aria-moda
  const ok=FB.stars>0&&FB.text.trim().length>=5;
  return `<div class="fbbox" role="dialog" aria-modal="true" aria-labelledby="fbh"><h3 id="fbh">How is KBC so far?</h3><p class="fbreq">Please share your feedback to continue.</p>
 <p class="fbl">Your rating <i>*</i></p><div class="fbstars" role="radiogroup" aria-label="Rating out of 5">${[1,2,3,4,5].map(n=>`<button class="fbs ${n<=FB.stars?"on":""}" data-act="fb-star" data-n="${n}" role="radio" aria-checked="${n===FB.stars}" aria-label="${n} star${n>1?"s":""}">★</button>`).join("")}<span class="fbsl">${["Tap a star","Poor","Okay","Good","Great","Loved it!"][FB.stars]}</span></div>
-<div class="fbx11"><p class="fbl">Loved it more than 5 stars? Give us extra stars <span class="fbopt">optional</span></p><div class="fbstars" role="radiogroup" aria-label="Extra stars, optional, up to 6">${[1,2,3,4,5,6].map(n=>`<button class="fbs fbb ${n<=FB.bonus?"on":""}" data-act="fb-bonus" data-n="${n}" role="radio" aria-checked="${n===FB.bonus}" aria-label="${n} extra star${n>1?"s":""}${n===FB.bonus?", tap again to clear":""}">★</button>`).join("")}<span class="fbsl">${FB.bonus?"+"+FB.bonus+" · "+FB_BONUS[FB.bonus]:FB_BONUS[0]}</span></div></div>
 <label class="fbl" for="fbtext">Tell us more <i>*</i></label><textarea id="fbtext" maxlength="600" rows="4" placeholder="What did you like? What should we change?">${esc(FB.text)}</textarea>
 <p class="fbhint" id="fbhint">${ok?"Ready to send.":FB.stars?"Write at least 5 characters.":"Pick a rating and write a few words. Both are required."}</p>
 <button class="btn gold fbsend" data-act="fb-send" ${ok?"":"disabled"}>Send feedback</button></div>`}
@@ -1447,10 +1445,10 @@ window.KB3D=(function(){if(!window.THREE)return null;try{document.body.classList
   floaters.forEach(m=>{const u=m.userData;m.rotation.x+=u.rx*dt*(1+boost*4)*k;m.rotation.y+=u.ry*dt*(1+boost*4)*k;m.position.y+=u.vy*dt*(1+boost*5)*k;if(m.position.y>9)m.position.y=-9});
   glyphs.forEach(gl=>{const u=gl.userData;gl.position.y+=u.v*dt*(1+boost*5)*k;gl.position.x+=Math.sin(t*.5+u.ph)*.004*dt*k;if(gl.position.y>13)gl.position.y=-13;u.cur=Math.min(u.o,(u.cur||0)+.01*dt);gl.material.opacity=u.cur*(still?0:1)});
   minis.forEach(m=>{const u=m.userData;m.position.y+=u.vy*dt*(1+boost*5)*k;m.rotation.z+=u.s*dt*(1+boost*4)*k;m.rotation.x=Math.PI/2+Math.sin(t+u.ph)*.5*k;if(m.position.y>11)m.position.y=-11});
-  minis.forEach(m=>m.visible=!still);floaters.forEach(m=>m.visible=!still);
+  const bare=still||S.screen==="home";minis.forEach(m=>m.visible=!bare);floaters.forEach(m=>m.visible=!bare);pts.visible=S.screen!=="home";
   pts.rotation.y+=.0006*dt*(1+boost*8)*k;
   cam.position.x+=(mx*1.6*k-cam.position.x)*.03*dt;cam.position.y+=(-my*k-cam.position.y)*.03*dt;cam.lookAt(0,0,-4);
-  beams.forEach(b=>{b.visible=S.screen!=="path";const u=b.userData;if(aimOn){const tg=Math.atan2(aimPt.x-b.position.x,-(aimPt.y-b.position.y));u.cur+=(tg-u.cur)*.12*dt;b.rotation.z=u.cur;b.material.opacity=.24*(1+boost*.6)}else{u.cur+=(u.r-u.cur)*.05*dt;b.rotation.z=u.cur+Math.sin(t*.5+u.ph)*.06*k;b.material.opacity=(still?.05:.17)*(1+boost)}});
+  beams.forEach(b=>{b.visible=S.screen!=="path"&&S.screen!=="home";const u=b.userData;if(aimOn){const tg=Math.atan2(aimPt.x-b.position.x,-(aimPt.y-b.position.y));u.cur+=(tg-u.cur)*.12*dt;b.rotation.z=u.cur;b.material.opacity=.24*(1+boost*.6)}else{u.cur+=(u.r-u.cur)*.05*dt;b.rotation.z=u.cur+Math.sin(t*.5+u.ph)*.06*k;b.material.opacity=(still?.05:.17)*(1+boost)}});
   aura.material.opacity=(still?.35:.7)+Math.sin(t*1.6)*.18*k+boost*.3;aura.scale.setScalar(12+Math.sin(t*1.1)*.6*k);
   boost=Math.max(0,boost-.012*dt);alarm=Math.max(0,alarm-.02*dt);
   scene.fog.color.copy(fogBase).lerp(red,alarm*.6);key.color.copy(keyBase).lerp(red,alarm);
@@ -1702,7 +1700,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="fb-close"){$("#fbm").hidden=true;return}
  if(a==="fb-bonus"){const n=+b.dataset.n;FB.bonus=FB.bonus===n?0:n;FB.text=($("#fbtext")||{}).value||FB.text;$("#fbm").innerHTML=fbHTML();SFX.pick();return}
  if(a==="fb-star"){FB.stars=+b.dataset.n;FB.text=($("#fbtext")||{}).value||FB.text;$("#fbm").innerHTML=fbHTML();SFX.pick();return}
- if(a==="fb-send"){if(!(FB.stars>0&&FB.text.trim().length>=5))return;logEv({kind:"feedback",stars:FB.stars,bonus:FB.bonus,text:FB.text.trim().slice(0,600),screen:S.screen});P.fbSent=true;saveP();KBCQ.api("POST","/api/feedback",{text:FB.text.trim().slice(0,600),ctx:{stars:FB.stars,bonus:FB.bonus,screen:S.screen,trigger:FB.trigger||"feedback button"}}).catch(()=>{});FB={stars:0,bonus:0,text:""};$("#fbm").innerHTML=fbHTML(true);ROBO.happy();return}
+ if(a==="fb-send"){if(!(FB.stars>0&&FB.text.trim().length>=5))return;logEv({kind:"feedback",stars:FB.stars,text:FB.text.trim().slice(0,600),screen:S.screen});P.fbSent=true;saveP();KBCQ.api("POST","/api/feedback",{text:FB.text.trim().slice(0,600),ctx:{stars:FB.stars,screen:S.screen,trigger:FB.trigger||"feedback button"}}).catch(()=>{});FB={stars:0,bonus:0,text:""};$("#fbm").innerHTML=fbHTML(true);ROBO.happy();return}
  if(a==="theme"){setTheme(document.documentElement.dataset.theme==="light"?"dark":"light");return}
  if(a==="pathjump"){pathJump(true);return}
  if(a==="pathsk"){if(b.classList.contains("lock"))return;const sk=b.dataset.sk,g=curGroup(),cur=curSkill(g);

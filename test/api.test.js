@@ -172,3 +172,18 @@ test('a new skill graph changes every path at once and keeps earned progress', a
   assert.equal(r.body.engine.skills.S2.status, 'open');
   assert.equal(r.body.engine.skills.S1.status, 'done');
 });
+
+test('graphs with checkpoints as a list and group.checkpoint are understood', async () => {
+  const live = JSON.parse(fs.readFileSync('server/content/skill-graph.json', 'utf8'));
+  const cps = Object.entries(live.checkpoints).map(([id, name]) => ({ id, name, groups: live.groups.filter((g) => g.cp === id).map((g) => g.id) }));
+  const g = { checkpoints: cps, groups: live.groups.map(({ cp, ...x }) => ({ ...x, checkpoint: cp })), skills: live.skills.map(({ cp, ...s }) => s) };
+  g.groups[0].skills = ['S4', 'S1', 'S2', 'S3', 'S5'];
+  const up = await call('a', 'POST', '/api/admin/graph/upload', g);
+  assert.equal(up.status, 200, JSON.stringify(up.body));
+  const b = (await call('s', 'GET', '/api/boot')).body.graph;
+  assert.equal(b.checkpoints.C1, live.checkpoints.C1);
+  assert.ok(b.groups.every((x) => x.cp), 'every group has its checkpoint');
+  assert.ok(b.skills.every((x) => x.cp), 'every skill has its checkpoint');
+  assert.deepEqual(b.skills.slice(0, 2).map((x) => x.id), ['S4', 'S1'], 'the group order is the path order');
+  await call('a', 'POST', '/api/admin/graph/activate', { version: 'skill-graph-2026-10-30' });
+});

@@ -25,7 +25,7 @@ export async function content() {
   if (cache && Date.now() - cache.at < 60_000 && cache.version === await activeVersion()) return cache;
   const g = await one('SELECT version, data FROM skill_graph WHERE active = 1 ORDER BY created_at DESC LIMIT 1');
   const types = await all('SELECT key, data FROM question_types');
-  const graph = g ? g.data : readContent('skill-graph.json');
+  const graph = normalizeGraph(g ? g.data : readContent('skill-graph.json'));
   const typesDoc = types.length ? { ...readContent('question-types.json'), types: sortTypes(types.map((t) => t.data)) } : readContent('question-types.json');
   const rows = await all("SELECT skill, level, type, difficulty, variant FROM questions WHERE status = 'live'");
   cache = { at: Date.now(), version: g ? g.version : 'file', graph, typesDoc, G: compileGraph(graph, typesDoc), avail: buildAvail(rows), count: rows.length };
@@ -97,8 +97,30 @@ export async function uploadBank(bundle, { adminId = null, fileName = null, dryR
   return { ok: errors.length === 0, counts, errors };
 }
 
-export function validateGraph(graph) {
-  const errs = [];
+// Graphs come in two shapes: checkpoints as { C1: "name" } with group.cp, or as [{ id, name, groups }] with
+// group.checkpoint and an ordered group.skills list. Everything downstream reads the first shape, in path order:
+// groups in their listed order, and skills in their group's listed order when the group gives one.
+export function normalizeGraph(graph) {
+  if (!graph || !Array.isArray(graph.skills) || !Array.isArray(graph.groups)) return graph;
+  const list = Array.isArray(graph.checkpoints) ? graph.checkpoints : null;
+  const checkpoints = list ? Object.fromEntries(list.filter((c) => c && c.id).map((c) => [c.id, c.name || c.id])) : graph.checkpoints;
+  const cpOfGroup = {};
+  for (const c of list || []) for (const gid of c.groups || []) cpOfGroup[gid] = c.id;
+  const groups = graph.groups.map((g) => {
+    const first = graph.skills.find((s) => s.group === g.id);
+    return { ...g, cp: g.cp || g.checkpoint || cpOfGroup[g.id] || (first && first.cp) || null };
+  });
+  const cpOf = Object.fromEntries(groups.map((g) => [g.id, g.cp]));
+  const rank = {};
+  groups.forEach((g, gi) => (Array.isArray(g.skills) ? g.skills : []).forEach((id, si) => { rank[id] = gi * 1e4 + si; }));
+  const gIdx = Object.fromEntries(groups.map((g, i) => [g.id, i]));
+  const skills = graph.skills.map((s, i) => ({ ...s, cp: s.cp || cpOf[s.group] || null, _o: rank[s.id] ?? ((gIdx[s.group] ?? 1e3) * 1e4 + 5e3 + i) }))
+    .sort((a, b) => a._o - b._o).map(({ _o, ...s }) => s);
+  return { ...graph, checkpoints, groups, skills };
+}
+
+export function validateGraph(raw) {
+  const errs = [], graph = normalizeGraph(raw);
   if (!graph || !Array.isArray(graph.skills) || !Array.isArray(graph.groups)) return ['expected { checkpoints, groups, skills }'];
   if (!graph.skills.length || !graph.groups.length) return ['the graph needs at least one group and one skill'];
   const cps = graph.checkpoints && typeof graph.checkpoints === 'object' ? graph.checkpoints : null;
@@ -173,7 +195,7 @@ export async function uploadGraph(graph, { adminId = null, version = null, fileN
   const errs = validateGraph(graph);
   if (errs.length) return { ok: false, errors: errs, error: 'The graph has problems:\n' + errs.slice(0, 40).join('\n') };
   const live = await one('SELECT data FROM skill_graph WHERE active = 1 ORDER BY created_at DESC LIMIT 1');
-  const diff = diffGraph(live && live.data, graph);
+  const diff = diffGraph(live && normalizeGraph(live.data), normalizeGraph(graph));
   if (dryRun) return { ok: true, dryRun: true, diff, impact: await impact(diff) };
   const v = version || 'g-' + Date.now();
   await tx(async () => {
@@ -198,7 +220,7 @@ export async function activateGraph(version, { adminId = null } = {}) {
   const g = await one('SELECT data FROM skill_graph WHERE version = ?', version);
   if (!g) return { ok: false, error: 'No graph with that version.' };
   const live = await one('SELECT data FROM skill_graph WHERE active = 1 ORDER BY created_at DESC LIMIT 1');
-  const diff = diffGraph(live && live.data, g.data);
+  const diff = diffGraph(live && normalizeGraph(live.data), normalizeGraph(g.data));
   await tx(async () => {
     await run('UPDATE skill_graph SET active = 0');
     await run('UPDATE skill_graph SET active = 1 WHERE version = ?', version);

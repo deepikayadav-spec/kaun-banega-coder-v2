@@ -241,7 +241,16 @@ export async function uploadTypes(typesDoc) {
 // First boot on an empty database: load the graph, the types and the built-in banks from server/content.
 export async function seedIfEmpty() {
   const g = await one('SELECT COUNT(*)::int AS n FROM skill_graph');
-  if (!g.n) await uploadGraph(readContent('skill-graph.json'), { version: 'skill-graph-2026-10-30' });
+  if (!g.n) await uploadGraph(readContent('skill-graph.json'), { version: readContent('skill-graph.json').version || 'skill-graph-2026-10-30' });
+  // A new built-in graph (server/content/skill-graph.json with a new "version") goes live once, on the first boot after
+  // the deploy that brings it. Graphs uploaded in Admin later are left alone, and Admin can still roll back to any version.
+  else {
+    const file = readContent('skill-graph.json');
+    if (file.version && !(await one('SELECT 1 AS x FROM skill_graph WHERE version = ?', file.version))) {
+      const r = await uploadGraph(file, { version: file.version, fileName: 'built-in ' + file.version });
+      if (!r.ok) console.error('[graph] built-in graph', file.version, 'not loaded:', r.error);
+    }
+  }
   const t = await one('SELECT COUNT(*)::int AS n FROM question_types');
   if (!t.n) await uploadTypes(readContent('question-types.json'));
   const q = await one('SELECT COUNT(*)::int AS n FROM questions');

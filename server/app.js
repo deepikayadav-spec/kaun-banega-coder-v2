@@ -81,7 +81,7 @@ function graphForClient(c) {
     ladder: ladderFor(c.G.groups.length),
     checkpoints: c.graph.checkpoints,
     groups: c.graph.groups,
-    skills: c.graph.skills.map((s) => ({ id: s.id, name: s.name, group: s.group, cp: s.cp, req: s.req || [], rmax: s.rmax,
+    skills: c.graph.skills.map((s) => ({ id: s.id, name: s.name, short: s.short || null, group: s.group, cp: s.cp, req: s.req || [], rmax: s.rmax,
       check: s.check || null, kps: s.kps || {}, mistakes: s.mistakes || {} })),
     types: c.typesDoc.types.map((t) => ({ key: t.key, level: t.level, T: t.T, name: t.name, description: t.description, ui: t.ui,
       grading: t.grading, modes: t.modes, lifeline_5050: t.lifeline_5050 })),

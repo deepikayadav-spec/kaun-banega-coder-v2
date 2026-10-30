@@ -8,7 +8,7 @@ import { seedIfEmpty, uploadBank, uploadGraph, uploadTypes, readContent } from '
 const args = process.argv.slice(2);
 await ready();
 if (args.includes('--force')) {
-  await uploadGraph(readContent('skill-graph.json'), { version: 'skill-graph-2026-10-30' });
+  await uploadGraph(readContent('skill-graph.json'), { version: readContent('skill-graph.json').version || 'skill-graph-2026-10-30' });
   await uploadTypes(readContent('question-types.json'));
   for (const f of ['bank-S1-full.json', 'upload-bundle.example.json']) console.log(f, (await uploadBank(readContent(f), { fileName: f })).counts);
 } else await seedIfEmpty();

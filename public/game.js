@@ -14,7 +14,7 @@ const LADDER=(window.KBC_BOOT&&KBC_BOOT.graph&&KBC_BOOT.graph.ladder)||[10,20,50
 const BOOT=window.KBC_BOOT,GR=BOOT.graph,ME=BOOT.me;
 let ENGINE=BOOT.engine; /* progression state from the server (server/engine.js view) */
 const PYD="https://docs.python.org/3/";
-const ROWS=GR.groups.map(g=>({id:g.id,c:g.cp,name:g.name,skills:GR.skills.filter(s=>s.group===g.id).map(s=>({id:s.id,name:s.name,pre:[...new Set((s.req||[]).flat())],
+const ROWS=GR.groups.map(g=>({id:g.id,c:g.cp,name:g.name,skills:GR.skills.filter(s=>s.group===g.id).map(s=>({id:s.id,name:s.name,short:s.short||null,pre:[...new Set((s.req||[]).flat())],
  check:s.check,kps:s.kps||{},mistakes:s.mistakes||{}}))}));
 const SK={};ROWS.forEach((r,i)=>r.skills.forEach(s=>{s.row=i;SK[s.id]=s}));
 /* checkpoint labels sit on the rung of the last group of each checkpoint */
@@ -732,7 +732,7 @@ const CHEER=["Correct! One more like that.","Nailed it. Keep the streak going.",
 function energyTick(ok){const R=S.run,b=R.en;if(ok){R.cs=(R.cs||0)+1;if(R.cs%3===0&&R.en<100){R.en=Math.min(100,R.en+10);S.enGain=10;setTimeout(()=>ROBO.charge(),900)}}else{R.cs=0;R.en=Math.max(0,R.en-(S.timeout?25:20));S.enLoss=b-R.en;setTimeout(()=>ROBO.powerdown(),400)}
  logEv({kind:"energy",en:R.en,ok})}
 function energyHTML(){if(S.practice||!S.run)return "";const e=S.run.en,c=e>50?"hi":e>20?"mid":"lo",d=S.phase==="reveal"?(S.enLoss?`<em class="eloss">−${S.enLoss}%</em>`:S.enGain?`<em class="egain">+${S.enGain}%</em>`:""):"";
- return `<div class="energy ${c}" role="meter" aria-label="Energy ${e} percent" aria-valuenow="${e}" aria-valuemin="0" aria-valuemax="100"><span class="ebolt">⚡</span><span class="ebat"><i style="width:${e}%"></i></span><b>${e}%</b>${d}<small>${S.run.cs%3===2&&e<100?"1 more right = +10%":"Energy"}</small></div>`}
+ return `<div class="energy ${c}" role="meter" aria-label="Energy ${e} percent" aria-valuenow="${e}" aria-valuemin="0" aria-valuemax="100"><span class="ebolt">⚡</span><span class="ebat"><i style="width:${e}%"></i></span><b>${e}%</b>${d}${S.run.cs%3===2&&e<100?"<small>1 more right = +10%</small>":""}</div>`}
 function dockHTML(mood,cls){const I=S.info,q=S.q;let say;
  if(!q)say=S.phase==="loading"?"Picking your next question…":S.phase==="error"?"Hmm, the line dropped. Try again?":"Nice work! More levels are coming.";
  else if(S.phase==="locked")say="Locked in… fingers crossed!";
@@ -1131,6 +1131,13 @@ function spaceHTML(zones,H){const R=rng(7331);let h="";const n=Math.round(H/9);
  return `<div class="space" aria-hidden="true">${h}</div>`}
 function conceptHTML(s){const X=EXPLAIN[s.id]||{},n=barOf(s.id);
  return `<div class="cpt"><span class="cpt-k">Concept</span><h3>${esc(s.name)}</h3>${X.idea?`<p>${esc(X.idea)}</p>`:""}${X.trap?`<p class="cpt-t"><b>Watch out:</b> ${esc(X.trap)}</p>`:""}<div class="pbar"><i style="width:${Math.round(n/BPS*100)}%"></i></div><small>${Math.round(n/BPS*100)}% of this level done</small></div>`}
+/* The road up to a fractional point t along the points P (same curve as spline), cutting the last cubic with de Casteljau */
+function splineTo(P,t){const n=Math.min(P.length-1,Math.floor(t)),fr=Math.min(1,t-n);let d=`M ${P[0].x} ${P[0].top}`;
+ const seg=j=>{const p0=P[Math.max(0,j-1)],p1=P[j],p2=P[j+1],p3=P[Math.min(P.length-1,j+2)];return [[p1.x,p1.top],[p1.x+(p2.x-p0.x)/6,p1.top+(p2.top-p0.top)/6],[p2.x-(p3.x-p1.x)/6,p2.top-(p3.top-p1.top)/6],[p2.x,p2.top]]};
+ for(let j=0;j<n;j++){const c=seg(j);d+=` C ${c[1][0]} ${c[1][1]}, ${c[2][0]} ${c[2][1]}, ${c[3][0]} ${c[3][1]}`}
+ if(fr>0&&n<P.length-1){const [a,b,c,e]=seg(n),L=(u,v)=>[u[0]+(v[0]-u[0])*fr,u[1]+(v[1]-u[1])*fr],ab=L(a,b),bc=L(b,c),ce=L(c,e),abc=L(ab,bc),bce=L(bc,ce),m=L(abc,bce);
+  d+=` C ${ab[0]} ${ab[1]}, ${abc[0]} ${abc[1]}, ${m[0]} ${m[1]}`}
+ return d}
 function vPath(){const g0=curGroup(),gi=g0.idx,s0=curSkill(g0),open=S.open&&SK[S.open]?SK[S.open]:null;
  const SHOW=Math.max(gi+1,GROUPS.reduce((m,g)=>g.c==="C1"||g.c==="C2"?Math.max(m,g.idx):m,0)),FOGN=3;
  const items=[];let lastC="",lvn=0,fogc=0;
@@ -1149,7 +1156,9 @@ function vPath(){const g0=curGroup(),gi=g0.idx,s0=curSkill(g0),open=S.open&&SK[S
  const spline=(P,n)=>{let d=`M ${P[0].x} ${P[0].top}`;for(let j=0;j<n;j++){const p0=P[Math.max(0,j-1)],p1=P[j],p2=P[j+1],p3=P[Math.min(P.length-1,j+2)];
   d+=` C ${p1.x+(p2.x-p0.x)/6} ${p1.top+(p2.top-p0.top)/6}, ${p2.x-(p3.x-p1.x)/6} ${p2.top-(p3.top-p1.top)/6}, ${p2.x} ${p2.top}`}return d};
  const P=[{x:TP[0].x,top:H},...TP,{x:TP[TP.length-1].x,top:0}],cur=items.find(it=>it.k==="sk"&&it.s===s0);
- const d=spline(P,P.length-1),dDone=spline(P,cur?cur.tp:1);
+ const d=spline(P,P.length-1);
+ const nx=cur?items.find(it=>(it.k==="sk"||it.k==="pz")&&!it.fog&&it.tp>cur.tp):null,f=s0?Math.max(0,Math.min(1,engSk(s0.id).progress||0)):0;
+ const dDone=cur?splineTo(P,nx?cur.tp+(nx.tp-cur.tp)*f:cur.tp):spline(P,1);
  const PROPS={mon:'<svg viewBox="0 0 40 34"><rect x="2" y="2" width="36" height="22" rx="4" fill="#2B1846" stroke="#000" stroke-width="2.5"/><path d="M8 10l4 3-4 3M15 17h8" stroke="#3DD16F" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M15 24h10l2 7H13z" fill="#3A332B" stroke="#000" stroke-width="2"/></svg>',
   cube:'<svg viewBox="0 0 36 36"><path d="M18 3l14 8v14l-14 8-14-8V11z" fill="var(--pc)" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/><path d="M4 11l14 8 14-8M18 19v14" stroke="#000" stroke-width="2.2" fill="none"/><path d="M6 12l12 7v4L6 16z" fill="rgba(255,255,255,.3)"/></svg>',
   brk:'<svg viewBox="0 0 44 30"><rect x="2" y="2" width="40" height="26" rx="13" fill="#FFF7E6" stroke="#000" stroke-width="2.5"/><text x="22" y="20" text-anchor="middle" font-family="JetBrains Mono,monospace" font-weight="800" font-size="13" fill="#2B1A0E">{ }</text></svg>',
@@ -1174,20 +1183,18 @@ function vPath(){const g0=curGroup(),gi=g0.idx,s0=curSkill(g0),open=S.open&&SK[S
   if(s.ph)return `<div class="mnode soon" style="${st};--nc:${col}"><span class="mb"><b>${it.no}</b><i class="lk">${LOCKI}</i></span><small>Level ${it.no}</small></div>`;
   const n=barOf(s.id),es=engSk(s.id),done=n>=BPS,now=s===s0,stt=done?"done":now?"now":"soon";
   const dots=LVEND.map(e=>`<i class="${n>=e?"on":""}"></i>`).join("");
-  return `<button class="mnode ${stt} ${open===s?"sel":""}" style="${st};--nc:${col}" data-act="pathsk" data-sk="${s.id}" aria-label="Level ${it.no}: ${esc(s.name)}${es.status==="locked"?", locked":done?", cleared":""}">${now?`<span class="mav ${it.x>50?"l":"r"}">${mascot("pointup",160)}<em>You</em></span>`:""}<span class="mb">${done?TICK:`<b>${it.no}</b>`}${es.status==="locked"?`<i class="lk">${LOCKI}</i>`:""}</span><small>${esc(s.name)}</small></button>`};
+  return `<button class="mnode ${stt} ${open===s?"sel":""}" style="${st};--nc:${col}" data-act="pathsk" data-sk="${s.id}" aria-label="Level ${it.no}: ${esc(s.name)}${es.status==="locked"?", locked":done?", cleared":""}">${now?`<span class="mav ${it.x>50?"l":"r"}">${mascot("pointup",160)}<em>You</em></span>`:""}<span class="mb">${done?TICK:`<b>${it.no}</b>`}${es.status==="locked"?`<i class="lk">${LOCKI}</i>`:""}</span><small title="${esc(s.name)}">${esc(s.short||s.name)}</small></button>`};
  const pct=Math.round(gDone(g0)/gTotal(g0)*100);
  const sheet=open&&open===s0?`<div class="msheet" role="dialog" aria-label="${esc(open.name)}"><div class="msheet-in concept"><div class="cpt"><span class="cpt-k">Up next</span><h3>${esc(open.name)}</h3></div><div class="mfoot"><button class="btn gold" data-act="fffgo">Play this topic →</button><button class="btn sm mclose" data-act="pathsk" data-sk="${open.id}">Close</button></div></div></div>`
   :S.openCk?ckSheet(S.openCk,s0):"";
  const DW=diwaliHTML(items,H,TP,fogTop);
- /* checkpoint gates stay visible above the fog, so students see where the next stage begins */
- const gates=items.filter(it=>it.k==="ck"&&it.fog).map(it=>`<div class="ckgate" style="top:${it.top}px;--cc:${CKCOL[it.c]}"><span class="cg-line"></span><div class="cg-tag"><i class="cgp" style="--p1:${(PLC[it.c]||PLC.C1)[0]};--p2:${(PLC[it.c]||PLC.C1)[1]}"></i><b>${stg(it.c)}</b><span>${CKNAME[it.c]}</span><em>starts here</em></div><span class="cg-line"></span></div>`).join("");
  return `<section class="pathv pfull">
-<div class="ptop"><div class="pnext"><span class="pn-k">Your next topic</span><b>${s0?esc(s0.name):"More topics coming soon"}</b><span class="pn-s">${s0?`Clear it in the hot seat. Every topic in <i>${esc(g0.name)}</i> cleared wins <b>₹ ${fmtR(g0.prize)}</b>.`:""}</span>${s0?`<button class="btn gold sm" data-act="fffgo">Play →</button>`:""}</div>
-<div class="plegend" aria-label="What the map shows"><span><i class="lg now"></i>You are here</span><span><i class="lg done">✓</i>Cleared</span><span><i class="lg lock">🔒</i>Locked: clear the topics before it</span><span><i class="lg prize">₹</i>Prize for clearing a group of topics</span><span><i class="lg planet"></i>Stage: tap it to list its topics</span></div>
+<div class="ptop"><div class="pnext"><span class="pn-k">Your next topic</span><b>${s0?esc(s0.name):"More topics coming soon"}</b><span class="pn-s">${s0?`Clear it in the hot seat. Every topic in <i>${esc(g0.name)}</i> cleared wins <b>${fmtR(g0.prize)}</b>.`:""}</span>${s0?`<button class="btn gold sm" data-act="fffgo">Play →</button>`:""}</div>
+<div class="plegend" aria-label="What the map shows"><span><i class="lg now"></i>You are here</span><span><i class="lg done">✓</i>Cleared</span><span><i class="lg lock">🔒</i>Locked: clear the topics before it</span><span><i class="lg prize">${noteThumb(10)}</i>Prize for clearing a group of topics</span><span><i class="lg planet"></i>Stage: tap it to list its topics</span></div>
 <div class="phud"><span class="ph-diw" aria-hidden="true">${DIYA}</span><div class="ph-prize"><small>Next prize</small><b>${fmtR(g0.prize)}</b></div><div class="ph-prog"><div class="ph-t"><b>${pct}%</b> to the next prize <span>· ${stg(g0.c)}: ${esc(g0.name)}</span></div><div class="pbar"><i style="width:${pct}%"></i></div></div><div class="ph-ct" title="GRIT Computational Thinking readiness">${gritRing(40)}<span><small>CT ready</small><b>${gritReady()}%</b></span></div><button class="ph-me" data-act="pathjump" aria-label="Jump to my level">◎ Me</button></div></div>
-<div class="pworld diw univ" style="height:${H}px">${spaceHTML(zones,H)}${DW.far}<div class="deco" aria-hidden="true">${deco}</div>
+<div class="pworld diw univ" style="height:${H}px;--fade:${fogTop!=null?fogTop+140:160}px">${spaceHTML(zones,H)}${DW.far}<div class="deco" aria-hidden="true">${deco}</div>
 <div class="map" style="height:${H}px">${DW.near}<div class="deco" aria-hidden="true">${props}</div><svg class="mroad mshadow" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" class="r-shadow"/></svg><div class="mlayer"><svg class="mroad" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" class="r-base"/><path d="${d}" class="r-edge"/><path d="${d}" class="r-top"/><path d="${dDone}" class="r-done"/><path d="${dDone}" class="r-flow"/><path d="${d}" class="r-dash"/><path d="${dDone}" class="r-dash done"/></svg>${items.map(node).join("")}</div></div>
-${fogTop!=null?`<div class="fog" style="height:${fogTop+110}px"><div class="fog-msg"><b>More levels ahead</b><span>They appear as you climb. Keep going.</span></div></div>`:""}${gates}</div>${sheet}</section>`}
+</div>${sheet}</section>`}
 /* Tapping a stage planet lists that stage's topics (names only) */
 function ckSheet(c,s0){const G=GROUPS.filter(g=>g.c===c);let k=0;GROUPS.forEach(g=>{if(GROUPS.indexOf(g)<GROUPS.indexOf(G[0]))k+=gSkills(g)});
  const items=G.flatMap(g=>g.skills?g.skills.map(s=>{const done=barOf(s.id)>=BPS,now=s===s0;return `<li class="${done?"done":now?"now":"lock"}"><span class="ck-n">${done?"✓":++k}</span><span>${esc(s.name)}</span>${now?"<em>You are here</em>":""}</li>`}):[`<li class="lock"><span class="ck-n">🔒</span><span>${esc(g.name)}</span><em>Coming soon</em></li>`]).join("");

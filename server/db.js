@@ -140,6 +140,10 @@ CREATE TABLE IF NOT EXISTS events (
 );
 CREATE INDEX IF NOT EXISTS events_roll ON events(roll_no, at);
 CREATE INDEX IF NOT EXISTS events_kind ON events(kind, at);
+CREATE TABLE IF NOT EXISTS presence (           -- who has the game open: a page pings every 30 s
+  roll_no     TEXT PRIMARY KEY,
+  last_seen   BIGINT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS feedback (
   id          BIGSERIAL PRIMARY KEY,
   roll_no     TEXT,

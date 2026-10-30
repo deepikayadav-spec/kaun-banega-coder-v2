@@ -98,6 +98,12 @@ test('progress is capped by what the engine allows; fame is per university', asy
   const f = await call('s', 'GET', '/api/fame');
   assert.equal(f.body.rows[0].coins, 0, 'no group cleared yet, so no coins');
   assert.equal(f.body.rows[0].me, true);
+  assert.equal(f.body.scope, 'all');
+  const u = await call('s', 'GET', '/api/fame?scope=uni');
+  assert.equal(u.body.university, 'ALARD - Pune');
+  assert.ok(u.body.rows.every((r) => r.university === 'ALARD - Pune'));
+  assert.equal((await call('s', 'GET', '/api/fame?scope=uni&uni=Nowhere')).body.rows.length, 0);
+  assert.equal((await call('s', 'POST', '/api/live')).body.live, 1);
 });
 
 test('admin: login, scoping, student history, bank dry-run, export', async () => {

@@ -49,12 +49,13 @@ The app follows the same pattern as Saturday Sprint: one Express app running as 
   - `transitions`: R up/down, level up, type switch, skill done and unlock.
   - `game_progress`: wallet and streaks.
   - `events`, `feedback`, `audit_log`.
+  - `presence`: when each student's game page last pinged, for the "N live" count.
 
 ## Students and universities
 
 Students log in with their **NIAT ID and name**, matched against the master list. The name match is forgiving about case, word order and small typos. The university comes from the master list, or from the NIAT ID prefix (`server/universities.js`, the same table as Saturday Sprint).
 
-The Hall of Fame shows only the student's own university. An admin can be limited to one university and then sees only that university's students and numbers.
+The Hall of Fame has two boards: **Overall** (every university) and **University** (the student's own by default, or any other picked from a list). An admin can be limited to one university and then sees only that university's students and numbers.
 
 ## Local development
 

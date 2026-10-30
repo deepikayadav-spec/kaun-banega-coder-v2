@@ -12,7 +12,7 @@ const BOOT=window.KBC_BOOT,GR=BOOT.graph,ME=BOOT.me;
 let ENGINE=BOOT.engine; /* progression state from the server (server/engine.js view) */
 const PYD="https://docs.python.org/3/";
 const ROWS=GR.groups.map(g=>({id:g.id,c:g.cp,name:g.name,skills:GR.skills.filter(s=>s.group===g.id).map(s=>({id:s.id,name:s.name,pre:[...new Set((s.req||[]).flat())],
- check:s.check,kps:s.kps||{},mistakes:s.mistakes||{},learn:["The Python tutorial",PYD+"tutorial/index.html"]}))}));
+ check:s.check,kps:s.kps||{},mistakes:s.mistakes||{}}))}));
 const SK={};ROWS.forEach((r,i)=>r.skills.forEach(s=>{s.row=i;SK[s.id]=s}));
 /* checkpoint labels sit on the rung of the last group of each checkpoint */
 const CK={};ROWS.forEach((r,i)=>{if(!ROWS[i+1]||ROWS[i+1].c!==r.c)CK[i]=r.c});CK[LADDER.length-1]="FIN";
@@ -639,36 +639,35 @@ ${under}<ellipse cx="100" cy="249" rx="40" ry="5" fill="#000" opacity=".35"/>
  return s.replace(/(id="|url[(]#)(hSuit|hCape|hGlow|rGold|rGlow)/g,"$1$2_"+K)}
 /* Satire desk: one quip per page, rotating every minute (and per question on the hot seat). */
 const QUOTES=[
- "\"It works on my machine\": the official motto of every group project.",
- "\"Python is easy,\" said someone who has never met an IndentationError.",
- "99 little bugs in the code. Fix one, run again: 127 little bugs in the code.",
- "Your code isn't slow. It's building suspense, like the host before a verdict.",
- "Semicolons in Python are like uninvited relatives at a wedding: technically allowed, nobody asked.",
- "The 7 crore question is easy. Getting to it is the hard part. Just like placements.",
- "A missing colon has ended more dreams than any interview panel.",
- "\"I'll comment my code later.\" Later has not been seen since 2009.",
- "Debugging: the crime movie where you are the detective and the culprit.",
- "Every coder has two moods: \"I'm a genius\" and \"Why is this printing None?\"",
- "print(\"Hello World\"): the only program that never had a bug. Allegedly.",
- "The money here is fake. The confidence you build is real.",
- "Naming a variable x feels smart today. Next week you will have no idea what x was.",
- "range(1, 10) stops at 9. Like your motivation on Monday, it never quite reaches the end.",
- "Strings are immutable. Your sleep schedule, sadly, is not.",
- "while True: study(). Sounds noble until you notice there's no break.",
- "Fastest Finger First rewards speed, but reading the question first is still faster than guessing twice.",
- 
- "Hall of Fame: where your name lives forever, or until someone clears the database.",
- "A tuple is like a hall ticket: once it's printed, you can't change a single detail.",
- "Indentation in Python isn't a style choice. It's a lifestyle.",
- "One wrong index can turn a crorepati into an IndexError. Always check where your list ends.",
- "dict.get(): the polite way to ask for something that may not exist. Like your refund.",
- "If at first you don't succeed, call it version 1.0.",
- "Sorting a list by hand is a great way to discover why sorted() exists.",
- "Your first loop will run forever. Your first bug will feel like it does too.",
- "A red error message is your friend. The scary bug is the one that prints the wrong answer quietly."];
-function quipHTML(seed){const i=(hashStr(String(seed||S.screen))+Math.floor(Date.now()/60000))%QUOTES.length;
- return `<figure class="quip"><blockquote>${esc(QUOTES[i])}</blockquote></figure>`}
-function quipText(seed){return QUOTES[(hashStr(String(seed))+Math.floor(Date.now()/60000))%QUOTES.length]}
+ ["💻","\"It works on my machine\": the official motto of every group project."],
+ ["🐍","\"Python is easy,\" said someone who has never met an IndentationError."],
+ ["🐞","99 little bugs in the code. Fix one, run again: 127 little bugs in the code."],
+ ["🥁","Your code isn't slow. It's building suspense, like the host before a verdict."],
+ ["💍","Semicolons in Python are like uninvited relatives at a wedding: technically allowed, nobody asked."],
+ ["🎯","The 7 crore question is easy. Getting to it is the hard part. Just like placements."],
+ ["😱","A missing colon has ended more dreams than any interview panel."],
+ ["⏳","\"I'll comment my code later.\" Later has not been seen since 2009."],
+ ["🕵️","Debugging: the crime movie where you are the detective and the culprit."],
+ ["🤯","Every coder has two moods: \"I'm a genius\" and \"Why is this printing None?\""],
+ ["👋","print(\"Hello World\"): the only program that never had a bug. Allegedly."],
+ ["💪","The money here is fake. The confidence you build is real."],
+ ["🤔","Naming a variable x feels smart today. Next week you will have no idea what x was."],
+ ["😴","range(1, 10) stops at 9. Like your motivation on Monday, it never quite reaches the end."],
+ ["🌙","Strings are immutable. Your sleep schedule, sadly, is not."],
+ ["🔁","while True: study(). Sounds noble until you notice there's no break."],
+ ["⚡","Fastest Finger First rewards speed, but reading the question first is still faster than guessing twice."],
+ ["🏆","Hall of Fame: where your name lives forever, or until someone clears the database."],
+ ["🎟️","A tuple is like a hall ticket: once it's printed, you can't change a single detail."],
+ ["📐","Indentation in Python isn't a style choice. It's a lifestyle."],
+ ["📉","One wrong index can turn a crorepati into an IndexError. Always check where your list ends."],
+ ["🙏","dict.get(): the polite way to ask for something that may not exist. Like your refund."],
+ ["🚀","If at first you don't succeed, call it version 1.0."],
+ ["🧮","Sorting a list by hand is a great way to discover why sorted() exists."],
+ ["🌀","Your first loop will run forever. Your first bug will feel like it does too."],
+ ["🚨","A red error message is your friend. The scary bug is the one that prints the wrong answer quietly."]];
+function quipHTML(seed){const [e,t]=QUOTES[(hashStr(String(seed||S.screen))+Math.floor(Date.now()/60000))%QUOTES.length];
+ return `<figure class="quip"><span class="qe" aria-hidden="true">${e}</span><blockquote>${esc(t)}</blockquote></figure>`}
+function quipText(seed){return QUOTES[(hashStr(String(seed))+Math.floor(Date.now()/60000))%QUOTES.length].join(" ")}
 
 /* Explanations: the key idea and the classic trap for every skill, shown under the step-by-step working. */
 const stripK=t=>String(t||"").replace(/^[A-Z][\w ,/&-]*: /,"");
@@ -684,8 +683,7 @@ function explainHTML(q,ok){const s=SK[q.sk],X=q.idea||q.trap?{idea:q.idea,trap:q
 <div class="ex-ans"><div class="ok"><span>Correct answer</span><code>${esc(q.show).replace(/\n/g,"<br>")}</code></div>${!ok&&picked!=null?`<div class="no"><span>You picked</span><code>${esc(picked)}</code></div>`:""}</div>
 ${codeWalk(q.code)}${steps.length?`<h4 class="ex-h">Work it out</h4><ol class="ex-steps">${steps.map(t=>`<li>${stepHTML(t,q)}</li>`).join("")}</ol>`:""}
 ${X.idea?`<div class="ex-note idea"><b>Key idea</b><p>${esc(X.idea)}</p></div>`:""}
-${X.trap?`<div class="ex-note trap"><b>${ok?"Watch out next time":"Common trap"}</b><p>${esc(X.trap)}</p></div>`:""}
-<p class="ex-more"><a href="${s.learn[1]}" target="_blank" rel="noopener">${ICON.book.replace('aria-hidden="true"','aria-hidden="true" style="width:15px;height:15px;vertical-align:-2px"')} Read more in the Python docs: ${esc(s.learn[0])}</a></p></div>`}
+${X.trap?`<div class="ex-note trap"><b>${ok?"Watch out next time":"Common trap"}</b><p>${esc(X.trap)}</p></div>`:""}</div>`}
 /* "Read the code": what each line does, in plain words (descriptive only; the worked steps below give the values) */
 function lineRole(raw){const t=raw.trim();let m;
  if(!t)return null;
@@ -798,21 +796,30 @@ function comboTick(ok){if(!ok){COMBO=0;return}COMBO++;if(COMBO<2)return;const w=
 const FLAME='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3-1-3 0-7 1-9.5z" fill="#FF7A1A" stroke="#2B1A0E" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 12c.6 1.6 2.4 2.4 2.4 4.4a2.4 2.4 0 0 1-4.8 0c0-1.2.8-2 1.4-2.6.2 1 .6 1.4 1 1.4-.4-1.2-.2-2.2 0-3.2z" fill="#FFD23F"/></svg>';
 function syncFire(){const c=$("#wchip");if(!c)return;let f=$("#fire");if(!f){f=document.createElement("span");f.id="fire";c.parentNode.insertBefore(f,c)}const n=liveDay();f.className="fire "+(n?(n>=3?"hot":""):"cold");f.title=n?`${n}-day streak. Play tomorrow to keep it.`:"Play today to start a streak";f.setAttribute("aria-label",f.title);f.innerHTML=FLAME+n}
 function saveP(){P.t=Date.now();syncChip();clearTimeout(saveT);saveT=setTimeout(pushP,1200)}
-function pushP(keep){clearTimeout(saveT);return KBCQ.api("PUT","/api/progress",{progress:P},keep).then(()=>fetchFame()).catch(()=>{})}
+function pushP(keep){clearTimeout(saveT);return KBCQ.api("PUT","/api/progress",{progress:P},keep).then(()=>{if(!keep)loadFame(FQ.scope,FQ.uni,true)}).catch(()=>{})}
 
 
-/* ================= Online: event log, Hall of Fame (per university), progress on the server ================= */
-let DB=null,UID=ME.roll,FAME=null,FAME_UNI=ME.university,TEAM=false;
+/* ================= Online: event log, Hall of Fame (overall and per university), live players, progress on the server ================= */
+let DB=null,UID=ME.roll,FAME=null,FAMEC=null,FAMEALL=[],LIVE=0,FQ={scope:"all",uni:""},TEAM=false;
 const LKEY="kbc-r1-events";let EVQ=[],evT=null;
-function flushEv(keep){clearTimeout(evT);if(!EVQ.length)return;const batch=EVQ.splice(0,100);KBCQ.api("POST","/api/events",{events:batch},keep).catch(()=>{})}
+function flushEv(keep){clearTimeout(evT);if(!EVQ.length)return Promise.resolve();const batch=EVQ.splice(0,100);return KBCQ.api("POST","/api/events",{events:batch},keep).catch(()=>{})}
 function logEv(e){const ev=Object.assign({t:Date.now()},e);
  const L=store.get(LKEY,[]);L.push(Object.assign({uid:UID,n:S.name||"",day:dayKey(Date.now())},ev));store.set(LKEY,L.slice(-3000));
  if(e.kind==="answer")return; /* answers are stored by the server when graded */
  EVQ.push(ev);clearTimeout(evT);evT=setTimeout(flushEv,EVQ.length>=20?0:3000)}
-function fetchFame(){return KBCQ.api("GET","/api/fame").then(r=>{FAME=r.rows;FAME_UNI=r.university;if(S.screen==="fame"||S.screen==="home")render()}).catch(()=>{})}
-function initOnline(){fetchFame();addEventListener("pagehide",()=>{flushEv(true);pushP(true)},SIG)}
+function syncLive(){document.querySelectorAll(".livenum").forEach(e=>e.textContent=LIVE);const c=$("#livechip");if(c){c.hidden=!LIVE;c.querySelector("b").textContent=LIVE;c.title=`${LIVE} student${LIVE===1?" is":"s are"} playing right now`}}
+async function pingLive(){if(document.hidden)return;try{const d=await KBCQ.api("POST","/api/live");LIVE=d.live||0;syncLive()}catch(e){}}
+/* Hall of Fame: scope "all" ranks every university, scope "uni" one university (the student's own by default) */
+async function loadFame(scope,uni,quiet){FQ={scope:scope||"all",uni:uni||""};const want=JSON.stringify(FQ);if(S.screen==="fame"&&!quiet){FAMEC=null;render()}
+ try{const d=await KBCQ.api("GET",`/api/fame?scope=${encodeURIComponent(FQ.scope)}&uni=${encodeURIComponent(FQ.uni)}`);if(JSON.stringify(FQ)!==want)return;
+  FAMEC=d;if(d.scope==="all")FAMEALL=d.rows;if(d.live!=null){LIVE=d.live;syncLive()}if(S.screen==="fame"||S.screen==="home")render()}
+ catch(e){if(S.screen==="fame"&&e.status!==401){FAMEC={rows:[],err:e.message};render()}}}
+function initOnline(){loadFame("all");pingLive();setInterval(pingLive,30000);addEventListener("pagehide",()=>{flushEv(true);pushP(true)},SIG);
+ if(!store.get("kbc-tour-"+ME.roll,false))setTimeout(()=>{if(S.screen==="home"&&TI<0)tourStart()},1200)}
 function syncTeam(){const l=$("#teamlink");if(l)l.hidden=true}
 function saveFame(){pushP()}
+async function logout(){if(S.screen==="play")endRun("stop");await Promise.all([pushP(true),flushEv(true)]);try{await KBCQ.api("POST","/api/auth/logout")}catch(e){}
+ try{localStorage.removeItem(PKEY);localStorage.removeItem(LKEY)}catch(e){}location.replace("/login")}
 
 /* ================= State ================= */
 let S={screen:"home",name:ME.name};
@@ -915,8 +922,8 @@ function countUpChip(a,b,d){const el=$("#wchip b"),ch=$("#wchip");if(!el)return;
 /* ================= Views ================= */
 function boardHTML(r,compact){const rows=[];for(let i=LADDER.length-1;i>=0;i--){
   const soon=i>=OPEN,cls=["rung",CK[i]?"ck":"",i<r?"done":"",i===r&&!soon?"next":"",soon?"soon":""].join(" ");
-  rows.push(`<div class="${cls}"><span class="no">${i+1}</span><span class="amtc">${boardNote(LADDER[i])}${fmtR(LADDER[i])}</span>${CK[i]?`<span class="tg">${CK[i]}${TAG[i]?" · "+TAG[i]:""}</span>`:TAG[i]?`<span class="tg">${TAG[i]}</span>`:soon?"":"<span></span>"}</div>`)}
- return `<aside class="board card" aria-label="Money board"><h2>Money board<small>15 rungs · ${Object.values(CK).filter(c=>c!=="FIN").length} checkpoints</small></h2>${rows.join("")}</aside>`}
+  rows.push(`<div class="${cls}"><span class="no">${i+1}</span><span class="amtc">${boardNote(LADDER[i])}${fmtR(LADDER[i])}</span>${CK[i]?`<span class="tg">${stg(CK[i])}${TAG[i]?" · "+TAG[i]:""}</span>`:TAG[i]?`<span class="tg">${TAG[i]}</span>`:soon?"":"<span></span>"}</div>`)}
+ return `<aside class="board card" aria-label="Money board"><h2>Money board<small>${LADDER.length} rungs · ${Object.values(CK).filter(c=>c!=="FIN").length} checkpoints</small></h2>${rows.join("")}</aside>`}
 function stripHTML(r){return `<div class="strip" aria-hidden="true">${LADDER.map((v,i)=>`<i class="${i<r?"done":i===r?"next":""} ${i>=OPEN?"soon":""}"></i>`).join("")}</div>`}
 function syncChip(){const c=$("#wchip");if(c){c.innerHTML=`<span class="coinlogo" style="width:20px;height:20px;font-size:7px" aria-hidden="true">{ }</span><b>${fmtR(P.coins||0)}</b>`;c.setAttribute("aria-label","Wallet "+fmtR(P.coins||0))}}
 /* Contextual buddy pose on Home (mirrors the reference pose rules) */
@@ -941,17 +948,19 @@ function vHome(){const best=P.best||0,coins=P.coins||0;
 <div class="h4-bot"><p class="say">${greet}</p>${mascot(ctxPose(),300)}<button class="btn quiet sm" data-act="buddy">Change buddy</button></div>
 <div class="h-hero">
 <span class="emb hlogo" aria-hidden="true"><i class="er"></i><i class="er er2"></i><span class="ec">{ }</span></span>
+<div class="codefloat" aria-hidden="true"><i>{ }</i><i>&lt;/&gt;</i><i>def</i><i>for i in</i><i>==</i><i>[ ]</i><i>print()</i><i>True</i></div>
 <div class="wish3"><span class="wd3" aria-hidden="true">${DIYA}</span><div><b>Happy Diwali!</b><span>Wishes first, KBC next.</span></div><span class="wd3" aria-hidden="true">${DIYA}</span></div>
-<h1 class="ttl"><span>Kaun Banega</span><b>Coder</b></h1>
+<h1 class="ttl"><span>Kaun Banega</span><b class="typed" aria-label="Coder"><em class="tw" aria-hidden="true">Coder</em><i class="caret" aria-hidden="true"></i></b></h1>
+<div class="term" aria-hidden="true"><span class="t-dots"><i></i><i></i><i></i></span><span class="t-p">&gt;&gt;&gt;</span><code class="t-l"></code><i class="caret sm"></i></div>
 <div class="ctready" aria-label="Your GRIT Computational Thinking readiness: ${gritReady()} percent"><div class="ct-ring" style="--v:${Math.min(100,parseFloat(gritReady()))}"><b>${gritReady()}<small>%</small></b></div><div class="ct-txt"><span class="ct-k">Your GRIT</span><strong>Computational Thinking readiness</strong><span class="ct-s">Rises with every level you clear</span></div></div>
 <ol class="steps3"><li><b>1</b><span><strong>Win Fastest Finger</strong></span></li><li><b>2</b><span><strong>Take the hot seat</strong></span></li><li><b>3</b><span><strong>Clear your path</strong></span></li></ol>
-<div class="pill" role="group" aria-label="Start a game"><span class="pname-ro">Hi, <b>${esc(S.name)}</b></span><button class="btn gold" type="button" data-act="play">Play Fastest Finger →</button></div>
-<div class="h-sub"><button class="btn quiet sm" data-act="practice">Practice (no stakes)</button></div>
-<p class="h-who">${esc(ME.roll)}${ME.university?" · "+esc(ME.university):""} · <button class="linkbtn" data-act="logout">Not you? Log out</button></p>
+<div class="pill hello" role="group" aria-label="Start a game"><span class="hi">👋 Namaste, <b>${esc(String(S.name||"").split(" ")[0])}</b></span><button class="btn gold glow" type="button" data-act="play">Play Fastest Finger →</button></div>
+<div class="hmeta"><span class="hlive"><i class="ldot"></i><b class="livenum">${LIVE}</b> playing now</span><button class="btn quiet sm" data-act="tour">✨ Take a quick tour</button></div>
+<div class="h-sub"><small class="hint" id="namehint"></small><button class="btn quiet sm" data-act="practice">Practice (no stakes)</button></div>
 <div class="h4-stats"><span>Wallet <b>${fmtR(coins)}</b></span><span>Best <b>${best?fmtR(amountOf(best)):"—"}</b></span><span>Every game starts at <b>10</b></span></div>
 </div>
 ${(()=>{const g=curGroup(),sk=curSkill(g),pct=Math.round(gDone(g)/gTotal(g)*100);const top=(fameRows().rows||[]).sort((a,b)=>(b.coins||0)-(a.coins||0)).slice(0,3);
- return `<aside class="h4-side"><div class="hs-card"><small>Up next on your path</small><h3>${sk?esc(sk.name):"All clear"}</h3><span class="hs-c">${g.c} · ${esc(g.name)}</span>
+ return `<aside class="h4-side"><div class="hs-card"><small>Up next on your path</small><h3>${sk?esc(sk.name):"All clear"}</h3><span class="hs-c">${stg(g.c)} · ${esc(g.name)}</span>
  <div class="hs-prize">${boardNote(g.prize)}<span><small>Next prize</small><b>${fmtR(g.prize)}</b></span></div><div class="pbar"><i style="width:${pct}%"></i></div><span class="hs-pc">${pct}% of the way</span>
  <button class="btn quiet sm" data-act="path">Open my path →</button></div>
  <div class="hs-card"><small>Hall of Fame</small>${top.length?`<ol class="hs-fame">${top.map((r,i)=>`<li><b>${i+1}</b><span>${esc(r.n)}</span><em>${fmtR(r.coins||0)}</em></li>`).join("")}</ol>`:`<p class="hs-empty">No names yet. Be the first.</p>`}<button class="btn quiet sm" data-act="fame">See all →</button></div></aside>`})()}
@@ -970,7 +979,8 @@ function answerHTML(){const q=S.q,rev=S.phase==="reveal",dis=S.phase!=="ask";
  if(q.kind==="match")return `<div class="tiles">${q.items.map((it,i)=>{const st=rev?(S.msel[i]===it.ans?"right":"wrong"):"";return `<div class="mrow ${st}"><code>${esc(it.label)}</code><div class="mchips" role="group" aria-label="Output for ${esc(it.label)}">${q.choices.map(c=>{const on=S.msel[i]===c,k=rev?(c===it.ans?"ok":on?"no":""):on?"on":"";return `<button class="mchip ${k}" data-act="msel" data-i="${i}" data-c="${esc(c)}" aria-pressed="${on}" ${dis?"disabled":""}>${esc(c)}</button>`}).join("")}</div>${rev&&st==="wrong"?`<span class="fix">Prints ${esc(it.ans)}</span>`:""}</div>`}).join("")}</div>`;
  return ""}
 function ready(){const q=S.q;if(!q)return false;if(q.kind==="bank")return KBCQ.ready(q,S);if(q.kind==="mcq")return S.pick!=null;if(q.kind==="fill")return S.fill.trim()!=="";if(q.kind==="order")return S.ord.length===q.lines.length;if(q.kind==="match")return S.msel.every(Boolean);return false}
-function actHTML(){const q=S.q;
+function actHTML(){const h=actHTML0();return S.phase==="reveal"&&S.q?h+`<button class="btn quiet solbtn" data-act="sol">💡 Reveal solution</button>`:h}
+function actHTML0(){const q=S.q;
  if(S.phase==="ask"){if(S.quitAsk)return `<span class="ask">Stop here and keep ${fmtR(amountOf(rungOf()))}?</span><button class="btn gold" data-act="quit">Yes, stop</button><button class="btn quiet" data-act="quit-no">Keep playing</button>`;
   if(!ready())return `<span class="muted">${q.kind==="bank"?KBCQ.need(q,S):q.kind==="mcq"?"Pick an answer (or press A–D)":q.kind==="fill"?"Type the missing word":q.kind==="order"?"Tap every line in order":"Choose an output for each line"}</span>${S.practice?'<button class="btn quiet sm" data-act="practice-end">End practice</button>':'<button class="btn quiet sm" data-act="quit-ask">Stop playing</button>'}`;
   return `<span class="ask">Final answer?</span><button class="btn gold" id="lockbtn" data-act="lock">Lock answer</button>${q.kind==="mcq"?`<button class="btn quiet" data-act="unpick">Change</button>`:""}`}
@@ -980,15 +990,15 @@ function actHTML(){const q=S.q;
  if(!S.ok)return `<span class="banner lose">${S.timeout?"Time's up":"Not this time"}</span><button class="btn gold" data-act="second">Try a new variant →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
  if(S.ok)return rungOf()>=OPEN&&!S.practice?`<span class="banner win">Correct answer!</span><button class="btn gold" data-act="collect">Collect ${fmtR(LADDER[OPEN-1])} →</button>`:`<span class="banner win">Correct answer!</span><button class="btn gold" data-act="next">Next question →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
  return `<span class="banner lose">${S.timeout?"Time's up":"Wrong answer"}</span><button class="btn gold" data-act="end">See my game →</button>`}
-function feedbackHTML(){const q=S.q,I=S.info;if(S.phase!=="reveal"||!I)return "";const s=SK[q.sk];let h="";
- if(S.ok){if(I.rungUp)h+=`<div class="rungup">${noteBig(amountOf(I.after),"won")||mascot("happy",72)}<b>You won ${fmtR(amountOf(I.after))}!</b><span>${I.ck?`Checkpoint ${I.ck} locked in. A wrong answer can't take you below this.`:`Rung ${I.after} won. ${I.after<OPEN?`Next: ${fmtR(LADDER[I.after])}.`:""}`}</span></div>`;
-  else if(I.mastered)h+=`<div class="panel card good"><h3>Level up</h3><p>${esc(I.msg||"Two in a row.")}</p></div>`;
-  else if(I.msg)h+=`<div class="panel card good"><p>${esc(I.msg)}</p></div>`;
-  h+=explainHTML(q,true)}
- else{h+=explainHTML(q,false);
-
-  if(I.drop)h+=`<div class="drop">${mascot("sad",44)}<span>${I.drop.lostRung?`Dropped from ${fmtR(I.drop.from)} to <b>${fmtR(I.drop.to)}</b> (${I.drop.ck}).`:`Back to your ${I.drop.ck} checkpoint: progress on this rung resets.`}</span></div>`}
+function feedbackHTML(){const I=S.info;if(S.phase!=="reveal"||!I)return "";let h="";
+ if(S.ok&&I.rungUp)h+=`<div class="rungup">${noteBig(amountOf(I.after),"won")||mascot("happy",72)}<b>You won ${fmtR(amountOf(I.after))}!</b><span>${I.ck?`${stg(I.ck)} locked in. A wrong answer can't take you below this.`:`Rung ${I.after} won. ${I.after<OPEN?`Next: ${fmtR(LADDER[I.after])}.`:""}`}</span></div>`;
+ if(!S.ok&&I.drop)h+=`<div class="drop">${mascot("sad",44)}<span>${I.drop.lostRung?`Dropped from ${fmtR(I.drop.from)} to <b>${fmtR(I.drop.to)}</b> (${stg(I.drop.ck)}).`:`Back to your ${stg(I.drop.ck)} checkpoint: progress on this rung resets.`}</span></div>`;
  return h}
+/* "Reveal solution": the full working opens in a sheet over the hot seat, so the question screen never needs scrolling */
+function solOpen(){if(!S.q||S.phase!=="reveal")return;let m=$("#solm");if(!m){m=document.createElement("div");m.id="solm";m.className="modalx";document.body.appendChild(m)}
+ m.innerHTML=`<div class="mbox solbox" role="dialog" aria-modal="true" aria-label="Solution"><button class="mx" data-act="sol-close" aria-label="Close">✕</button>${explainHTML(S.q,S.ok)}<div class="mbtns"><button class="btn gold" data-act="sol-close">Got it</button></div></div>`;
+ m.hidden=false;setTimeout(()=>{const b=m.querySelector(".mbtns .btn");b&&b.focus({preventScroll:true})},30)}
+function modalClose(id){const m=$(id);if(m)m.hidden=true}
 function vNoQ(){const r=S.noQ||{},soon=(r.comingSoon||[]).map(id=>SK[id]).filter(Boolean);
  let body;
  if(S.phase==="loading")body=`<div class="qcard card bq-wait"><span class="bq-spin" aria-hidden="true"></span><h2 class="qtext">Getting your next question…</h2></div>`;
@@ -1006,7 +1016,7 @@ function vPlay(){if(!S.q)return vNoQ();const q=S.q,r=rungOf(),st=rowSteps(Math.m
 ${stripHTML(r)}<button class="mbtoggle" data-act="board" aria-label="Show the money board">Money board</button>
 <section class="mainc" id="mainc">
 <div class="qcard card"><div class="qtop"><span class="chip gold">${S.practice?"Practice":`Question ${S.run.answered+(S.phase==="reveal"?0:1)} · for ${fmtR(S.phase==="reveal"&&S.info?LADDER[Math.min(S.info.before,LADDER.length-1)]:stake)}`}</span>${pips?`<span class="rowprog">To next rung <span class="pips" aria-label="${st.done} of ${st.total}">${pips}</span></span>`:""}</div>
-<span class="qaddr" title="Checkpoint · group · skill · level · type · difficulty · variant">${esc(q.addr||"")}</span><h2 class="qtext">${esc(q.prompt)}</h2>${KBCQ.above(q,S)}
+<h2 class="qtext">${esc(q.prompt)}</h2>${KBCQ.above(q,S)}
 ${q.code?codeHTML(q.code):""}
 ${q.ai!=null?`<div class="ai"><i>AI</i><span>The AI says this prints <b>${esc(q.ai)}</b></span></div>`:""}
 ${S.hint?`<div class="panel card"><h3>${ICON.hint}${esc(COSTUMES[CHAR].name)}'s hint</h3><p>${esc(S.hintText||"Thinking…")}</p></div>`:""}
@@ -1014,12 +1024,11 @@ ${S.hint?`<div class="panel card"><h3>${ICON.hint}${esc(COSTUMES[CHAR].name)}'s 
 ${answerHTML()}
 <div class="dockrow">${dockHTML(mood)}<div class="actions">${actHTML()}</div></div>
 ${feedbackHTML()}
-${quipHTML(q.id)}
 </section></div><div class="side">${boardHTML(r)}</div></div>`}
 function vResult(){const R=S.res,rc=R.reached||0,pay=R.payout||0;
  const msg=R.reason==="win"?`${fmtR(pay)} collected! You're a Crorepati Coder.`:R.reason==="stop"?`Smart move. You walked away with ${fmtR(pay)}.`:R.reason==="energy"?`Out of energy! Your path progress is saved${pay?` and ${fmtR(pay)} went to your wallet`:""}. Recharge with a new game.`:pay?`Game over, but you keep it all. ${fmtR(pay)} goes to your wallet.`:"Tough one. Nothing banked this time. Read why, then go again.";
  const mood=R.reason==="win"?"trophy":R.reason==="stop"?"chai":pay?"dance":R.reason==="timeout"?"tired":"bonk";
- const learn=R.last&&R.ok===false&&R.last.why?`<div class="res-learn"><h3>${ICON.book}Before you go again</h3><ol class="ex-steps">${whySteps(R.last.why).map(t=>`<li>${stepHTML(t,R.last)}</li>`).join("")}</ol>${EXPLAIN[R.last.sk]?`<div class="ex-note idea"><b>Key idea</b><p>${esc(EXPLAIN[R.last.sk].idea)}</p></div>`:""}<a href="${SK[R.last.sk].learn[1]}" target="_blank" rel="noopener">Read more in the Python docs: ${esc(SK[R.last.sk].learn[0])} →</a></div>`:"";
+ const learn=R.last&&R.ok===false&&R.last.why?`<div class="res-learn"><h3>${ICON.book}Before you go again</h3><ol class="ex-steps">${whySteps(R.last.why).map(t=>`<li>${stepHTML(t,R.last)}</li>`).join("")}</ol>${EXPLAIN[R.last.sk]?`<div class="ex-note idea"><b>Key idea</b><p>${esc(EXPLAIN[R.last.sk].idea)}</p></div>`:""}</div>`:"";
  return `<section class="res enter"><div class="res-card card">
 <div class="res-top"><div class="res-head">
 <div class="coach">${mascot(mood,84)}<p class="say">${esc(msg)}</p></div>
@@ -1036,7 +1045,6 @@ ${quipHTML("result"+R.reason)}
    and wallet ≤ answered-right × (7 crore / 15), the most any single correct answer can be worth. */
 function famePlausible(f){const c=+f.correct||0,a=+f.answered||0,w=+f.coins||0,b=+f.best||0;
  return typeof f.n==="string"&&f.n.trim().length>0&&f.n.length<=24&&c>=0&&c<=a&&b>=0&&b<=LADDER.length&&w>=0&&w<=Math.ceil(c*LADDER[LADDER.length-1]/LADDER.length)}
-function fameRows(){if(FAME)return {live:true,rows:FAME.filter(f=>f.n).map(f=>({n:f.n,rung:f.rung||0,coins:f.coins||0,correct:f.correct||0,answered:f.answered||0,t:f.t||0,me:!!f.me}))};return {live:false,rows:[]}}
 function podiumHTML(rows){const ini=n=>esc(String(n||"?").trim().charAt(0).toUpperCase()||"?");const at=i=>rows[i];const one=(i,cls)=>{const r=at(i);return `<div class="pod ${cls}${r?"":" empty"}"><div class="who"><span class="av">${r?ini(r.n):"?"}</span><span class="nm">${r?esc(r.n):"Your spot"}</span><span class="amt">${r?fmtR(r.coins||0):"—"}</span></div><div class="blk">${cls.slice(1)}</div></div>`};if(!rows.length)return "";return `<div class="podium" aria-label="Top three">${one(1,"p2")}${one(0,"p1")}${one(2,"p3")}</div>`}
 /* ================= Skill path: driven by the progression engine on the server =================
    Checkpoint › skill group (one prize rung) › skill › 4 levels (L1 Recognise … L4 Create) › R1–R3 difficulty › 25 variants.
@@ -1067,7 +1075,8 @@ function skillDetail(s){const e=engSk(s.id),cells=e.cells||{};
  return `<div class="skd card"><div class="skd-h"><div><b>${esc(s.name)}</b><p class="muted">${e.right||0}/${e.q||0} answered right${s.pre.length?` · builds on ${s.pre.join(", ")}`:""}</p></div>${here}</div><div class="lvls">${cols}</div></div>`}
 /* Candy-style map: winding road from the bottom (G1) to the top (G15). Skills are round level nodes; a prize chest ends each group. */
 const CKCOL={C1:"#14C3A2",C2:"#FF4F8B",C3:"#7B5CFF",C4:"#2F8CFF",C5:"#FF8A1F",C6:"#FFC52E",FIN:"#FFC52E"};
-const CKNAME={C1:"Basics",C2:"Loops",C3:"Lists & text",C4:"Dictionaries & sets",C5:"GRIT questions",C6:"Grand finale",FIN:"Grand finale"};
+const CKNAME={C1:"Python basics",C2:"Loops & lists",C3:"Functions",C4:"Data & errors",C5:"GRIT practice",C6:"Grand finale",FIN:"Grand finale"};
+const stg=c=>c==="FIN"?"Finale":c?"Stage "+String(c).replace(/^C/,""):"";
 const LVEND=[2,4,6,8];
 const LOCKI='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.6"/></svg>';
 const TICK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -1142,28 +1151,43 @@ function vPath(){const g0=curGroup(),gi=g0.idx,s0=curSkill(g0),open=S.open&&SK[S
   if(it.fog){if(it.k==="ck")return "";
    if(it.k==="pz")return `<div class="mprize fogged" style="${st}"><div class="chest"><b class="q">?</b></div></div>`;
    return `<div class="mnode fogged" style="${st};--nc:#6B6052"><span class="mb"><b>?</b></span></div>`}
-  if(it.k==="ck"){const pc=PLC[it.c]||PLC.C1;return `<div class="ckplanet ${["C2","C4","C6"].includes(it.c)?"ring":""}" style="left:${it.x}%;top:${it.top}px;--p1:${pc[0]};--p2:${pc[1]};--cc:${CKCOL[it.c]}"><span class="pl"></span><span class="pt"><b>${it.c}</b>${CKNAME[it.c]}</span></div>`}
+  if(it.k==="ck"){const pc=PLC[it.c]||PLC.C1;return `<button class="ckplanet ${["C2","C4","C6"].includes(it.c)?"ring":""} ${S.openCk===it.c?"sel":""}" data-act="pathck" data-c="${it.c}" aria-label="${stg(it.c)}: ${CKNAME[it.c]}. Show its topics" style="left:${it.x}%;top:${it.top}px;--p1:${pc[0]};--p2:${pc[1]};--cc:${CKCOL[it.c]}"><span class="pl"></span><span class="pt"><b>${stg(it.c)}</b>${CKNAME[it.c]}</span></button>`}
   if(it.k==="pz"){const g=it.g,s=g.idx<gi?"won":g.idx===gi?"cur":"lock";return `<div class="mprize ${s}" style="${st}">${s==="won"?`<span class="crown">★</span>`:""}<div class="chest">${boardNote(g.prize)}<b>${fmtR(g.prize)}</b></div>${s==="won"?`<span class="mp-tag">Won</span>`:""}</div>`}
   const s=it.s,g=it.g,col=CKCOL[g.c];
   if(s.ph)return `<div class="mnode soon" style="${st};--nc:${col}"><span class="mb"><b>${it.no}</b><i class="lk">${LOCKI}</i></span><small>Level ${it.no}</small></div>`;
   const n=barOf(s.id),es=engSk(s.id),done=n>=BPS,now=s===s0,stt=done?"done":now?"now":"soon";
   const dots=LVEND.map(e=>`<i class="${n>=e?"on":""}"></i>`).join("");
-  return `<button class="mnode ${stt} ${open===s?"sel":""}" style="${st};--nc:${col}" data-act="pathsk" data-sk="${s.id}" aria-label="Level ${it.no}: ${esc(s.name)}, ${n} of ${BPS} barriers">${now?`<span class="mav ${it.x>50?"l":"r"}">${mascot("pointup",160)}<em>You</em></span>`:""}<span class="mb">${done?TICK:`<b>${it.no}</b>`}${es.status==="locked"?`<i class="lk">${LOCKI}</i>`:""}</span><span class="mdots">${dots}</span><small>${esc(s.name)}${!done&&es.content==="none"?" · coming soon":""}</small></button>`};
+  return `<button class="mnode ${stt} ${open===s?"sel":""}" style="${st};--nc:${col}" data-act="pathsk" data-sk="${s.id}" aria-label="Level ${it.no}: ${esc(s.name)}${es.status==="locked"?", locked":done?", cleared":""}">${now?`<span class="mav ${it.x>50?"l":"r"}">${mascot("pointup",160)}<em>You</em></span>`:""}<span class="mb">${done?TICK:`<b>${it.no}</b>`}${es.status==="locked"?`<i class="lk">${LOCKI}</i>`:""}</span><small>${esc(s.name)}</small></button>`};
  const pct=Math.round(gDone(g0)/gTotal(g0)*100);
- const sheet=open?`<div class="msheet" role="dialog" aria-label="${esc(open.name)}"><div class="msheet-in concept">${conceptHTML(open)}${skillDetail(open)}<div class="mfoot">${open===s0?`<button class="btn gold" data-act="fffgo">Play this level →</button>`:""}<button class="btn sm mclose" data-act="pathsk" data-sk="${open.id}">Close</button></div></div></div>`:"";
+ const sheet=open&&open===s0?`<div class="msheet" role="dialog" aria-label="${esc(open.name)}"><div class="msheet-in concept"><div class="cpt"><span class="cpt-k">Up next</span><h3>${esc(open.name)}</h3></div><div class="mfoot"><button class="btn gold" data-act="fffgo">Play this topic →</button><button class="btn sm mclose" data-act="pathsk" data-sk="${open.id}">Close</button></div></div></div>`
+  :S.openCk?ckSheet(S.openCk,s0):"";
  const DW=diwaliHTML(items,H,TP,fogTop);
  /* checkpoint gates stay visible above the fog, so students see where the next stage begins */
- const gates=items.filter(it=>it.k==="ck"&&it.fog).map(it=>`<div class="ckgate" style="top:${it.top}px;--cc:${CKCOL[it.c]}"><span class="cg-line"></span><div class="cg-tag"><i class="cgp" style="--p1:${(PLC[it.c]||PLC.C1)[0]};--p2:${(PLC[it.c]||PLC.C1)[1]}"></i><b>${it.c}</b><span>${CKNAME[it.c]}</span><em>starts here</em></div><span class="cg-line"></span></div>`).join("");
+ const gates=items.filter(it=>it.k==="ck"&&it.fog).map(it=>`<div class="ckgate" style="top:${it.top}px;--cc:${CKCOL[it.c]}"><span class="cg-line"></span><div class="cg-tag"><i class="cgp" style="--p1:${(PLC[it.c]||PLC.C1)[0]};--p2:${(PLC[it.c]||PLC.C1)[1]}"></i><b>${stg(it.c)}</b><span>${CKNAME[it.c]}</span><em>starts here</em></div><span class="cg-line"></span></div>`).join("");
  return `<section class="pathv pfull">
-<div class="phud"><span class="ph-diw" aria-hidden="true">${DIYA}</span><div class="ph-prize"><small>Next prize</small><b>${fmtR(g0.prize)}</b></div><div class="ph-prog"><div class="ph-t"><b>${pct}%</b> to the next prize <span>· ${g0.c} ${esc(g0.name)}</span></div><div class="pbar"><i style="width:${pct}%"></i></div></div><div class="ph-ct" title="GRIT Computational Thinking readiness">${gritRing(40)}<span><small>CT ready</small><b>${gritReady()}%</b></span></div><button class="ph-me" data-act="pathjump" aria-label="Jump to my level">◎ Me</button></div>
+<div class="phud"><span class="ph-diw" aria-hidden="true">${DIYA}</span><div class="ph-prize"><small>Next prize</small><b>${fmtR(g0.prize)}</b></div><div class="ph-prog"><div class="ph-t"><b>${pct}%</b> to the next prize <span>· ${stg(g0.c)}: ${esc(g0.name)}</span></div><div class="pbar"><i style="width:${pct}%"></i></div></div><div class="ph-ct" title="GRIT Computational Thinking readiness">${gritRing(40)}<span><small>CT ready</small><b>${gritReady()}%</b></span></div><button class="ph-me" data-act="pathjump" aria-label="Jump to my level">◎ Me</button></div>
 <div class="pworld diw univ" style="height:${H}px">${spaceHTML(zones,H)}${DW.far}<div class="deco" aria-hidden="true">${deco}</div>
 <div class="map" style="height:${H}px">${DW.near}<div class="deco" aria-hidden="true">${props}</div><svg class="mroad mshadow" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" class="r-shadow"/></svg><div class="mlayer"><svg class="mroad" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" class="r-base"/><path d="${d}" class="r-edge"/><path d="${d}" class="r-top"/><path d="${dDone}" class="r-done"/><path d="${dDone}" class="r-flow"/><path d="${d}" class="r-dash"/><path d="${dDone}" class="r-dash done"/></svg>${items.map(node).join("")}</div></div>
 ${fogTop!=null?`<div class="fog" style="height:${fogTop+110}px"><div class="fog-msg"><b>More levels ahead</b><span>They appear as you climb. Keep going.</span></div></div>`:""}${gates}</div>${sheet}</section>`}
+/* Tapping a stage planet lists that stage's topics (names only) */
+function ckSheet(c,s0){const G=GROUPS.filter(g=>g.c===c);let k=0;GROUPS.forEach(g=>{if(GROUPS.indexOf(g)<GROUPS.indexOf(G[0]))k+=gSkills(g)});
+ const items=G.flatMap(g=>g.skills?g.skills.map(s=>{const done=barOf(s.id)>=BPS,now=s===s0;return `<li class="${done?"done":now?"now":"lock"}"><span class="ck-n">${done?"✓":++k}</span><span>${esc(s.name)}</span>${now?"<em>You are here</em>":""}</li>`}):[`<li class="lock"><span class="ck-n">🔒</span><span>${esc(g.name)}</span><em>Coming soon</em></li>`]).join("");
+ return `<div class="msheet" role="dialog" aria-label="${stg(c)} topics"><div class="msheet-in concept"><div class="cpt ckl" style="--cc:${CKCOL[c]}"><span class="cpt-k">${stg(c)}</span><h3>${esc(CKNAME[c])}</h3><ol class="cklist">${items}</ol></div><div class="mfoot"><button class="btn sm mclose" data-act="pathck" data-c="${c}">Close</button></div></div></div>`}
 function pathJump(smooth){const n=$(".mnode.now")||$(".mprize.cur");if(!n)return;const r=n.getBoundingClientRect();scrollTo({top:Math.max(0,scrollY+r.top-innerHeight*.55),behavior:smooth?"smooth":"auto"})}
-function vFame(){const F=fameRows(),rows=F.rows.sort((a,b)=>(b.coins||0)-(a.coins||0)||b.rung-a.rung||(b.correct/(b.answered||1))-(a.correct/(a.answered||1))||a.t-b.t).slice(0,30);
- return `<section class="center"><div class="fame"><div class="buddy" style="align-items:center">${mascot(rows.slice(0,3).some(r=>r.me)?"trophy":"review",72)}<div><h2>Hall of Fame</h2><p class="muted" style="margin:4px 0 0">${F.live?`Live · ${F.rows.length} player${F.rows.length===1?"":"s"}`:"Scores on this device. The live board appears when you open the shared link signed in."}</p></div></div>
-${podiumHTML(rows)}<div class="lb card">${rows.length?`<ol>${rows.map((r,i)=>`<li class="${r.me?"me":""} ${i===0?"t1":""}"><span class="rk">${i+1}</span><span class="nm">${esc(r.n)}${r.me?" <em>you</em>":""}</span><span class="sub">${r.answered?Math.round(r.correct/r.answered*100):0}% right</span><b>${fmtR(r.coins||0)}</b></li>`).join("")}</ol>`:`<p class="muted" style="padding:20px;margin:0;text-align:center">No names yet. Play a game to be the first.</p>`}</div>
+function fameRows(){return {live:true,rows:(FAMEALL||[]).map(r=>({n:r.name,coins:r.coins,correct:r.correct,answered:r.answered,rung:r.best,me:r.me}))}}
+function vFame(){const F=FAMEC,uni=FQ.scope==="uni",myU=(ME&&ME.university)||"",unis=((F&&F.universities)||[]).length?F.universities:(myU?[myU]:[]);
+ const cur=(F&&F.university)||FQ.uni||myU,rows=(F&&F.rows)||[],pct=r=>r.answered?Math.round(r.correct/r.answered*100):0,ini=n=>esc(String(n||"?").trim().charAt(0).toUpperCase()||"?");
+ const tabs=`<div class="ftabs" role="tablist" aria-label="Leaderboard"><button role="tab" aria-selected="${!uni}" class="ftab ${!uni?"on":""}" data-act="fame-tab" data-s="all">🌍 Overall</button><button role="tab" aria-selected="${uni}" class="ftab ${uni?"on":""}" data-act="fame-tab" data-s="uni">🏛️ University</button></div>`;
+ const pick=uni&&unis.length?`<label class="fsel"><span>University</span><select id="fameuni">${unis.map(u=>`<option value="${esc(u)}" ${u===cur?"selected":""}>${esc(u)}</option>`).join("")}</select></label>`:"";
+ const pod=(i,cls)=>{const r=rows[i];return `<div class="fpod ${cls} ${r?"":"empty"} ${r&&r.me?"me":""}"><span class="fav">${r?ini(r.name):"?"}</span><b class="fnm">${r?esc(r.name):"Your spot"}</b>${r&&!uni&&r.university?`<small class="fu">${esc(r.university)}</small>`:""}<span class="famt">${r?fmtR(r.coins):"—"}</span><span class="fblk">${cls==="p1"?"🥇":cls==="p2"?"🥈":"🥉"}</span></div>`};
+ const row=r=>`<li class="${r.me?"me":""} ${r.rank<=3?"top":""}"><span class="frk">${r.rank}</span><span class="fav sm">${ini(r.name)}</span><span class="fwho"><b>${esc(r.name)}${r.me?' <em>you</em>':""}</b>${!uni&&r.university?`<small>${esc(r.university)}</small>`:""}</span><span class="facc" title="${r.correct} of ${r.answered} right"><i style="--v:${pct(r)}%"></i><b>${pct(r)}%</b><small>right</small></span><span class="famtr">${fmtR(r.coins)}</span></li>`;
+ const body=!F?`<p class="fempty">Loading the leaderboard…</p>`:F.err?`<p class="fempty">${esc(F.err)}</p>`:uni&&!cur?`<p class="fempty">Your university isn't on the student list yet, so there is no university board for you. Ask your mentor to add it.</p>`
+  :rows.length?`${podiumOK(rows)?`<div class="fpodium">${pod(1,"p2")}${pod(0,"p1")}${pod(2,"p3")}</div>`:""}<ol class="flist">${rows.map(row).join("")}</ol>${F.me&&!rows.some(r=>r.me)?`<ol class="flist mine">${row(F.me)}</ol>`:""}`
+  :`<p class="fempty">No names on this board yet. Play a game to be the first! 🚀</p>`;
+ return `<section class="center"><div class="fame fame2"><div class="fhead">${mascot(rows.slice(0,3).some(r=>r.me)?"trophy":"review",84)}<div><h2>Hall of Fame</h2><p><span class="hlive"><i class="ldot"></i><b class="livenum">${LIVE}</b> playing now</span><span class="muted">${uni?esc(cur||"Your university"):"All universities"} · ranked by prize money</span></p></div></div>
+${tabs}${pick}<div class="fboard card">${body}</div>
 ${quipHTML("fame")}<div class="ractions"><button class="btn gold" data-act="play">Play →</button></div></div></section>`}
+const podiumOK=rows=>rows.length>=1;
 
 /* ================= Team dashboard ================= */
 let DASH={events:null,live:false,loading:false};
@@ -1249,7 +1273,7 @@ function render(){if(SAFE_SCREENS.includes(S.screen)){if(S.graphChanged)return p
  document.body.classList.toggle("qscreen",S.screen==="play"||S.screen==="fff");if(S.screen!=="home")document.body.classList.remove("homespot");if(S.screen!=="fff")clearInterval(fInt);requestAnimationFrame(placeSpot);
  document.body.classList.toggle("inplay",S.screen==="play"||S.screen==="result");document.body.classList.toggle("inteam",S.screen==="team");
  window.KB3D&&KB3D.mode(S.screen==="result"||S.screen==="fff"||S.screen==="play"||S.screen==="guide"||S.screen==="buddy"||S.screen==="wallet"?"hide":S.screen==="path"?"home":S.screen);
- if(S.screen==="home"){requestAnimationFrame(placeHomeCoin);[150,600,1500].forEach(t=>setTimeout(placeHomeCoin,t))}
+ if(S.screen==="home"){requestAnimationFrame(placeHomeCoin);[150,600,1500].forEach(t=>setTimeout(placeHomeCoin,t));typeHome()}else clearTimeout(typeT);syncLive();
  if(S.screen==="path"){if(!S.mapped){S.mapped=1;requestAnimationFrame(()=>pathJump(false))}else if(S.mapTop!=null)scrollTo({top:S.mapTop})}}
 /* the coin logo sits in the free band between the header and the "Kaun Banega" title */
 function placeHomeCoin(){const l=$(".home4 .hlogo");if(!l||!window.KB3D||!KB3D.place)return;const r=l.getBoundingClientRect();if(!r.height)return;KB3D.place(r.top+r.height/2,r.height*1.25)}
@@ -1360,141 +1384,174 @@ if(!window.KB3D){document.body.classList.remove("has3d");document.body.classList
  $("#symfall").innerHTML=Array.from({length:28},(_,i)=>{const r=G[i%G.length].includes("{");return `<span style="left:${(i*37)%100}%;--fs:${18+(i*7)%26}px;--d:${14+(i*5)%16}s;--dl:-${(i*3.1)%20}s;--o:${.18+((i*13)%30)/100};--c:${r?"#FFD66B":"#C4B5FD"}">${G[i%G.length]}</span>`}).join("")}
 
 /* ================= Events ================= */
-/* ================= Fastest Finger First: order 4 lines of code in 30 seconds to earn the hot seat ================= */
-/* Fastest Finger programs: each was run in Python against all 24 line orders; only the listed order gives the right output.
-   Lines are shown without indentation and in a fresh shuffle every round. */
-const FFF=[{"task":"Print the sum of the even numbers from 1 to 10.","prog":["total = 0","for i in range(1, 11):","    if i % 2 == 0: total += i","print(total)"],"out":"30"},{"task":"Reverse the word \"code\" and print it.","prog":["r = \"\"","for ch in \"code\":","    r = ch + r","print(r)"],"out":"edoc"},{"task":"Print 5, 4, 3, 2, 1.","prog":["n = 5","while n > 0:","    print(n)","    n -= 1"],"out":"5\n4\n3\n2\n1"},{"task":"Print every name in the list, then Done.","prog":["names = [\"Asha\", \"Ravi\"]","for name in names:","    print(name)","print(\"Done\")"],"out":"Asha\nRavi\nDone"},{"task":"Count the vowels in \"india\".","prog":["count = 0","for ch in \"india\":","    if ch in \"aeiou\": count += 1","print(count)"],"out":"3"},{"task":"Print the largest of 3, 9 and 4.","prog":["best = 0","for n in [3, 9, 4]:","    if n > best: best = n","print(best)"],"out":"9"},{"task":"Print the squares of 1 to 3, then end.","prog":["for i in range(1, 4):","    sq = i * i","    print(sq)","print(\"end\")"],"out":"1\n4\n9\nend"},{"task":"Read a name, trim the spaces, then greet it.","prog":["name = input()","name = name.strip()","msg = \"Hi \" + name","print(msg)"],"out":"Hi Asha","stdin":"  Asha  \n"},{"task":"Read two numbers and print the first minus the second.","prog":["a = int(input())","b = int(input())","diff = a - b","print(diff)"],"out":"4","stdin":"7\n3\n"},{"task":"Build a list of the even numbers up to 6 and print it.","prog":["evens = []","for i in range(2, 7, 2):","    evens.append(i)","print(evens)"],"out":"[2, 4, 6]"},{"task":"Print the last item, then how many items there are.","prog":["items = [\"pen\", \"ink\", \"cap\"]","last = items[-1]","print(last)","print(len(items))"],"out":"cap\n3"},{"task":"Count how many numbers are above 10.","prog":["count = 0","for n in [4, 12, 15]:","    if n > 10: count += 1","print(count)"],"out":"2"},{"task":"Add ink to the stock, then print how much ink there is.","prog":["stock = {\"pen\": 5}","stock[\"ink\"] = 2","qty = stock[\"ink\"]","print(qty)"],"out":"2"},{"task":"Say \"hey\" three times with single spaces between.","prog":["word = \"hey\"","out = (word + \" \") * 3","out = out.strip()","print(out)"],"out":"hey hey hey"},{"task":"Print each letter of \"abc\" on its own line, then the length.","prog":["s = \"abc\"","for ch in s:","    print(ch)","print(len(s))"],"out":"a\nb\nc\n3"},{"task":"Add up 2, 4 and 6 and print the total once.","prog":["total = 0","for n in [2, 4, 6]:","    total += n","print(total)"],"out":"12"},{"task":"Make \"nxt\" uppercase, print it, then its length.","prog":["t = \"nxt\"","t = t.upper()","print(t)","print(len(t))"],"out":"NXT\n3"},{"task":"Unpack the point (3, 4) and print x + y.","prog":["point = (3, 4)","x, y = point","s = x + y","print(s)"],"out":"7"},{"task":"Keep only the unique numbers and print how many there are.","prog":["nums = [1, 2, 2, 3, 3]","u = set(nums)","n = len(u)","print(n)"],"out":"3"},{"task":"Remove the last number, print the rest, then the removed one.","prog":["nums = [5, 6, 7]","last = nums.pop()","print(nums)","print(last)"],"out":"[5, 6]\n7"}];
-let fInt=null;
-let F0dl=0;
-function vFFFOrder(){const F=S.fff,p=FFF[F.idx%FFF.length],L="ABCD",done=!!F.done;
- const typed=p.stdin?p.stdin.split("\n").filter(x=>x!=="").map(x=>`<code>${esc(JSON.stringify(x))}</code>`).join(" then "):"";
- const prog=[0,1,2,3].map(k=>{const i=F.order[k];if(i==null)return `<li class="empty"><span class="n">${k+1}</span><span>${k===F.order.length&&!done?"← tap the line that runs "+["first","second","third","last"][k]:"…"}</span></li>`;
-  const ok=done?F.ans[k]===i:null;return `<li class="${ok===true?"ok":ok===false?"no":"on"}"><span class="n">${k+1}</span><code>${esc(F.lines[i])}</code>${!done?"":ok?'<i aria-label="right">✓</i>':'<i aria-label="wrong">✗</i>'}</li>`}).join("");
- return `<div class="fffgrid">${fffBot()}<section class="fffw enter" data-r="${F.idx}-${F.t0}">
-<div class="qcard card fffhead"><div class="qtop"><span class="chip gold">Fastest Finger First</span><div class="clock ${F.time<=10?"low":""}" id="fclock" style="--p:${F.time/(F.max||30)}" role="timer" aria-label="Seconds left"><span>${F.time}</span></div></div>
-<h2 class="qtext">Build the program</h2>
-<div class="fgoal"><div class="fg-task"><span class="fl">Goal</span><p>${esc(p.task)}</p></div><div class="fg-out"><span class="fl">It must print</span><pre>${esc(p.out)}</pre>${typed?`<small>when the user types ${typed}</small>`:""}</div></div>
-${done?"":`<ol class="fsteps"><li><b>1</b>Tap a line to add it to your program</li><li><b>2</b>Use the order Python runs them, top to bottom</li><li><b>3</b>Submit before the timer hits 0</li></ol>`}</div>
-<div class="fbuild"><div class="fpool"><h3>The 4 lines <small>jumbled · indentation hidden</small></h3><div class="opts fffopts">${F.lines.map((l,i)=>{const pos=F.order.indexOf(i),cls=F.done==="ok"?"opt right":pos>-1?"opt pending":"opt";return `<button class="${cls}" data-act="fff-add" data-i="${i}" ${pos>-1||done?"disabled":""}><span class="l">${pos>-1?pos+1:L[i]}</span><span class="t">${esc(l)}</span></button>`}).join("")}</div></div>
-<div class="fprog card"><h3>Your program</h3><ol>${prog}</ol>${done?"":`<div class="fbtns"><button class="btn quiet sm" data-act="fff-undo" ${F.order.length?"":"disabled"}>Undo</button><button class="btn quiet sm" data-act="fff-clear" ${F.order.length?"":"disabled"}>Clear</button><button class="btn gold" data-act="fff-submit" ${F.order.length<4?"disabled":""}>Submit</button></div>`}</div></div>
-${F.done==="ok"?`<div class="verdict card good"><div><b>Correct in ${F.secs.toFixed(1)} seconds!</b><span class="muted">You've earned the hot seat.</span></div><button class="btn gold" data-act="hotseat">Take the hot seat →</button></div><div class="panel card explain"><h3>${ICON.why}The right order, line by line</h3>${fffSteps(p.prog)}</div>`
- :F.done?`<div class="verdict card bad"><div><b>${F.timeout?"Time's up.":"Not quite."}</b><span class="muted">The right order was <span class="ordans">${F.ans.map(i=>L[i]).join(" ")}</span>. Win a round to reach the hot seat.</span></div><button class="btn gold" data-act="fff-next">Try another →</button></div><div class="panel card explain"><h3>${ICON.why}The right order, line by line</h3>${fffSteps(p.prog)}</div>`:""}
-${quipHTML("fff"+F.idx)}</section><div class="fffsp"></div></div>`}
-/* ===== Fastest Finger: three quick formats, rotated (Python Sprint, Flash Trace, Build the program) ===== */
-const FMODES=["sprint","tf","flash","bug","order","odd"],FMODE={tf:{name:"True / False Blitz",secs:20,how:"5 Python statements. Tap True or False for each. Get all 5 right."},bug:{name:"Bug Hunt",secs:20,how:"One line of this program is broken. Tap it."},odd:{name:"Odd One Out",secs:20,how:"Three snippets print the same thing. Tap the one that doesn't."},sprint:{name:"Python Sprint",secs:30,how:"Type what each snippet prints. Solve 3 before the clock runs out."},flash:{name:"Flash Trace",secs:15,how:"Lines flash one at a time. Keep x in your head, then type its final value."},order:{name:"Build the program",secs:30,how:"Tap the 4 lines in the order Python runs them."}};
-const SPRINT=[["print(7 // 2)","3"],["x = 5\nx += 3\nprint(x)","8"],['print("ab" * 3)',"ababab"],['print(len("python"))',"6"],['for i in range(3):\n    print(i, end="")',"012"],["print(10 % 4)","2"],['s = "hello"\nprint(s[1:4])',"ell"],["print(2 ** 3 + 1)","9"],['print(int("7") + 3)',"10"],['print("Py" + "thon")',"Python"],
- ["print(9 > 4 and 2 > 5)","False"],['print("code"[-1])',"e"],["a = [3, 1, 2]\nprint(len(a) + a[0])","6"],['print("Hi", "Run", sep="-")',"Hi-Run"],["n = 4\nn = n * n - 1\nprint(n)","15"],["print(17 // 5, 17 % 5)","3 2"],['print("nxt".upper())',"NXT"],["t = (4, 5, 6)\nprint(t[1])","5"],["print(sum([2, 4, 6]))","12"],['print(type(3.0).__name__)',"float"],
- ["x = 10\nif x > 5:\n    x -= 4\nprint(x)","6"],['print("a,b,c".split(",")[1])',"b"],["print(max(3, 8, 5))","8"],["c = 0\nfor i in range(1, 4):\n    c += i\nprint(c)","6"]];
-const FLASH=[["x = 4","x += 3","x *= 2","x -= 5","x //= 2"],["x = 9","x -= 4","x *= 3","x += 1","x //= 4"],["x = 2","x **= 3","x -= 3","x %= 4","x += 10"],["x = 15","x //= 2","x += 6","x *= 2","x -= 20"],["x = 7","x *= 7","x %= 10","x += 5","x //= 3"],["x = 1","x += 9","x *= x","x //= 25","x -= 1"],["x = 20","x %= 6","x *= 5","x += 3","x //= 2"],["x = 3","x *= 4","x -= 2","x //= 3","x **= 2"]];
-function flashVals(L){let x=0;return L.map(l=>{const m=/^x\s*(\*\*|\/\/|[+\-*%])?=\s*(.+)$/.exec(l),v=m[2].trim()==="x"?x:+m[2];const op=m[1];
- x=!op?v:op==="+"?x+v:op==="-"?x-v:op==="*"?x*v:op==="//"?Math.floor(x/v):op==="%"?((x%v)+v)%v:op==="**"?x**v:x;return x})}
-function fffClock(secs){const F=S.fff;clearInterval(fInt);F.max=secs;F.time=secs;F0dl=Date.now()+secs*1000;F.t0=F.t0||Date.now();F.tStart=Date.now();
- fInt=setInterval(()=>{const F=S.fff;if(S.screen!=="fff"||!F||F.done){clearInterval(fInt);return}const left=Math.max(0,Math.ceil((F0dl-Date.now())/1000));if(left===F.time)return;F.time=left;const c=$("#fclock");if(c){c.querySelector("span").textContent=F.time;c.style.setProperty("--p",F.time/F.max);c.classList.toggle("low",F.time<=Math.min(10,F.max/3))}if(!F.panic&&F.time<=Math.min(10,Math.ceil(F.max/3))&&F.time>0){F.panic=true;const ob=$(".fffbot");if(ob){const t=document.createElement("div");t.innerHTML=fffBot();ob.replaceWith(t.firstChild)}ROBO.think()}
+/* ================= Fastest Finger First: quick maths puzzles (Matiks-style), one format per round =================
+   Math Sprint: type the answers to 5 quick sums. Code Maze: connect 3 touching numbers that add up to the target.
+   Cross Math: fill the blanks so every row and column sum works. Each round opens on a rules card; the clock starts on Play. */
+let fInt=null,F0dl=0;
+const FMODES=["sprint","maze","cross"];
+const FMODE={
+ sprint:{name:"Math Sprint",secs:45,icon:"⚡",how:["Solve 5 quick sums","Type the answer. A right answer moves on by itself","Stuck? Skip to a new sum"],demo:"&gt;&gt;&gt; 7 × 8 = <b>56</b>"},
+ maze:{name:"Code Maze",secs:40,icon:"🧩",how:["Look at the target number","Tap 3 numbers that touch each other (side by side or up and down)","They must add up to the target. Solve 2 mazes"],demo:"target <b>15</b> → 4 + 5 + 6"},
+ cross:{name:"Cross Math",secs:50,icon:"✚",how:["Every row and every column is a small sum","Tap a number tile to fill the next blank","Fill both blanks so all four sums work"],demo:"3 + <b>?</b> = 8 → <b>?</b> = 5"}};
+const rint=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+function sprintQ(){const k=rint(0,7);let q,a;
+ if(k===0){const x=rint(3,12),y=rint(3,12);q=`${x} × ${y}`;a=x*y}
+ else if(k===1){const x=rint(12,79),y=rint(11,49);q=`${x} + ${y}`;a=x+y}
+ else if(k===2){const x=rint(40,99),y=rint(11,39);q=`${x} − ${y}`;a=x-y}
+ else if(k===3){const y=rint(2,9),z=rint(3,12);q=`${y*z} ÷ ${y}`;a=z}
+ else if(k===4){const x=rint(2,9),y=rint(2,9),z=rint(2,9);q=`${x} + ${y} × ${z}`;a=x+y*z}
+ else if(k===5){const p=[10,20,25,50][rint(0,3)],n=[20,40,60,80,120,200][rint(0,5)];q=`${p}% of ${n}`;a=p*n/100}
+ else if(k===6){const x=rint(4,15);q=`${x}²`;a=x*x}
+ else{const x=rint(3,9),y=rint(3,9),z=rint(1,x*y-1);q=`${x} × ${y} − ${z}`;a=x*y-z}
+ return {q,a:String(a)}}
+function mzNb(c,N){const r=c/N|0,k=c%N,o=[];if(r>0)o.push(c-N);if(r<N-1)o.push(c+N);if(k>0)o.push(c-1);if(k<N-1)o.push(c+1);return o}
+function mazeGrid(){const N=4,g=Array.from({length:N*N},()=>rint(1,9));let path=[];
+ while(path.length<3){path=[rint(0,N*N-1)];while(path.length<3){const nb=mzNb(path[path.length-1],N).filter(x=>!path.includes(x));if(!nb.length)break;path.push(nb[rint(0,nb.length-1)])}}
+ return {N,g,path,target:path.reduce((a,i)=>a+g[i],0)}}
+const XOP=(a,o,b)=>o==="+"?a+b:o==="−"?a-b:a*b;
+/* 2×2 cross: A o0 B = R0 / C o1 D = R1 / columns A o2 C = R2, B o3 D = R3. Two cells are blank; the tiles hold their values and two decoys.
+   Only puzzles where exactly one placement of the tiles works are kept. */
+function crossGen(){const OPS=["+","−","×"];
+ for(let t=0;t<500;t++){const v=[0,1,2,3].map(()=>rint(1,9)),o=[0,1,2,3].map(()=>OPS[rint(0,2)]);
+  const R=[XOP(v[0],o[0],v[1]),XOP(v[2],o[1],v[3]),XOP(v[0],o[2],v[2]),XOP(v[1],o[3],v[3])];if(R.some(x=>x<0||x>99))continue;
+  const bl=shuf([0,1,2,3]).slice(0,2).sort();if(v[bl[0]]===v[bl[1]])continue;
+  const dec=[];for(let n=0;dec.length<2&&n<50;n++){const d=rint(1,9);if(!bl.some(k=>v[k]===d)&&!dec.includes(d))dec.push(d)}if(dec.length<2)continue;
+  const tiles=shuf([v[bl[0]],v[bl[1]],...dec]),ok=w=>XOP(w[0],o[0],w[1])===R[0]&&XOP(w[2],o[1],w[3])===R[1]&&XOP(w[0],o[2],w[2])===R[2]&&XOP(w[1],o[3],w[3])===R[3];
+  let n=0;for(const x of tiles)for(const y of tiles){if(x===y)continue;const w=v.slice();w[bl[0]]=x;w[bl[1]]=y;if(ok(w))n++}
+  if(n===1)return {v,o,R,blanks:bl,tiles}}
+ return {v:[3,5,2,4],o:["+","+","×","+"],R:[8,6,6,9],blanks:[1,2],tiles:[5,2,7,1]}}
+function fffClock(secs){const F=S.fff;clearInterval(fInt);F.max=secs;F.time=secs;F0dl=Date.now()+secs*1000;F.tStart=Date.now();
+ fInt=setInterval(()=>{const F=S.fff;if(S.screen!=="fff"||!F||F.done||F.intro){clearInterval(fInt);return}const left=Math.max(0,Math.ceil((F0dl-Date.now())/1000));if(left===F.time)return;F.time=left;const c=$("#fclock");if(c){c.querySelector("span").textContent=F.time;c.style.setProperty("--p",F.time/F.max);c.classList.toggle("low",F.time<=Math.min(10,F.max/3))}if(!F.panic&&F.time<=Math.min(10,Math.ceil(F.max/3))&&F.time>0){F.panic=true;const ob=$(".fffbot");if(ob){const t=document.createElement("div");t.innerHTML=fffBot();ob.replaceWith(t.firstChild)}ROBO.think()}
   if(F.time<=5&&F.time>0)SFX.tick();if(F.time<=0){clearInterval(fInt);F.done="bad";F.timeout=true;SFX.wrong();spotFx("lose");render();say("Time's up.");logEv({kind:"fff",mode:F.mode,ok:false,ms:secs*1000})}},250)}
 function fffFinish(ok){const F=S.fff;if(F.done)return;clearInterval(fInt);F.secs=(Date.now()-(F.tStart||F.t0))/1000;F.done=ok?"ok":"bad";
  if(ok){SFX.fffWin();spotFx("win");confetti(90)}else{SFX.wrong();spotFx("lose")}render();say(ok?"You've earned the hot seat.":"Not quite.");logEv({kind:"fff",mode:F.mode,ok,ms:Math.round(F.secs*1000),away:F.away||0})}
-function fffFocus(){requestAnimationFrame(()=>{const i=$("#sprin")||$("#flin");i&&i.focus({preventScroll:true})})}
-function startFFF(idx){ctx();goFull();clearInterval(fInt);stopQ();if(idx==null)idx=Math.random()*999|0;
- const mode=FMODES[idx%FMODES.length];
- const prog=FFF[idx%FFF.length].prog;let disp;do{disp=shuf([0,1,2,3])}while(disp.join()==="0,1,2,3");
- const F={idx,mode,order:[],time:FMODE[mode].secs,max:FMODE[mode].secs,done:null,t0:Date.now(),timeout:false,lines:disp.map(i=>prog[i].trim()),ans:[0,1,2,3].map(k=>disp.indexOf(k))};
- if(mode==="sprint"){F.pool=shuf(SPRINT.map((_,i)=>i));F.qi=0;F.solved=[];F.skipped=[]}
- if(mode==="tf"){F.tfq=shuf(TFQ.map(x=>x)).slice(0,5);F.ti=0;F.tfa=[]}
- if(mode==="bug")F.bq=BUGQ[Math.floor(idx/FMODES.length)%BUGQ.length];
- if(mode==="odd"){F.oq=ODDQ[Math.floor(idx/FMODES.length)%ODDQ.length];F.oord=shuf([0,1,2,3])}
- if(mode==="flash"){F.L=FLASH[idx%FLASH.length];F.V=flashVals(F.L);F.stage="flash";F.k=-1}
- S={screen:"fff",name:S.name,q:{fff:idx},phase:"ask",run:{answered:0},fff:F};SFX.start();render();scrollTo({top:0});
- if(mode==="flash")flashRun(F);else{fffClock(F.max);fffFocus()}}
-function flashRun(F){const step=k=>{if(S.fff!==F||F.done)return;F.k=k;const c=$("#flcard"),n=$("#flno");
-  if(k>=F.L.length){F.stage="ask";render();fffClock(F.max);fffFocus();return}
-  if(c){c.classList.remove("pop");void c.offsetWidth;c.innerHTML=`<code>${esc(F.L[k])}</code>`;c.classList.add("pop")}if(n)n.textContent=`Line ${k+1} of ${F.L.length}`;
-  document.querySelectorAll("#fldots i").forEach((d,j)=>d.classList.toggle("on",j<=k));SFX.pick();setTimeout(()=>step(k+1),1500)};
- setTimeout(()=>step(0),1100)}
-function fffBot(){const F=S.fff,m=F.done==="ok"?"finish":F.done?(F.timeout?"tired":"bonk"):(F.mode==="flash"&&F.k<0?"warm":F.panic?"panic":"run");
- const go=F.panic?["Hurry! Clock is melting!","Faster faster faster!","Seconds left. GO!"][F.idx%3]:{tf:"True or false? Trust your gut, fast!",bug:"Spot the broken line. Tap it!",odd:"Three match, one doesn't. Find it!",sprint:"Type fast. Correct answers jump ahead on their own!",flash:F.stage==="ask"?"What's x? Trust your trace!":"Eyes on the card. Keep x in your head!",order:"Tap the lines in order. Go, go, go!"}[F.mode];
+function fffFocus(){requestAnimationFrame(()=>{const i=$("#sprin")||$('[data-act="fff-begin"]');i&&i.focus({preventScroll:true})})}
+function startFFF(idx){ctx();goFull();clearInterval(fInt);stopQ();if(idx==null)idx=Math.random()*999|0;const mode=FMODES[idx%FMODES.length];
+ const F={idx,mode,intro:true,time:FMODE[mode].secs,max:FMODE[mode].secs,done:null,t0:Date.now(),timeout:false};
+ S={screen:"fff",name:S.name,q:{fff:idx},phase:"ask",run:{answered:0},fff:F};render();scrollTo({top:0});fffFocus()}
+function fffBegin(){const F=S.fff;if(!F||!F.intro)return;F.intro=false;F.t0=Date.now()+1;
+ if(F.mode==="sprint"){F.cur=sprintQ();F.solved=0;F.log=[]}
+ if(F.mode==="maze"){F.mz=0;F.grid=mazeGrid();F.sel=[];F.msg=""}
+ if(F.mode==="cross"){F.cx=crossGen();F.fill={};F.msg=""}
+ SFX.start();render();fffClock(F.max);fffFocus()}
+function fffBot(){const F=S.fff,m=F.intro?"warm":F.done==="ok"?"finish":F.done?(F.timeout?"tired":"bonk"):F.panic?"panic":"run";
+ const go=F.intro?"Read the rules, then hit Play. The clock waits for you!":F.panic?["Hurry! Clock is melting!","Faster faster faster!","Seconds left. GO!"][F.idx%3]:{sprint:"Type fast. Right answers jump ahead!",maze:"Find the path that hits the target!",cross:"Fill the blanks so every sum works!"}[F.mode];
  const say=F.done==="ok"?"Lightning fingers! The hot seat is yours.":F.done?(F.timeout?"Too slow! Try another round.":"Shake it off. Next round!"):go;
  return `<aside class="fffbot" data-m="${m}"><p class="say">${say}</p>${mascot(m,200)}</aside>`}
-function fffHead(F,title){const M=FMODE[F.mode];return `<div class="qcard card fffhead"><div class="qtop"><span class="chip gold">Fastest Finger First</span><div class="clock ${F.time<=Math.min(10,F.max/3)?"low":""}" id="fclock" style="--p:${F.time/F.max}" role="timer" aria-label="Seconds left"><span>${F.time}</span></div></div>
-<h2 class="qtext">${title}</h2><p class="fhow">${M.how} <b>Win it → take the hot seat.</b></p></div>`}
-function fffVerdict(F,expl){return F.done==="ok"?`<div class="verdict card good"><div><b>Done in ${F.secs.toFixed(1)} seconds!</b><span class="muted">You've earned the hot seat.</span></div><button class="btn gold" data-act="hotseat">Take the hot seat →</button></div>${expl}`
- :F.done?`<div class="verdict card bad"><div><b>${F.timeout?"Time's up.":"Not quite."}</b><span class="muted">Win a round to reach the hot seat. The next round uses a different format.</span></div><button class="btn gold" data-act="fff-next">Try another →</button></div>${expl}`:""}
-function vSprint(F){const cur=SPRINT[F.pool[F.qi%F.pool.length]],seen=[...F.solved.map(i=>[i,1]),...F.skipped.map(i=>[i,0])];
- const pips=[0,1,2].map(k=>`<i class="${k<F.solved.length?"on":""}"></i>`).join("");
- const body=F.done?"":`<div class="sprc card"><div class="spr-top"><span class="fl">What does this print?</span><span class="spips" aria-label="${F.solved.length} of 3 solved">${pips}<b>${F.solved.length}/3</b></span></div>${codeHTML(cur[0])}
- <div class="spr-in"><input class="fpin" id="sprin" autocomplete="off" spellcheck="false" placeholder="Type the output" aria-label="Your answer"><button class="btn quiet sm" data-act="fff-skip">Skip</button></div><p class="fb" id="sprfb">Correct answers move on by themselves.</p></div>`;
- const expl=`<div class="panel card explain"><h3>${ICON.why}This round's snippets</h3><div class="sprlist">${(F.done?seen.concat(F.done&&!F.solved.includes(F.pool[F.qi%F.pool.length])?[[F.pool[F.qi%F.pool.length],0]]:[]):[]).map(([i,ok])=>`<div class="${ok?"ok":"no"}">${codeHTML(SPRINT[i][0])}<span>Prints <code>${esc(SPRINT[i][1])}</code> ${ok?"✓":"· skipped / missed"}</span></div>`).join("")}</div></div>`;
- return fffHead(F,"Python Sprint")+body+fffVerdict(F,expl)}
-function vFlash(F){const n=F.L.length;
- const card=F.stage==="flash"&&!F.done?`<div class="flwrap card"><span class="fl" id="flno">${F.k<0?"Get ready…":`Line ${F.k+1} of ${n}`}</span><div class="fldots" id="fldots">${F.L.map((_,j)=>`<i class="${j<=F.k?"on":""}"></i>`).join("")}</div><div class="flcard" id="flcard">${F.k<0?"<span>3 · 2 · 1</span>":`<code>${esc(F.L[F.k])}</code>`}</div></div>`
-  :F.done?"":`<div class="flwrap card"><span class="fl">Lines hidden</span><div class="fldots">${F.L.map(()=>`<i class="on"></i>`).join("")}</div><div class="flask"><label for="flin">What is <code>x</code> now?</label><div class="spr-in"><input class="fpin" id="flin" inputmode="numeric" autocomplete="off" placeholder="x = ?"><button class="btn gold" data-act="fff-check">Check</button></div></div></div>`;
- const ops=F.L.map((l,k)=>{const m=/^x\s*(\*\*|\/\/|[+\-*%])?=\s*(.+)$/.exec(l),prev=k?F.V[k-1]:null;return m[1]?`${prev} ${m[1]} ${m[2].trim()}`:"start"});
- const expl=`<div class="panel card explain xtrace"><h3>${ICON.why}What x was after every line</h3>
-<div class="xchain">${F.V.map((v,k)=>`<span class="xv ${k===n-1?"last":""}">${v}</span>`).join('<span class="xa">→</span>')}</div>
-<ol class="xsteps">${F.L.map((l,k)=>`<li><span class="xn">${k+1}</span><code>${esc(l)}</code><span class="xop">${ops[k]==="start"?"x starts at":esc(ops[k])+" ="}</span><b class="xv ${k===n-1?"last":""}">${F.V[k]}</b></li>`).join("")}</ol>
-${F.ansGiven!=null?`<p class="xres ${Number(F.ansGiven)===F.V[n-1]?"ok":"no"}">You answered <b>${esc(F.ansGiven)}</b> · x ends at <b>${F.V[n-1]}</b></p>`:`<p class="xres no">x ends at <b>${F.V[n-1]}</b></p>`}</div>`;
- return fffHead(F,"Flash Trace")+card+fffVerdict(F,expl)}
-const TFQ=[["len('abc') == 3",1],["'5' + '5' == '10'",0],["3 // 2 == 1",1],["[1, 2][1] == 1",0],["'a' in 'cat'",1],["bool(0) == True",0],["2 ** 3 == 6",0],["10 % 3 == 1",1],["'Hi'.lower() == 'hi'",1],["type(3.0) == int",0],["list(range(3)) == [0, 1, 2, 3]",0],["'py' * 2 == 'pypy'",1],["5 > 3 and 2 > 4",0],["not (4 == 4)",0],["int('7') + 1 == 8",1],["'abc'[-1] == 'c'",1],["len([1, [2, 3]]) == 3",0],["1 == 1.0",1]];
-const BUGQ=[{l:["total = 0","for i in range(1, 5)","    total += i","print(total)"],b:1,why:"A for line must end with a colon:  for i in range(1, 5):"},
- {l:["name = input()","if name = 'Asha':","    print('Hi')","print('Done')"],b:1,why:"= assigns; comparing needs ==  →  if name == 'Asha':"},
- {l:["nums = [3, 1, 2]","nums.sort()","print(nums[3])","print('end')"],b:2,why:"The list has indexes 0–2, so nums[3] raises IndexError."},
- {l:["x = '5'","y = 2","print(x + y)","print('ok')"],b:2,why:"You can't add a str and an int. Use int(x) + y."},
- {l:["count = 0","while count < 3:","print(count)","    count += 1"],b:2,why:"print(count) must be indented to sit inside the while loop."},
- {l:["def add(a, b):","    return a + b","result = add(2)","print(result)"],b:2,why:"add needs two arguments; add(2) raises TypeError."},
- {l:["word = 'code'","word[0] = 'C'","print(word)","print(len(word))"],b:1,why:"Strings can't be changed in place. Build a new one: 'C' + word[1:]"},
- {l:["d = {'a': 1}","print(d['b'])","d['c'] = 3","print(d)"],b:1,why:"'b' isn't a key yet, so d['b'] raises KeyError."}];
-const ODDQ=[{c:["print(2 * 3)","print(12 // 2)","print(3 + 3)","print(2 ** 3)"],o:["6","6","6","8"]},{c:["print(len('four'))","print(2 + 2)","print(8 // 2)","print(9 % 4)"],o:["4","4","4","1"]},{c:["print('ab' * 2)","print('a' + 'bab')","print('abab')","print('ba' * 2)"],o:["abab","abab","abab","baba"]},{c:["print(10 / 2)","print(5.0)","print(10 // 2)","print(float(5))"],o:["5.0","5.0","5","5.0"]},{c:["print(bool(1))","print(3 > 2)","print(not False)","print(bool(''))"],o:["True","True","True","False"]},{c:["print([1, 2, 3][-1])","print(len([0, 0, 0]))","print(max(1, 3, 2))","print(sum([1, 1]))"],o:["3","3","3","2"]}];
-function vTF(F){const q=F.tfq,cur=q[F.ti];const pips=q.map((x,k)=>`<i class="${k<F.ti?(F.tfa[k]===x[1]?"on":"bad"):""}"></i>`).join("");
- const body=F.done?"":`<div class="sprc card"><div class="spr-top"><span class="fl">Is this True?</span><span class="spips">${pips}<b>${F.ti}/5</b></span></div>${codeHTML(cur[0])}<div class="tfbtns"><button class="btn tfb t" data-act="fff-tf" data-v="1">True</button><button class="btn tfb f" data-act="fff-tf" data-v="0">False</button></div><p class="fb">Keys: T / F</p></div>`;
- const expl=`<div class="panel card explain"><h3>${ICON.why}The 5 statements</h3><div class="sprlist">${q.map((x,k)=>`<div class="${F.tfa[k]===x[1]?"ok":"no"}">${codeHTML(x[0])}<span>${x[1]?"True":"False"} ${F.tfa[k]==null?"· not answered":F.tfa[k]===x[1]?"✓":"· you said "+(F.tfa[k]?"True":"False")}</span></div>`).join("")}</div></div>`;
- return fffHead(F,"True / False Blitz")+body+fffVerdict(F,expl)}
-function vBug(F){const q=F.bq;const body=F.done?"":`<div class="sprc card"><span class="fl">Tap the broken line</span><div class="buglines">${q.l.map((l,k)=>`<button class="bugl" data-act="fff-bug" data-i="${k}"><span class="n">${k+1}</span><code>${esc(l).replace(/ /g,"&nbsp;")}</code></button>`).join("")}</div></div>`;
- const expl=`<div class="panel card explain"><h3>${ICON.why}The bug</h3><div class="buglines">${q.l.map((l,k)=>`<div class="bugl ${k===q.b?"isbug":""} ${F.bpick===k&&k!==q.b?"miss":""}"><span class="n">${k+1}</span><code>${esc(l).replace(/ /g,"&nbsp;")}</code></div>`).join("")}</div><p>Line ${q.b+1}: ${esc(q.why)}</p></div>`;
- return fffHead(F,"Bug Hunt")+body+fffVerdict(F,expl)}
-function vOdd(F){const q=F.oq,ord=F.oord;const body=F.done?"":`<div class="sprc card"><span class="fl">Which one prints something different?</span><div class="oddgrid">${ord.map((k,j)=>`<button class="oddc" data-act="fff-odd" data-i="${k}"><span class="l">${"ABCD"[j]}</span>${codeHTML(q.c[k])}</button>`).join("")}</div></div>`;
- const expl=`<div class="panel card explain"><h3>${ICON.why}What each one prints</h3><div class="sprlist">${ord.map(k=>`<div class="${q.o[k]===q.o.find((v,i,a)=>a.filter(z=>z===v).length===1)?"no":"ok"}">${codeHTML(q.c[k])}<span>Prints <code>${esc(q.o[k])}</code></span></div>`).join("")}</div></div>`;
- return fffHead(F,"Odd One Out")+body+fffVerdict(F,expl)}
-function vFFF(){const F=S.fff;if(F.mode!=="order")return `<div class="fffgrid">${fffBot()}<section class="fffw enter" data-r="${F.idx}-${F.t0}">${({sprint:vSprint,flash:vFlash,tf:vTF,bug:vBug,odd:vOdd})[F.mode](F)}${quipHTML("fff"+F.idx)}</section><div class="fffsp"></div></div>`;
- return vFFFOrder()}
-document.addEventListener("input",e=>{if(e.target.id!=="sprin"||S.screen!=="fff")return;const F=S.fff;if(F.done)return;const cur=F.pool[F.qi%F.pool.length];
- if(e.target.value.trim()===SPRINT[cur][1]){F.solved.push(cur);F.qi++;SFX.pick();if(F.solved.length>=3){fffFinish(true);return}render();fffFocus()}},SIG);
-document.addEventListener("keydown",e=>{if(S.screen==="fff"&&S.fff&&!S.fff.done&&S.fff.mode==="tf"&&!e.target.matches("input")){const k=e.key.toLowerCase();if(k==="t"||k==="f"){e.preventDefault();const bt=$(`[data-act="fff-tf"][data-v="${k==="t"?1:0}"]`);bt&&bt.click()}return}if(S.screen!=="fff"||!S.fff||S.fff.done||e.key!=="Enter")return;
- if(e.target.id==="sprin"){e.preventDefault();const a=e.target,fb=$("#sprfb");a.classList.remove("shake");void a.offsetWidth;a.classList.add("shake");if(fb){fb.className="fb bad";fb.textContent="Not quite. Check the output again."}}
- if(e.target.id==="flin"){e.preventDefault();const b=$('[data-act="fff-check"]');b&&b.click()}},SIG);
+function fffHead(F){const M=FMODE[F.mode];return `<div class="qcard card fffhead"><div class="qtop"><span class="chip gold">Fastest Finger First</span><div class="clock ${F.time<=Math.min(10,F.max/3)?"low":""}" id="fclock" style="--p:${F.time/F.max}" role="timer" aria-label="Seconds left"><span>${F.time}</span></div></div>
+<h2 class="qtext">${M.icon} ${M.name}</h2><p class="fhow">${esc(M.how.join(" · "))}</p></div>`}
+function fffVerdict(F,expl){return F.done==="ok"?`<div class="verdict card good"><div><b>Done in ${F.secs.toFixed(1)} seconds! 🎉</b><span class="muted">You've earned the hot seat.</span></div><button class="btn gold" data-act="hotseat">Take the hot seat →</button></div>${expl}`
+ :F.done?`<div class="verdict card bad"><div><b>${F.timeout?"Time's up.":"Not quite."}</b><span class="muted">Win a round to reach the hot seat. The next round is a different puzzle.</span></div><button class="btn gold" data-act="fff-next">Try another →</button></div>${expl}`:""}
+function vFFFIntro(F){const M=FMODE[F.mode];
+ return `<div class="qcard card fffhead fintro"><span class="chip gold">Fastest Finger First</span><div class="fi-ic" aria-hidden="true">${M.icon}</div><h2 class="qtext">${M.name}</h2><p class="muted">Quick rules. The clock starts when you press Play.</p>
+<ol class="fi-steps">${M.how.map((h,i)=>`<li style="--i:${i}"><b>${i+1}</b><span>${esc(h)}</span></li>`).join("")}</ol>
+<div class="fi-demo"><span>Example</span><code>${M.demo}</code></div>
+<div class="fi-meta"><span>⏱ <b>${M.secs} seconds</b></span><span>🏆 Win it → <b>take the hot seat</b></span></div>
+<div class="fi-go"><button class="btn gold glow" data-act="fff-begin">Play →</button><button class="btn quiet sm" data-act="fff-next">Try a different puzzle</button></div><small class="muted">or press Enter</small></div>`}
+function vSprint(F){const pips=[0,1,2,3,4].map(k=>`<i class="${k<F.solved?"on":""}"></i>`).join("");
+ const body=F.done?"":`<div class="sprc card mathc"><div class="spr-top"><span class="fl">Quick maths</span><span class="spips" aria-label="${F.solved} of 5 solved">${pips}<b>${F.solved}/5</b></span></div>
+ <div class="mq"><span class="mq-p">&gt;&gt;&gt;</span><span class="mq-t">${esc(F.cur.q)}</span><span class="mq-eq">=</span></div>
+ <div class="spr-in"><input class="fpin" id="sprin" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="?" aria-label="Answer to ${esc(F.cur.q)}"><button class="btn quiet sm" data-act="fff-skip">Skip</button></div><p class="fb" id="sprfb">Right answers move on by themselves.</p></div>`;
+ const list=F.log.concat(F.done&&!F.timeoutSeen?[{q:F.cur.q,a:F.cur.a,st:"open"}]:[]);
+ const expl=`<div class="panel card explain"><h3>${ICON.why}This round's sums</h3><div class="mlist">${list.map(x=>`<div class="${x.st==="ok"?"ok":"no"}"><code>${esc(x.q)} = ${esc(x.a)}</code><span>${x.st==="ok"?"✓ solved":x.st==="skip"?"skipped":"not answered"}</span></div>`).join("")}</div></div>`;
+ return fffHead(F)+body+fffVerdict(F,expl)}
+function vMaze(F){const M=F.grid,sum=F.sel.reduce((a,i)=>a+M.g[i],0),last=F.sel[F.sel.length-1];
+ const cell=(v,i)=>{const at=F.sel.indexOf(i),can=!F.done&&(!F.sel.length||at===F.sel.length-1||(at<0&&F.sel.length<3&&mzNb(last,M.N).includes(i)));
+  return `<button class="mzc ${at>-1?"on":""} ${!can&&at<0?"dim":""}" data-act="fff-cell" data-i="${i}" ${can?"":"disabled"} aria-label="${v}${at>-1?", step "+(at+1):""}"><b>${v}</b>${at>-1?`<em>${at+1}</em>`:""}</button>`};
+ const body=F.done?"":`<div class="sprc card mathc"><div class="spr-top"><span class="fl">Maze ${F.mz+1} of 2</span><span class="spips">${[0,1].map(k=>`<i class="${k<F.mz?"on":""}"></i>`).join("")}<b>${F.mz}/2</b></span></div>
+ <div class="mz-goal"><span class="mz-t">target <b>${M.target}</b></span><span class="mz-sum">${F.sel.length?F.sel.map(i=>M.g[i]).join(" + ")+" = <b>"+sum+"</b>":"tap a number to start"}</span></div>
+ <div class="mzgrid" style="--n:${M.N}">${M.g.map(cell).join("")}</div>
+ <p class="fb ${F.msgBad?"bad":""}">${esc(F.msg||"Tap the last number again to undo it.")}</p></div>`;
+ const expl=`<div class="panel card explain"><h3>${ICON.why}A path that works</h3><div class="mzgrid sm" style="--n:${M.N}">${M.g.map((v,i)=>`<span class="mzc ${M.path.includes(i)?"on":""}"><b>${v}</b></span>`).join("")}</div><p class="mz-ans">${M.path.map(i=>M.g[i]).join(" + ")} = <b>${M.target}</b></p></div>`;
+ return fffHead(F)+body+fffVerdict(F,expl)}
+function vCross(F){const X=F.cx,val=k=>X.blanks.includes(k)?F.fill[k]:X.v[k],used=X.blanks.map(k=>F.fill[k]).filter(v=>v!=null);
+ const nextBlank=X.blanks.find(k=>F.fill[k]==null);
+ const cv=k=>X.blanks.includes(k)?`<button class="cx-c blank ${F.fill[k]!=null?"set":""} ${k===nextBlank&&!F.done?"next":""} ${F.wrong&&!F.done?"bad":""}" data-act="fff-blank" data-k="${k}" ${F.done?"disabled":""} aria-label="${F.fill[k]!=null?F.fill[k]+", tap to clear":"blank"}">${F.done?X.v[k]:F.fill[k]!=null?F.fill[k]:"?"}</button>`:`<span class="cx-c">${X.v[k]}</span>`;
+ const op=o=>`<span class="cx-o">${o}</span>`,eq=`<span class="cx-o">=</span>`,res=r=>`<span class="cx-r">${r}</span>`,gap=`<span></span>`;
+ const grid=`<div class="cxgrid">${cv(0)}${op(X.o[0])}${cv(1)}${eq}${res(X.R[0])}${op(X.o[2])}${gap}${op(X.o[3])}${gap}${gap}${cv(2)}${op(X.o[1])}${cv(3)}${eq}${res(X.R[1])}${eq}${gap}${eq}${gap}${gap}${res(X.R[2])}${gap}${res(X.R[3])}${gap}${gap}</div>`;
+ const counts={};used.forEach(v=>counts[v]=(counts[v]||0)+1);
+ const tiles=F.done?"":`<div class="cx-tiles">${X.tiles.map(v=>{const u=counts[v]>0;if(u)counts[v]--;return `<button class="cx-t ${u?"used":""}" data-act="fff-tile" data-v="${v}" ${u?"disabled":""}>${v}</button>`}).join("")}</div><p class="fb ${F.wrong?"bad":""}">${esc(F.msg||"Tap a tile to fill the glowing blank. Tap a filled blank to clear it.")}</p>`;
+ const body=`<div class="sprc card mathc"><div class="spr-top"><span class="fl">${F.done?"The answer":"Fill the blanks"}</span></div>${grid}${tiles}</div>`;
+ return fffHead(F)+body+fffVerdict(F,"")}
+function vFFF(){const F=S.fff;const inner=F.intro?vFFFIntro(F):({sprint:vSprint,maze:vMaze,cross:vCross})[F.mode](F);
+ return `<div class="fffgrid">${fffBot()}<section class="fffw enter" data-r="${F.idx}-${F.t0}">${inner}${F.intro?"":quipHTML("fff"+F.idx)}</section><div class="fffsp"></div></div>`}
+function crossCheck(){const F=S.fff,X=F.cx;if(X.blanks.some(k=>F.fill[k]==null)){F.wrong=false;F.msg="";return}
+ const w=X.v.map((v,k)=>X.blanks.includes(k)?F.fill[k]:v),ok=XOP(w[0],X.o[0],w[1])===X.R[0]&&XOP(w[2],X.o[1],w[3])===X.R[1]&&XOP(w[0],X.o[2],w[2])===X.R[2]&&XOP(w[1],X.o[3],w[3])===X.R[3];
+ if(ok){fffFinish(true);return true}F.wrong=true;F.msg="One of the sums doesn't work yet. Tap a blank to change it.";SFX.wrong()}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b||b.disabled||S.screen!=="fff"||!S.fff)return;const a=b.dataset.act,F=S.fff;
+ if(a==="fff-begin"){fffBegin();return}
+ if(F.done||F.intro)return;
+ if(a==="fff-skip"&&F.mode==="sprint"){F.log.push({q:F.cur.q,a:F.cur.a,st:"skip"});F.cur=sprintQ();render();fffFocus();return}
+ if(a==="fff-cell"&&F.mode==="maze"){const i=+b.dataset.i,at=F.sel.indexOf(i);if(at>-1&&at===F.sel.length-1)F.sel.pop();else if(at<0)F.sel.push(i);SFX.pick();F.msg="";F.msgBad=false;
+  if(F.sel.length===3){const M=F.grid,s=F.sel.reduce((x,j)=>x+M.g[j],0);
+   if(s===M.target){F.mz++;if(F.mz>=2){fffFinish(true);return}F.grid=mazeGrid();F.sel=[];F.msg="Nice! One more maze.";ROBO.happy()}
+   else{F.msg=`That adds up to ${s}, not ${M.target}. Try another path.`;F.msgBad=true;F.sel=[];SFX.wrong()}}
+  render();return}
+ if(a==="fff-blank"&&F.mode==="cross"){const k=+b.dataset.k;if(F.fill[k]!=null){delete F.fill[k];F.wrong=false;F.msg="";SFX.pick();render()}return}
+ if(a==="fff-tile"&&F.mode==="cross"){const X=F.cx,k=X.blanks.find(j=>F.fill[j]==null);if(k==null)return;F.fill[k]=+b.dataset.v;SFX.pick();if(crossCheck())return;render();return}
+},SIG);
+document.addEventListener("input",e=>{if(e.target.id!=="sprin"||S.screen!=="fff")return;const F=S.fff;if(!F||F.done||F.intro)return;
+ if(e.target.value.trim()===F.cur.a){F.log.push({q:F.cur.q,a:F.cur.a,st:"ok"});F.solved++;SFX.pick();if(F.solved>=5){F.timeoutSeen=true;fffFinish(true);return}F.cur=sprintQ();render();fffFocus()}},SIG);
+document.addEventListener("keydown",e=>{if(S.screen!=="fff"||!S.fff)return;const F=S.fff;
+ if(F.intro&&e.key==="Enter"&&!e.target.matches("button,input,textarea,select")){e.preventDefault();fffBegin();return}
+ if(F.done||e.key!=="Enter"||e.target.id!=="sprin")return;e.preventDefault();const a=e.target,fb=$("#sprfb");a.classList.remove("shake");void a.offsetWidth;a.classList.add("shake");if(fb){fb.className="fb bad";fb.textContent="Not quite. Check your sum again."}},SIG);
 /* How to play: a visual flow, not paragraphs */
 const GICON={"name":"<svg viewBox=\"0 0 48 48\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"24\" cy=\"17\" r=\"8\"/><path d=\"M9 41c2-9 8-13 15-13s13 4 15 13\"/></svg>","bolt":"<svg viewBox=\"0 0 48 48\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linejoin=\"round\"><path d=\"M27 4L9 28h13l-2 16 19-25H26z\"/></svg>","seat":"<svg viewBox=\"0 0 48 48\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 26V10a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v16M9 26h30v6H9zM14 32v10M34 32v10\"/></svg>","climb":"<svg viewBox=\"0 0 48 48\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 40h8v-8h8v-8h8v-8h8V8\"/><path d=\"M33 8h7v7\"/></svg>","bank":"<svg viewBox=\"0 0 48 48\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"6\" y=\"14\" width=\"36\" height=\"24\" rx=\"4\"/><path d=\"M6 21h36\"/><circle cx=\"33\" cy=\"30\" r=\"3\"/></svg>","clock":"<svg viewBox=\"0 0 48 48\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\"><circle cx=\"24\" cy=\"26\" r=\"16\"/><path d=\"M24 17v9l6 4M19 5h10\"/></svg>","heart":"<svg viewBox=\"0 0 48 48\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linejoin=\"round\"><path d=\"M24 41S7 30 7 18a9 9 0 0 1 17-4 9 9 0 0 1 17 4c0 12-17 23-17 23z\"/></svg>","door":"<svg viewBox=\"0 0 48 48\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M28 6H12v36h16M22 24h20M35 17l7 7-7 7\"/></svg>","steps":"<svg viewBox=\"0 0 48 48\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\"><path d=\"M16 12h24M16 24h24M16 36h24\"/><circle cx=\"8\" cy=\"12\" r=\"2.5\"/><circle cx=\"8\" cy=\"24\" r=\"2.5\"/><circle cx=\"8\" cy=\"36\" r=\"2.5\"/></svg>"};
-function vGuide(){const flow=[["name","Type your name",""],["bolt","Fastest Finger",""],["seat","Hot seat","Pick · lock · wait"],["climb","Clear your path","Every level → a prize"],["bank","Get GRIT-ready","Score rises as you clear"]];
- const bars=LADDER.map((v,i)=>`<i class="${CK[i]?"ck":""}" style="--h:${18+i*5.5}px" title="${fmtR(v)}"></i>`).join("");
- return `<section class="guide vis">
-<div class="ghead">${mascot("read",110)}<div><h2>How to play</h2><p class="muted">Read the code. Predict the output. Climb.</p></div></div>
-<ol class="vflow">${flow.map((s,i)=>`<li><span class="vic">${GICON[s[0]]}</span><b>${s[1]}</b>${s[2]?`<small>${s[2]}</small>`:""}</li>`).join('<li class="arr" aria-hidden="true">→</li>')}</ol>
-<div class="vrow">
- <div class="card vcard"><h3>The ladder <small>gold = checkpoints</small></h3><div class="vladder">${bars}</div><div class="vlad-l"><span>10</span><span>7 crore</span></div></div>
-</div>
-<div class="gsec card"><h3>What you'll get</h3><div class="gets">
- <div><span class="gi">${gritRing(46)}</span><b>GRIT Computational Thinking readiness</b><small>A live score on your home screen. It rises with every barrier you clear, so you always know how ready you are for GRIT.</small></div>
- <div><span class="gi gi-c">{ }</span><b>Prize money on the board</b><small>Virtual coins, from 10 up to 7 crore, paid into your wallet each time you clear a skill group.</small></div>
- <div><span class="gi gi-p">★</span><b>A place in the Hall of Fame</b><small>Top climbers are listed for everyone to see.</small></div>
- <div><span class="gi gi-t">↻</span><b>Working after every answer</b><small>Step-by-step explanations, so a wrong answer still teaches you something.</small></div>
-</div></div>
-<div class="gsec card"><h3>Your path <small>open “My path” to see yours</small></h3>
-<ol class="gpath">
- <li><b>Checkpoint</b><small>Basic → Advance → GRIT level</small></li>
- <li><b>Skill group</b><small>a few related skills; clearing the whole group wins the next prize</small></li>
- <li><b>Skill (level)</b><small>one bubble on the map, e.g. “Variables &amp; assignment”</small></li>
- <li><b>4 stages</b><small>L1 Recognise · L2 Reason · L3 Repair · L4 Create</small></li>
- <li><b>Question types</b><small>MCQ, fill the blank, fix the bug, write the function…</small></li>
- <li><b>R1 → R2 → R3</b><small>each type gets harder: this skill only, then mixed with 1–2 earlier skills, then 3 or more</small></li>
+function vGuide(inOverlay){
+ const lifes=LIFE.map(l=>`<div class="glife"><span class="lt">${ICON[l.k]||""}</span><b>${esc(l.name)}</b><small>${esc(l.tip)}</small></div>`).join("");
+ return `<section class="guide vis g2">
+<div class="ghead">${mascot("read",110)}<div><h2>How to play</h2><p class="muted">Three steps. Takes a minute to learn.</p></div></div>
+<ol class="gsteps">
+ <li class="gstep" style="--i:0"><span class="gnum">1</span><div class="gdemo d-fff" aria-hidden="true"><span class="dclock"><i></i><b>30</b></span><span class="dsum">7 × 8 = <u>56</u></span></div><b>Win Fastest Finger First</b><small>Solve a quick maths puzzle before the timer runs out. You'll see the rules first, then press <b>Play</b>. Win it to reach the hot seat.</small></li>
+ <li class="gstep" style="--i:1"><span class="gnum">2</span><div class="gdemo d-seat" aria-hidden="true"><i>A</i><i class="pk">B</i><i>C</i><i>D</i></div><b>Answer in the hot seat</b><small>Read the code, <b>pick</b> an option, then <b>lock</b> it. Right answers move you up. Tap <b>Reveal solution</b> to see the working.</small></li>
+ <li class="gstep" style="--i:2"><span class="gnum">3</span><div class="gdemo d-path" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="me"></i><i></i><span class="dchest">₹</span></div><b>Climb your path, win prizes</b><small>Each topic you clear brings you closer to the next prize. Prize money goes straight into your wallet.</small></li>
 </ol>
-<p class="gnote">Get one wrong and you get a fresh version of the same question (up to 25), so you can't just memorise answers. The path ahead stays hidden in fog until you reach it.</p></div>
+<div class="gsec card"><h3>🛟 Lifelines <small>one use each per game</small></h3><div class="glifes">${lifes}</div></div>
 <div class="vrules">
- <div class="vrule"><span class="vic sm">${GICON.clock}</span><b>60 s</b><small>per hot-seat question</small></div>
- <div class="vrule"><span class="vic sm">${GICON.heart}</span><b>Energy 100%</b><small>miss −20%, timeout −25%, 3 in a row +10%</small></div>
- <div class="vrule"><span class="vic sm">${GICON.door}</span><b>Leave anytime</b><small>your path progress is saved</small></div>
- <div class="vrule"><span class="vic sm">${GICON.steps}</span><b>Step-by-step</b><small>working after every answer</small></div>
+ <div class="vrule"><span class="vic sm">${GICON.clock}</span><b>60 seconds</b><small>for each hot-seat question</small></div>
+ <div class="vrule"><span class="vic sm">${GICON.heart}</span><b>Energy</b><small>a miss costs 20%. 3 right in a row gives 10% back</small></div>
+ <div class="vrule"><span class="vic sm">${GICON.door}</span><b>Stay in the game</b><small>leaving mid-game ends it. Your path progress is always saved</small></div>
+ <div class="vrule"><span class="vic sm">${GICON.steps}</span><b>Learn from every answer</b><small>step-by-step working behind “Reveal solution”</small></div>
 </div>
-<div class="card vkeys"><span><kbd>A</kbd><kbd>B</kbd><kbd>C</kbd><kbd>D</kbd> pick</span><span><kbd>Enter</kbd> lock / next</span><span><kbd>⌫</kbd> undo line</span><span><kbd>Esc</kbd> exit full screen</span></div>
-${quipHTML("guide")}
-<div class="ractions"><button class="btn gold" data-act="play">Play Fastest Finger →</button><button class="btn quiet" data-act="practice">Practice</button><button class="btn quiet" data-act="buddy">Choose buddy</button></div></section>`}
+<div class="card vkeys"><span><kbd>A</kbd><kbd>B</kbd><kbd>C</kbd><kbd>D</kbd> pick</span><span><kbd>Enter</kbd> lock / next</span><span><kbd>Esc</kbd> close a window</span></div>
+${inOverlay?"":quipHTML("guide")}
+<div class="ractions">${inOverlay?`<button class="btn gold" data-act="guide-close">Back to my game</button>`:`<button class="btn gold" data-act="play">Play Fastest Finger →</button><button class="btn quiet" data-act="tour">✨ Take the tour</button><button class="btn quiet" data-act="practice">Practice (no stakes)</button>`}</div></section>`}
+/* ================= Product tour: spotlights each part of the home screen once, on a student's first visit ================= */
+const TOUR=[
+ {sel:'.h-hero [data-act="play"]',t:"Start here",d:"Play Fastest Finger First: a quick maths puzzle. Win it to take the hot seat."},
+ {sel:'header [data-act="path"]',t:"My path",d:"Your journey, topic by topic. Clear topics to win prize money."},
+ {sel:"#wchip",t:"Your wallet",d:"Every prize you win is saved here."},
+ {sel:'header [data-act="fame"]',t:"Hall of Fame",d:"Top players overall and in your university."},
+ {sel:"#livechip",t:"Live now",d:"How many students are playing right now."},
+ {sel:'header [data-act="guide"]',t:"How to play",d:"The rules in pictures. Open it any time, even mid-game."},
+ {sel:'header [data-act="fb-open"]',t:"Feedback",d:"Tell us what to improve. We read every message."},
+ {sel:"#themebtn",t:"Light or dark",d:"Switch the look whenever you like."},
+ {sel:'header [data-act="logout"]',t:"Log out",d:"Done for the day? Log out here. Your progress is saved."}];
+let TI=-1;
+function tourStart(){if(S.screen!=="home"){S={screen:"home",name:S.name};render();scrollTo({top:0})}TI=0;tourShow();logEv({kind:"tour",step:"start"})}
+const vis=el=>{if(!el||el.hidden)return false;const r=el.getBoundingClientRect();return r.width>0&&r.height>0};
+function tourShow(dir){let o=$("#tour");if(!o){o=document.createElement("div");o.id="tour";o.innerHTML='<div class="t-hole"></div><div class="t-card" role="dialog" aria-modal="true" aria-labelledby="t-h"></div>';document.body.appendChild(o)}
+ while(TI>=0&&TI<TOUR.length&&!vis(document.querySelector(TOUR[TI].sel)))TI+=dir||1;
+ if(TI<0)TI=0;if(TI>=TOUR.length){tourEnd();return}
+ const st=TOUR[TI],el=document.querySelector(st.sel);const r0=el.getBoundingClientRect();if(r0.top<70||r0.bottom>innerHeight-200)scrollBy({top:r0.top-innerHeight*.35,behavior:"instant"});const r=el.getBoundingClientRect(),pad=8,h=o.querySelector(".t-hole"),c=o.querySelector(".t-card");
+ h.style.cssText=`left:${r.left-pad}px;top:${r.top-pad}px;width:${r.width+pad*2}px;height:${r.height+pad*2}px`;
+ const n=TOUR.filter(x=>vis(document.querySelector(x.sel))).length,k=TOUR.slice(0,TI+1).filter(x=>vis(document.querySelector(x.sel))).length;
+ c.innerHTML=`<span class="t-k">${k} of ${n}</span><h3 id="t-h">${esc(st.t)}</h3><p>${esc(st.d)}</p><div class="t-btns"><button class="btn quiet sm" data-act="tour-skip">Skip tour</button>${TI>0?'<button class="btn quiet sm" data-act="tour-back">Back</button>':""}<button class="btn gold sm" data-act="tour-next">${k>=n?"Let's play!":"Next →"}</button></div>`;
+ const cw=Math.min(320,innerWidth-24),below=r.bottom+14+170<innerHeight;c.style.width=cw+"px";
+ c.style.left=Math.max(12,Math.min(innerWidth-cw-12,r.left+r.width/2-cw/2))+"px";c.style.top=(below?r.bottom+14:Math.max(12,r.top-14-c.offsetHeight))+"px";
+ o.hidden=false;setTimeout(()=>{const nb=c.querySelector('[data-act="tour-next"]');nb&&nb.focus({preventScroll:true})},30)}
+function tourEnd(){const o=$("#tour");if(o)o.remove();TI=-1;store.set("kbc-tour-"+ME.roll,true);logEv({kind:"tour",step:"end"})}
+addEventListener("resize",()=>{if(TI>=0)tourShow()},SIG);
+/* "Coder" types itself out on Home, and a little Python prompt keeps typing lines underneath */
+const TERM=['while not crorepati: level_up()','if answer == correct: prize += 1','print("Namaste, coder!")','for q in range(15): stay_calm()','import confidence'];
+let typeT=null;
+function typeHome(){clearTimeout(typeT);const w=$(".ttl .tw"),l=$(".term .t-l");if(!w||!l)return;if(reduceMotion){w.textContent="Coder";l.textContent=TERM[0];return}
+ let i=0,j=0,k=0,del=false;w.textContent="";l.textContent="";
+ const step=()=>{if(!document.body.contains(w))return;
+  if(i<5){w.textContent="Coder".slice(0,++i);typeT=setTimeout(step,i<5?150:500);return}
+  const t=TERM[k%TERM.length];if(!del){l.textContent=t.slice(0,++j);if(j>=t.length){del=true;typeT=setTimeout(step,1800);return}typeT=setTimeout(step,55)}
+  else{l.textContent=t.slice(0,--j);if(j<=0){del=false;k++;typeT=setTimeout(step,300);return}typeT=setTimeout(step,22)}};
+ typeT=setTimeout(step,350)}
 /* Wallet: what the coin chip opens */
 function vWallet(){const coins=P.coins||0,best=P.best||0,acc=P.answered?Math.round(P.correct/P.answered*100):0;
  const runs=store.get(LKEY,[]).filter(e=>e.kind==="run_end").slice(-8).reverse();
@@ -1512,22 +1569,52 @@ function vBuddy(){return `<section class="buddies"><div class="ghead"><div><h2>C
 <div class="bgrid">${BUDDY_ORDER.map(id=>COSTUMES[id]).map(c=>`<button class="bcard card ${c.id===CHAR?"on":""}" data-act="pick-char" data-c="${c.id}" aria-pressed="${c.id===CHAR}">${mascot(c.id===CHAR?"dance":"idle",104,c.id)}<span class="chip">${esc(c.tag)}</span><b>${esc(c.name)}</b><small>${esc(c.line)}</small>${c.id===CHAR?'<em>Your buddy</em>':""}</button>`).join("")}</div>
 ${quipHTML("buddy")}
 <div class="ractions"><button class="btn gold" data-act="home">Done</button><button class="btn quiet" data-act="guide">How to play</button></div></section>`}
-function goPlay(mode){if(S.screen==="play")endRun("stop");if(mode==="seat")startRun();else startFFF()}
+function goPlay(mode){S.name=ME.name||S.name;
+ if(S.screen==="play")endRun("stop");if(mode==="seat")startRun();else startFFF()}
 document.addEventListener("click",e=>{const bl=e.target.closest(".bill3d");if(bl)bl.classList.toggle("flip")},SIG);
+/* Leaving mid-game ends the game (the hot seat needs a fresh Fastest Finger win), so header links ask first */
+let PEND=null,LEAVE_OK=false;
+const LEAVES={home:1,fame:1,wallet:1,path:1,logout:1,buddy:1,tour:1};
+function inGame(){return S.screen==="play"||(S.screen==="fff"&&S.fff&&S.fff.done!=="bad")}
+function askLeave(b){PEND=b;let m=$("#leavem");if(!m){m=document.createElement("div");m.id="leavem";m.className="modalx";document.body.appendChild(m)}
+ const fff=S.screen==="fff";
+ m.innerHTML=`<div class="mbox" role="alertdialog" aria-modal="true" aria-labelledby="lvh">${mascot("think",96)}<h3 id="lvh">Leave this game?</h3><p>${fff?"You'll lose this Fastest Finger round. To reach the hot seat you'll need to win one again.":S.practice?"Your practice round will end here.":"This game ends here and you keep what you've won so far. Next time you'll start again from Fastest Finger First."}</p><p class="muted">Your path progress is always saved.</p><div class="mbtns"><button class="btn gold" data-act="leave-stay">Keep playing</button><button class="btn quiet" data-act="leave-go">Leave game</button></div></div>`;
+ m.hidden=false;setTimeout(()=>{const s=m.querySelector('[data-act="leave-stay"]');s&&s.focus()},30)}
+function guideOverlay(){let m=$("#guidem");if(!m){m=document.createElement("div");m.id="guidem";m.className="modalx wide";document.body.appendChild(m)}
+ m.innerHTML=`<div class="mbox guidebox" role="dialog" aria-modal="true" aria-label="How to play"><button class="mx" data-act="guide-close" aria-label="Close">✕</button>${vGuide(true)}</div>`;m.hidden=false;
+ setTimeout(()=>{const c=m.querySelector(".mx");c&&c.focus()},30)}
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;for(const id of ["#solm","#guidem","#leavem"]){const m=$(id);if(m&&!m.hidden){e.preventDefault();m.hidden=true;return}}if(TI>=0){e.preventDefault();tourEnd()}},SIG);
+document.addEventListener("click",e=>{if(e.target.classList&&e.target.classList.contains("modalx"))e.target.hidden=true},SIG);
 document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b||b.disabled)return;const a=b.dataset.act;
+ if(a==="leave-stay"){modalClose("#leavem");return}
+ if(a==="leave-go"){modalClose("#leavem");const el=PEND;PEND=null;if(el){LEAVE_OK=true;try{el.click()}finally{LEAVE_OK=false}}return}
+ if(a==="guide"&&inGame()){guideOverlay();return}
+ if(a==="guide-close"){modalClose("#guidem");return}
+ if(LEAVES[a]&&inGame()&&!LEAVE_OK&&!b.closest(".modalx")){askLeave(b);return}
+ if(a==="logout"){logout();return}
+ if(a==="sol"){solOpen();return}
+ if(a==="sol-close"){modalClose("#solm");return}
+ if(a==="tour"){if(S.screen==="play")endRun("stop");tourStart();return}
+ if(a==="tour-next"){TI++;tourShow();return}
+ if(a==="tour-back"){TI=Math.max(0,TI-1);tourShow(-1);return}
+ if(a==="tour-skip"){tourEnd();return}
+ if(a==="fame-tab"){loadFame(b.dataset.s,b.dataset.s==="uni"?(FQ.uni||(ME&&ME.university)||""):"");return}
+ if(a==="pathck"){S.mapTop=scrollY;S.open=null;S.openCk=S.openCk===b.dataset.c?null:b.dataset.c;render();return}
  if(a==="home"){if(S.screen==="play"&&S.phase!=="ask"&&S.phase!=="reveal")return;if(S.screen==="play"){endRun("stop");return}S={screen:"home",name:S.name};render();scrollTo({top:0});return}
- if(a==="fame"){if(S.screen==="play"){endRun("stop")}S={screen:"fame",name:S.name};render();scrollTo({top:0});return}
+ if(a==="fame"){if(S.screen==="play"){endRun("stop")}S={screen:"fame",name:S.name};render();scrollTo({top:0});loadFame(FQ.scope,FQ.uni);return}
  if(a==="team"){if(!TEAM)return;if(S.screen==="play")endRun("stop");S={screen:"team",name:S.name};render();loadDash();scrollTo({top:0});return}
  if(a==="dash-refresh"){loadDash();return}
  if(a==="fb-open"){fbOpen();return}
  if(a==="fb-close"){$("#fbm").hidden=true;return}
  if(a==="fb-star"){FB.stars=+b.dataset.n;FB.text=($("#fbtext")||{}).value||FB.text;$("#fbm").innerHTML=fbHTML();SFX.pick();return}
- if(a==="fb-send"){if(!(FB.stars>0&&FB.text.trim().length>=5))return;logEv({kind:"feedback",stars:FB.stars,text:FB.text.trim().slice(0,600),screen:S.screen});FB={stars:0,text:""};$("#fbm").innerHTML=fbHTML(true);ROBO.happy();return}
+ if(a==="fb-send"){if(!(FB.stars>0&&FB.text.trim().length>=5))return;logEv({kind:"feedback",stars:FB.stars,text:FB.text.trim().slice(0,600),screen:S.screen});KBCQ.api("POST","/api/feedback",{text:FB.text.trim().slice(0,600),ctx:{stars:FB.stars,screen:S.screen}}).catch(()=>{});FB={stars:0,text:""};$("#fbm").innerHTML=fbHTML(true);ROBO.happy();return}
  if(a==="theme"){setTheme(document.documentElement.dataset.theme==="light"?"dark":"light");return}
  if(a==="pathjump"){pathJump(true);return}
- if(a==="pathsk"){if(b.classList.contains("lock"))return;S.mapTop=scrollY;S.open=S.open===b.dataset.sk?null:b.dataset.sk;render();return}
+ if(a==="pathsk"){if(b.classList.contains("lock"))return;const sk=b.dataset.sk,g=curGroup(),cur=curSkill(g);
+  if(!S.open&&(!cur||sk!==cur.id)){fsToast(barOf(sk)>=BPS?"✓ Topic cleared. Well done!":"🔒 Clear the topics before this one to unlock it.");return}
+  S.mapTop=scrollY;S.openCk=null;S.open=S.open===sk?null:sk;render();return}
  if(a==="buddy")return;
- if(a==="guide"||a==="wallet"||a==="path"){if(S.screen==="play")endRun("stop");const el=$("#pname");if(el&&el.value.trim())S.name=el.value.trim();S={screen:a,name:S.name};render();scrollTo({top:0});return}
+ if(a==="guide"||a==="wallet"||a==="path"){if(S.screen==="play")endRun("stop");S={screen:a,name:S.name};render();scrollTo({top:0});return}
  if(a==="pick-char"&&COSTUMES[b.dataset.c]){CHAR=b.dataset.c;store.set("kbc-r2-char",CHAR);SFX.pick();ROBO.hello();logEv({kind:"buddy",c:CHAR});render();return}
  if(a==="fs"){toggleFull();return}
  if(a==="sound"){soundOn=!soundOn;store.set("kbc-r1-snd",soundOn);syncSound();if(soundOn){ctx();SFX.pick();VIBE_UNTIL=Date.now()+60000;if(S.screen==="home")render()}return}
@@ -1536,15 +1623,6 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="seat"){goPlay("seat");return}
  if(a==="practice"){startPractice();return}
  if(a==="hotseat"){startRun(true);return}
- if(a==="fff-add"&&S.screen==="fff"){const F=S.fff,i=+b.dataset.i;if(!F.done&&!F.order.includes(i)&&F.order.length<4){F.order.push(i);SFX.pick();render()}return}
- if(a==="fff-clear"&&S.screen==="fff"){S.fff.order=[];render();return}
- if(a==="fff-undo"&&S.screen==="fff"&&!S.fff.done){S.fff.order.pop();render();return}
- if(a==="fff-tf"&&S.screen==="fff"&&!S.fff.done){const F=S.fff,v=+b.dataset.v,ok=v===F.tfq[F.ti][1];F.tfa[F.ti]=v;F.ti++;SFX.pick();if(!ok){fffFinish(false);return}if(F.ti>=5){fffFinish(true);return}render();return}
- if(a==="fff-bug"&&S.screen==="fff"&&!S.fff.done){const F=S.fff;F.bpick=+b.dataset.i;fffFinish(F.bpick===F.bq.b);return}
- if(a==="fff-odd"&&S.screen==="fff"&&!S.fff.done){const F=S.fff,k=+b.dataset.i,odd=F.oq.o.findIndex((v,i,a)=>a.filter(z=>z===v).length===1);fffFinish(k===odd);return}
- if(a==="fff-submit"&&S.screen==="fff"){const F=S.fff;fffFinish(F.order.join()===F.ans.join());return}
- if(a==="fff-skip"&&S.screen==="fff"&&!S.fff.done){const F=S.fff;F.skipped.push(F.pool[F.qi%F.pool.length]);F.qi++;render();fffFocus();return}
- if(a==="fff-check"&&S.screen==="fff"&&!S.fff.done){const F=S.fff,v=($("#flin")||{}).value||"";if(!v.trim())return;F.ansGiven=v.trim();fffFinish(Number(v)===F.V[F.V.length-1]);return}
  if(a==="fff-next"){startFFF(S.fff?S.fff.idx+1:null);return}
  if(a==="collect"){endRun("win");return}
  if(S.screen!=="play")return;
@@ -1573,17 +1651,11 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
    if(k==="flip"&&r.question){const used=S.used,secsMax=S.secsMax;setQ(r);S.used=used;S.time=secsMax;S.secsMax=secsMax}
    const y2=scrollY;render();scrollTo({top:y2})}).catch(e=>{S.used[k]=false;fsToast(e.message||"That lifeline is not available now.");render()});return}
  if(a==="bq"){if(KBCQ.act(b,S)){const y=scrollY;render();scrollTo({top:y})}else syncAct();return}
- if(a==="logout"){KBCQ.api("POST","/api/auth/logout").finally(()=>location.href="/login");return}
 },SIG);
 document.addEventListener("input",e=>{if(e.target.dataset&&e.target.dataset.bqIn!=null&&S.screen==="play"){KBCQ.input(e.target,S);syncAct();return}
  if(e.target.id==="fillin"&&S.screen==="play"){S.fill=e.target.value;syncAct()}},SIG);
-document.addEventListener("change",e=>{if(e.target.matches(".mrow select")&&S.screen==="play"){S.msel[+e.target.dataset.i]=e.target.value;syncAct()}},SIG);
+document.addEventListener("change",e=>{if(e.target.id==="fameuni"){loadFame("uni",e.target.value);return}if(e.target.matches(".mrow select")&&S.screen==="play"){S.msel[+e.target.dataset.i]=e.target.value;syncAct()}},SIG);
 document.addEventListener("keydown",e=>{
- if(e.key==="Enter"&&e.target.id==="pname"){e.preventDefault();goPlay();return}
- if(S.screen==="fff"&&S.fff&&S.fff.mode==="order"&&!S.fff.done&&!e.target.matches("input,select")){const F=S.fff,k=e.key.toLowerCase(),j="abcd".indexOf(k);
-  if(j>-1){const b=$('[data-act="fff-add"][data-i="'+j+'"]');if(b&&!b.disabled){e.preventDefault();b.click()}return}
-  if(k==="backspace"&&F.order.length){e.preventDefault();F.order.pop();render();return}
-  if(k==="enter"&&F.order.length===4){e.preventDefault();const s=$('[data-act="fff-submit"]');s&&s.click();return}}
  if(S.screen!=="play")return;
  if(e.key==="Enter"){if(e.target.id==="fillin"||(!e.target.matches("input,select,button,textarea")&&!(e.target.closest&&e.target.closest(".bq")))){const btn=$("#lockbtn")||$('[data-act="next"]')||$('[data-act="second"]')||$('[data-act="end"]');if(btn){e.preventDefault();btn.click()}}return}
  if(e.target.matches("input,select,textarea"))return;const i="abcd".indexOf(e.key.toLowerCase());

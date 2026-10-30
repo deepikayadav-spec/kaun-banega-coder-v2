@@ -222,12 +222,45 @@ app.post('/api/events', requireStudent, express.json({ limit: '256kb' }), wrap(a
   });
   res.json({ ok: true, n: list.length });
 }));
+// Live players: a game page pings every 30 s; anyone seen in the last 75 s counts.
+const LIVE_MS = 75_000;
+let liveCache = { at: 0, n: 0 };
+async function liveCount() {
+  if (Date.now() - liveCache.at < 5000) return liveCache.n;
+  const r = await one('SELECT COUNT(*)::int AS n FROM presence WHERE last_seen > ?', Date.now() - LIVE_MS);
+  liveCache = { at: Date.now(), n: r.n };
+  return r.n;
+}
+app.post('/api/live', requireStudent, wrap(async (req, res) => {
+  const was = await one('SELECT last_seen FROM presence WHERE roll_no = ?', req.student.roll_no);
+  await run('INSERT INTO presence (roll_no, last_seen) VALUES (?, ?) ON CONFLICT (roll_no) DO UPDATE SET last_seen = excluded.last_seen', req.student.roll_no, Date.now());
+  if (!was || was.last_seen <= Date.now() - LIVE_MS) liveCache.at = 0; // a newly live player shows up at once
+  res.json({ live: await liveCount() });
+}));
+
+// Hall of Fame. scope=all ranks every university; scope=uni ranks one (the student's own unless ?uni= names another).
+// Coins and best rung are capped by the engine when saved (PUT /api/progress), so the ranking rests on server-checked numbers.
+const FAME_SQL = `SELECT m.roll_no, m.name, m.university, g.coins, g.best, g.data, g.updated_at FROM game_progress g
+  JOIN students_master m ON m.roll_no = g.roll_no WHERE m.active = 1 AND COALESCE((g.data->>'answered')::int, 0) > 0`;
+const FAME_ORDER = ' ORDER BY g.coins DESC, g.best DESC, g.updated_at ASC';
+const fameRow = (r, me) => ({ name: String(r.name || r.roll_no).slice(0, 40), university: r.university || '', coins: Number(r.coins) || 0, best: Number(r.best) || 0,
+  correct: Number(r.data?.correct) || 0, answered: Number(r.data?.answered) || 0, me: r.roll_no === me });
 app.get('/api/fame', requireStudent, wrap(async (req, res) => {
-  const uni = req.student.university || universityOf(req.student.roll_no);
-  const rows = await all(`SELECT m.roll_no, m.name, g.coins, g.best, g.data, g.updated_at FROM game_progress g JOIN students_master m ON m.roll_no = g.roll_no
-    WHERE m.university = ? AND m.active = 1 ORDER BY g.coins DESC, g.best DESC, g.updated_at ASC LIMIT 100`, uni);
-  res.json({ university: uni, rows: rows.map((r) => ({ n: String(r.name || r.roll_no).slice(0, 24), coins: r.coins, rung: r.best, best: r.best,
-    correct: (r.data && r.data.correct) || 0, answered: (r.data && r.data.answered) || 0, t: r.updated_at, me: r.roll_no === req.student.roll_no })) });
+  const me = req.student.roll_no, own = req.student.university || universityOf(me);
+  const scope = req.query.scope === 'uni' ? 'uni' : 'all', uni = scope === 'uni' ? String(req.query.uni || own || '') : '';
+  const rows = uni ? await all(FAME_SQL + ' AND m.university = ?' + FAME_ORDER + ' LIMIT 50', uni) : await all(FAME_SQL + FAME_ORDER + ' LIMIT 50');
+  const out = rows.map((r, i) => ({ ...fameRow(r, me), rank: i + 1 }));
+  let mine = null;
+  if (!out.some((r) => r.me)) {
+    const r = await one(FAME_SQL + ' AND m.roll_no = ?', me);
+    if (r && (!uni || r.university === uni)) {
+      const ahead = await one(`SELECT COUNT(*)::int AS n FROM (${FAME_SQL}${uni ? ' AND m.university = ?' : ''}) t WHERE t.coins > ? OR (t.coins = ? AND t.best > ?)`,
+        ...(uni ? [uni] : []), r.coins, r.coins, r.best);
+      mine = { ...fameRow(r, me), rank: ahead.n + 1 };
+    }
+  }
+  const universities = (await all("SELECT DISTINCT university FROM students_master WHERE active = 1 AND university IS NOT NULL AND university <> '' ORDER BY university")).map((r) => r.university);
+  res.json({ scope, university: uni || own, universities, rows: out, me: mine, live: await liveCount() });
 }));
 app.post('/api/feedback', requireStudent, jsonBody, wrap(async (req, res) => {
   const text = String(req.body?.text || '').trim().slice(0, 4000);

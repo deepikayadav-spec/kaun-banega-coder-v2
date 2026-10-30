@@ -1270,11 +1270,14 @@ function buildToran(){const t=$(".toran");if(!t)return;const n=Math.max(13,Math.
   for(let i=0;i<n;i++){const d=Math.abs(i-(n-1)/2)/((n-1)/2),len=Math.round(3+4*(1-d))+(i%2?0:1);let b="";for(let k=0;k<len;k++)b+=`<i style="background:${k%2?"#FFC300":"#FF8A00"}"></i>`;h+=`<span class="tstr" style="left:calc(${(i/(n-1)*100).toFixed(3)}% - 8px);animation-delay:${(i%5)*.3}s">${b}<em></em></span>`}
   t.innerHTML=h;t.dataset.w=innerWidth}
 /* ===== Feedback: 5-star rating + written comment, both required ===== */
-let FB={stars:0,text:""};
+let FB={stars:0,bonus:0,text:""};
+/* Optional "11-star" question: the rating stays out of 5; a student who loved it can add up to 6 extra stars */
+const FB_BONUS=["Optional","Better than I expected","I told a friend","I came back on my own","Best part of my week","I'd pick it over a reel","Felt like the real hot seat!"];
 function fbHTML(sent){if(sent)return `<div class="fbbox" role="dialog" aria-modal="true" aria-label="Feedback"><div class="fbdone">${mascot("dance",120)}<h3>Thank you!</h3><p>Your feedback reached the KBC team.</p><button class="btn gold" data-act="fb-close">Close</button></div></div>`;
  const ok=FB.stars>0&&FB.text.trim().length>=5;
  return `<div class="fbbox" role="dialog" aria-modal="true" aria-labelledby="fbh"><h3 id="fbh">How is KBC so far?</h3><p class="fbreq">Please share your feedback to continue.</p>
 <p class="fbl">Your rating <i>*</i></p><div class="fbstars" role="radiogroup" aria-label="Rating out of 5">${[1,2,3,4,5].map(n=>`<button class="fbs ${n<=FB.stars?"on":""}" data-act="fb-star" data-n="${n}" role="radio" aria-checked="${n===FB.stars}" aria-label="${n} star${n>1?"s":""}">★</button>`).join("")}<span class="fbsl">${["Tap a star","Poor","Okay","Good","Great","Loved it!"][FB.stars]}</span></div>
+<div class="fbx11"><p class="fbl">Loved it more than 5 stars? Give us extra stars <span class="fbopt">optional</span></p><div class="fbstars" role="radiogroup" aria-label="Extra stars, optional, up to 6">${[1,2,3,4,5,6].map(n=>`<button class="fbs fbb ${n<=FB.bonus?"on":""}" data-act="fb-bonus" data-n="${n}" role="radio" aria-checked="${n===FB.bonus}" aria-label="${n} extra star${n>1?"s":""}${n===FB.bonus?", tap again to clear":""}">★</button>`).join("")}<span class="fbsl">${FB.bonus?"+"+FB.bonus+" · "+FB_BONUS[FB.bonus]:FB_BONUS[0]}</span></div></div>
 <label class="fbl" for="fbtext">Tell us more <i>*</i></label><textarea id="fbtext" maxlength="600" rows="4" placeholder="What did you like? What should we change?">${esc(FB.text)}</textarea>
 <p class="fbhint" id="fbhint">${ok?"Ready to send.":FB.stars?"Write at least 5 characters.":"Pick a rating and write a few words. Both are required."}</p>
 <button class="btn gold fbsend" data-act="fb-send" ${ok?"":"disabled"}>Send feedback</button></div>`}
@@ -1664,8 +1667,9 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="buddy-toggle"){store.set("kbc-hide-buddy",!store.get("kbc-hide-buddy",false));syncBuddy();const y=scrollY;render();scrollTo({top:y});return}
  if(a==="fb-open"){FB.trigger="";fbOpen();return}
  if(a==="fb-close"){$("#fbm").hidden=true;return}
+ if(a==="fb-bonus"){const n=+b.dataset.n;FB.bonus=FB.bonus===n?0:n;FB.text=($("#fbtext")||{}).value||FB.text;$("#fbm").innerHTML=fbHTML();SFX.pick();return}
  if(a==="fb-star"){FB.stars=+b.dataset.n;FB.text=($("#fbtext")||{}).value||FB.text;$("#fbm").innerHTML=fbHTML();SFX.pick();return}
- if(a==="fb-send"){if(!(FB.stars>0&&FB.text.trim().length>=5))return;logEv({kind:"feedback",stars:FB.stars,text:FB.text.trim().slice(0,600),screen:S.screen});P.fbSent=true;saveP();KBCQ.api("POST","/api/feedback",{text:FB.text.trim().slice(0,600),ctx:{stars:FB.stars,screen:S.screen,trigger:FB.trigger||"feedback button"}}).catch(()=>{});FB={stars:0,text:""};$("#fbm").innerHTML=fbHTML(true);ROBO.happy();return}
+ if(a==="fb-send"){if(!(FB.stars>0&&FB.text.trim().length>=5))return;logEv({kind:"feedback",stars:FB.stars,bonus:FB.bonus,text:FB.text.trim().slice(0,600),screen:S.screen});P.fbSent=true;saveP();KBCQ.api("POST","/api/feedback",{text:FB.text.trim().slice(0,600),ctx:{stars:FB.stars,bonus:FB.bonus,screen:S.screen,trigger:FB.trigger||"feedback button"}}).catch(()=>{});FB={stars:0,bonus:0,text:""};$("#fbm").innerHTML=fbHTML(true);ROBO.happy();return}
  if(a==="theme"){setTheme(document.documentElement.dataset.theme==="light"?"dark":"light");return}
  if(a==="pathjump"){pathJump(true);return}
  if(a==="pathsk"){if(b.classList.contains("lock"))return;const sk=b.dataset.sk,g=curGroup(),cur=curSkill(g);

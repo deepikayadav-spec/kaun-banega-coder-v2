@@ -2253,3 +2253,14 @@ html[data-theme="light"] .pworld .chest b{color:#B45309!important;text-shadow:0 
 
 /* Home: the Diwali wish line always shows, even on short screens */
 .home4 .wish3 span.wmsg{display:block!important}
+
+/* Feedback: optional extra stars (Airbnb "11-star" idea); the main rating stays out of 5 */
+.fbx11{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:14px;border:1px dashed rgba(196,181,253,.45);background:rgba(124,58,237,.08)}
+.fbx11 .fbl{margin:0}
+.fbopt{margin-left:6px;padding:1px 8px;border-radius:999px;font:700 10.5px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:#C4B5FD;border:1px solid rgba(196,181,253,.45)}
+.fbx11 .fbs{width:36px!important;height:36px!important;font-size:19px!important}
+.fbx11 .fbs.on{background:linear-gradient(180deg,#C4B5FD,#7C3AED)!important;color:#fff!important;box-shadow:0 0 12px rgba(167,139,250,.6)!important}
+html[data-theme="light"] .fbx11{background:rgba(124,58,237,.06);border-color:rgba(124,58,237,.4)}
+html[data-theme="light"] .fbopt{color:#6D28D9;border-color:rgba(109,40,217,.4)}
+html[data-theme="light"] .fbx11 .fbs.on{background:linear-gradient(180deg,#A78BFA,#6D28D9)!important;color:#fff!important}
+@media (max-width:420px){.fbx11 .fbs{width:32px!important;height:32px!important}}

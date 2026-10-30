@@ -1,9 +1,11 @@
 /* Kaun Banega Coder: the intro, shown once per student on this device, before the game.
    The intro is built in HTML (not a video): a 1280×720 stage scaled to the screen, with the same storyboard, timings
    and soundtrack as KBC_Intro_Video.mp4. Text stays sharp at any size and the whole thing weighs about 2 MB.
-   - A title card first ("Play the intro", like a game launcher): the click lets the soundtrack play.
-   - The soundtrack is the clock: every scene is drawn from audio.currentTime, so picture and sound never drift.
-     If audio can't play, a wall clock takes over.
+   - It starts playing at once, like the film. Browsers only allow sound after a click, so if sound is blocked the
+     picture runs on a wall clock with a "Tap for sound" button; a tap (anywhere) brings the soundtrack in at the
+     same moment. From then on the soundtrack is the clock, so picture and sound never drift.
+   - Like the film it never stands still: the camera drifts and pushes in, the background moves, a cursor works the
+     game screens with clicks, Pixel talks while typing, and chapters change with a light sweep.
    - Small Skip (Esc), sound toggle (M), progress line. Ends on "Let's play" (clickable) and fades into the game.
    window.KBC_INTRO resolves when the intro is over (or at once when it is not shown), so the game can hold its tour.
    Add ?intro to the address to see it again. */
@@ -54,6 +56,18 @@
     { a: 69.5, b: 74.3, kick: "Concepts", bar: "Concepts", title: "Tap a<br><em>planet</em>", pose: "pointq", scr: "path" },
     { a: 74.5, b: 80.4, kick: "Hall of Fame", bar: "Hall of Fame", title: "Climb.<br><em>Tell us.</em>", pose: "trophy", scr: "hof" }
   ];
+  // where the cursor goes in each chapter: [seconds into the chapter, x, y, 1 = click]; it eases between points
+  var PTR = [
+    [[0, 820, 470], [1.9, 640, 380], [3.0, 400, 214], [5.6, 430, 230], [7.0, 820, 470]],
+    [[0, 820, 470], [1.4, 650, 300], [2.6, 220, 160], [3.3, 390, 160], [4.0, 560, 160], [5.2, 600, 330]],
+    [[0, 760, 420], [0.9, 260, 252, 1], [2.4, 300, 300], [3.45, 588, 252, 1], [5.0, 600, 262]],
+    [[0, 780, 420], [0.75, 230, 255, 1], [1.47, 230, 255, 1], [2.19, 560, 255, 1], [2.91, 230, 255, 1], [3.63, 230, 255, 1], [4.6, 640, 195], [5.3, 650, 196, 1], [6.3, 820, 470]],
+    [[0, 760, 420], [1.6, 600, 303, 1], [2.85, 450, 409, 1], [4.4, 560, 410], [5.8, 820, 470]],
+    [[0, 520, 470], [0.4, 600, 303, 1], [1.5, 560, 120], [5.6, 420, 300], [8.5, 600, 280], [10.3, 820, 470]],
+    [[0, 820, 470], [2.0, 330, 236], [4.0, 360, 250], [6.0, 520, 330], [8.3, 820, 470]],
+    [[0, 520, 330], [0.55, 302, 226, 1], [2.4, 520, 470], [3.6, 598, 470, 1], [4.8, 820, 470]],
+    [[0, 820, 470], [2.6, 600, 200], [3.15, 240, 108, 1], [3.32, 284, 108, 1], [3.49, 328, 108, 1], [3.66, 372, 108, 1], [3.83, 416, 108, 1], [4.6, 393, 376], [5.2, 393, 376, 1], [5.9, 820, 470]]
+  ];
   var TF = [["'a' in 'cat'", 1], ["len('code') == 4", 1], ["3 * '2' == 6", 0], ["10 // 3 == 3", 1], ["'Py' + 'thon' == 'Python'", 1]];
 
   /* ---------------- markup ---------------- */
@@ -62,7 +76,7 @@
   var OFF = spk + '<path d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   var coin = function (cls) { return '<div class="kx-emb ' + (cls || "") + '" aria-hidden="true"><i class="kx-ring"></i><i class="kx-ring b"></i><span class="kx-coin">{ }</span></div>'; };
   var pixel = function (pose, cls) { return '<div class="kx-pix ' + (cls || "") + '" data-pose="' + pose + '"><span class="kx-pixs"><span class="kx-strip" style="background-image:url(' + PIX + pose + '.webp)"></span></span><i class="kx-shadow"></i></div>'; };
-  var win = function (inner) { return '<div class="kw"><div class="kw-bar"><i></i><i></i><i></i><span>kaun-banega-coder</span></div><div class="kw-body">' + inner + "</div></div>"; };
+  var win = function (inner) { return '<div class="kw"><div class="kw-bar"><i></i><i></i><i></i><span>kaun-banega-coder</span></div><div class="kw-body">' + inner + '<i class="kx-click"></i><i class="kx-ptr"></i></div></div>'; };
   var code = function (lines) { return '<div class="kc">' + lines.map(function (l, i) { return "<div><b>" + (i + 1) + "</b>" + l + "</div>"; }).join("") + "</div>"; };
   var py = function (s) { return s.replace(/('[^']*')/g, "\u0001$1\u0002").replace(/(\d+)/g, '<span class="n">$1</span>').replace(/\u0001/g, '<span class="s">').replace(/\u0002/g, "</span>").replace(/\b(len|print)\b/g, '<span class="f">$1</span>'); };
 
@@ -128,15 +142,12 @@
   el.setAttribute("aria-label", "Kaun Banega Coder intro");
   el.innerHTML =
     '<div class="ki-sky" aria-hidden="true"></div>' +
-    '<section class="ki-card">' + coin("ki-emb") +
-      '<p class="ki-kicker">Kaun Banega</p><h1 class="ki-title">Coder</h1>' +
-      '<p class="ki-tag">The Python quiz show · Your seat is waiting</p>' +
-      '<button class="ki-start" type="button" data-ki="play"><span class="ki-tri" aria-hidden="true"></span><span>Play the intro</span></button>' +
-      '<p class="ki-meta"><span class="ki-snd">' + ON + '</span> 1 min 27 s · sound on <span class="ki-k"><span class="ki-dot">·</span> <kbd>Enter</kbd> to play</span></p>' +
-      '<button class="ki-skiplink" type="button" data-ki="skip">Skip intro</button>' +
-    "</section>" +
     '<div class="ki-show" hidden>' +
+      '<div class="kx-fx" aria-hidden="true"><i class="kx-glow g1"></i><i class="kx-glow g2"></i><i class="kx-beam b1"></i><i class="kx-beam b2"></i><i class="kx-beam b3"></i>' +
+        ["{ }", "print()", "for i in", "def", "==", "[ ]", "True", "</>", "if/else", "range()", "len()", "+="].map(function (w, i) {
+          return '<span class="kx-tok" style="left:' + ((i * 37 + 7) % 96) + "%;--d:" + (16 + (i * 7) % 12) + "s;--dl:-" + ((i * 3.3) % 16).toFixed(1) + "s;--fs:" + (13 + (i * 5) % 9) + 'px">' + w.replace(/</g, "&lt;") + "</span>"; }).join("") + "</div>" +
       '<div class="kx-stage" aria-hidden="true">' +
+        '<i class="kx-burst"></i><i class="kx-sweep"></i>' +
         '<div class="kx-story">' + LINES.map(function (l, i) { return '<p class="kx-line ' + (l.cls || "") + '" data-l="' + i + '"></p>'; }).join("") + pixel("pointq", "kx-storypix") + "</div>" +
         coin("kx-flycoin") +
         '<div class="kx-brand">' + pixel("dance", "kx-brandpix") +
@@ -150,6 +161,7 @@
       "</div>" +
       '<button type="button" class="kx-letsplay" data-ki="done">Let\'s play →</button>' +
       '<p class="ki-rot">Turn your phone sideways for a bigger picture</p>' +
+      '<button class="ki-sound" type="button" data-ki="sound">' + ON + '<span>Tap for sound</span></button>' +
       '<button class="ki-mute" type="button" data-ki="mute" aria-label="Mute" title="Sound (M)"><span class="on">' + ON + '</span><span class="off">' + OFF + "</span></button>" +
       '<button class="ki-skip" type="button" data-ki="skip" aria-label="Skip the intro"><span>Skip</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l8 7-8 7zM14 5l8 7-8 7z" fill="currentColor"/></svg><kbd>Esc</kbd></button>' +
       '<div class="ki-bar" aria-hidden="true"><i></i></div>' +
@@ -157,7 +169,7 @@
 
   /* ---------------- engine ---------------- */
   var $ = function (s) { return el.querySelector(s); }, $$ = function (s) { return Array.prototype.slice.call(el.querySelectorAll(s)); };
-  var audio, show, bar, closing = false, raf = 0, started = false, wall0 = 0, useWall = false;
+  var audio, show, bar, closing = false, raf = 0, started = false, wall0 = 0, aud = false;
   var clamp = function (v, a, b) { return v < a ? a : v > b ? b : v; };
   var typed = function (s, a, b, t) { return t <= a ? "" : t >= b ? s : s.slice(0, Math.round(s.length * (t - a) / (b - a))); };
   // change the page only when a value changes (the frame loop runs 60 times a second)
@@ -167,7 +179,9 @@
     var k = memo.get(node); if (!k) { k = {}; memo.set(node, k); }
     if (k[key] === val) return; k[key] = val;
     if (key === "text") node.textContent = val; else if (key === "html") node.innerHTML = val;
-    else if (key.charAt(0) === "-") node.style.setProperty(key, val); else node.classList.toggle(key, !!val);
+    else if (key.charAt(0) === "-") node.style.setProperty(key, val);
+    else if (typeof val === "number" && val) { node.classList.remove(key); void node.offsetWidth; node.classList.add(key); }
+    else node.classList.toggle(key, !!val);
   }
 
   function mount() {
@@ -180,7 +194,7 @@
     el.addEventListener("pointermove", function () { if (started) wake(); });
     addEventListener("resize", fit);
     stars(); fit();
-    setTimeout(function () { var b = $(".ki-start"); if (b) b.focus({ preventScroll: true }); }, 50);
+    play();
   }
   function fit() { el.style.setProperty("--s", Math.min(innerWidth / 1280, innerHeight / 720).toFixed(4)); }
   function stars() {
@@ -192,18 +206,26 @@
     }
     $(".ki-sky").innerHTML = h;
   }
-  function now() { return useWall ? (performance.now() - wall0) / 1000 : audio.currentTime; }
+  // the clock: the wall clock until the soundtrack plays, then the soundtrack
+  function now() { return aud ? audio.currentTime : (performance.now() - wall0) / 1000; }
   function play() {
     if (closing || started) return;
     started = true;
+    wall0 = performance.now();
     el.classList.add("playing");
     show.hidden = false;
-    var toWall = function () { if (useWall) return; useWall = true; wall0 = performance.now() - audio.currentTime * 1000; el.classList.add("muted", "nosound"); };
-    var p = audio.play();
-    if (p && p.catch) p.catch(toWall);
-    // the soundtrack never starts (blocked, offline): the picture runs on the wall clock
-    setTimeout(function () { if (!useWall && audio.currentTime === 0 && !closing) { try { audio.pause(); } catch (e) {} toWall(); } }, 2500);
+    sound(true);
     wake(); frame();
+  }
+  // start the soundtrack where the picture is; if the browser blocks it, offer "Tap for sound"
+  function sound(first) {
+    if (aud || closing) return;
+    var at = now(), p;
+    try { audio.muted = false; audio.currentTime = at; p = audio.play(); } catch (e) { p = null; }
+    var ok = function () { if (closing) return; try { if (Math.abs(audio.currentTime - now()) > 0.25) audio.currentTime = now(); } catch (e) {} aud = true; el.classList.remove("nosnd", "muted"); };
+    var no = function () { el.classList.add("nosnd"); };
+    if (p && p.then) p.then(ok, no); else no();
+    if (first) setTimeout(function () { if (!aud && !closing) no(); }, 1500);
   }
   var idleT = 0;
   function wake() { el.classList.add("awake"); clearTimeout(idleT); idleT = setTimeout(function () { el.classList.remove("awake"); }, 2600); }
@@ -211,7 +233,7 @@
     var t = now();
     draw(t);
     bar.style.transform = "scaleX(" + clamp(t / END, 0, 1).toFixed(4) + ")";
-    if (useWall && t >= END) return close(true);
+    if (!aud && t >= END) return close(true);
     raf = requestAnimationFrame(frame);
   }
 
@@ -220,6 +242,8 @@
   function draw(t) {
     if (!N.story) ["story", "flycoin", "brand", "ch", "dlg", "say", "more", "storypix", "letsplay"].forEach(function (k) {
       N[k] = $({ story: ".kx-story", flycoin: ".kx-flycoin", brand: ".kx-brand", ch: ".kx-ch", dlg: ".kx-dlg", say: ".kx-say", more: ".kx-more", storypix: ".kx-storypix", letsplay: ".kx-letsplay" }[k]); });
+    // time for the CSS: the camera, the background and the light drift with it
+    el.style.setProperty("--t", t.toFixed(3));
     // story (0 – 7.4 s)
     put(N.story, "on", t < 7.4);
     $$(".kx-line").forEach(function (n, i) { var l = LINES[i]; put(n, "text", typed(l.text, l.a, l.b, t)); });
@@ -227,6 +251,7 @@
     // the coin flies in, then settles above the logo (7.6 – 9.4 s, and again 80.6 – 82 s)
     put(N.flycoin, "on", (t > 7.6 && t < 9.4) || (t > 80.6 && t < 82.0));
     put(N.flycoin, "settle", (t > 8.6 && t < 9.4) || (t > 81.3 && t < 82.0));
+    put($(".kx-burst"), "on", (t > 7.95 && t < 9.0) || (t > 80.95 && t < 82.0));
     // brand: welcome (9.3 – 17.8 s) and finale (81.7 s – end)
     var welcome = t > 9.3 && t < 17.8, finale = t > 81.7;
     put(N.brand, "on", welcome || finale);
@@ -240,12 +265,16 @@
     var line = null;
     for (var i = SAY.length - 1; i >= 0; i--) if (t >= SAY[i][0] - 0.3) { line = SAY[i]; break; }
     put(N.say, "text", line ? typed(line[2], line[0], line[1], t) : "");
+    put(N.dlg, "talk", !!line && t > line[0] && t < line[1]);
     put(N.more, "on", !!line && t > line[1] + 0.2);
     // chapters
     var c = -1;
     for (var k = 0; k < CH.length; k++) if (t >= CH[k].a && t < CH[k].b) c = k;
     put(N.ch, "on", c >= 0);
     if (c >= 0) chapter(c, t - CH[c].a, CH[c].b - t);
+    // a light sweep at every scene change
+    var cut = [7.7, 17.7].concat(CH.map(function (x) { return x.a; }), [80.5]).some(function (x) { return t > x - 0.1 && t < x + 0.7; });
+    put($(".kx-sweep"), "on", cut);
   }
   var lastCh = -1;
   function chapter(c, lt, left) {
@@ -266,8 +295,28 @@
       N.ch.classList.remove("enter", "same"); void N.ch.offsetWidth; N.ch.classList.add("enter"); if (prevScr === C.scr) N.ch.classList.add("same");
     }
     put(N.ch, "leave", left < 0.45);
+    // slow camera push on the window through the chapter, and the cursor working the screen
+    N.ch.style.setProperty("--kb", clamp(lt / (C.b - C.a), 0, 1).toFixed(4));
+    pointer(c, lt);
     put(N.ch, "keepwin", left < 0.45 && c + 1 < CH.length && CH[c + 1].scr === C.scr);
     ({ home: home, fff: fff, seat: seat, energy: energy, path: path, hof: hof })[C.scr](c, lt);
+  }
+  var ease = function (k) { return k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; };
+  function pointer(c, lt) {
+    var P = PTR[c], i = 0;
+    while (i < P.length - 1 && lt >= P[i + 1][0]) i++;
+    var a = P[i], b = P[Math.min(i + 1, P.length - 1)], k = b[0] > a[0] ? ease(clamp((lt - a[0]) / (b[0] - a[0]), 0, 1)) : 1;
+    var x = a[1] + (b[1] - a[1]) * k, y = a[2] + (b[2] - a[2]) * k;
+    var ptr = N.ptr || (N.ptr = $$(".kx-ptr")), clk = N.clk || (N.clk = $$(".kx-click"));
+    var on = $(".sc.on"), body = on && on.parentNode;
+    ptr.forEach(function (p) { p.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px)"; p.style.opacity = p.parentNode === body ? "1" : "0"; });
+    // a click: the cursor dips and a ring opens where it pressed
+    var hit = null;
+    for (var j = 0; j < P.length; j++) if (P[j][3] && lt >= P[j][0] && lt < P[j][0] + 0.45) hit = P[j];
+    ptr.forEach(function (p) { put(p, "down", !!hit && lt - hit[0] < 0.16); });
+    clk.forEach(function (r) {
+      if (hit && r.parentNode === body) { r.style.left = hit[1] + "px"; r.style.top = hit[2] + "px"; put(r, "on", hit[0] + c * 100); } else put(r, "on", 0);
+    });
   }
   function home(c, lt) {
     var s = $(".sc-home");
@@ -325,12 +374,12 @@
   }
 
   /* ---------------- controls ---------------- */
-  function toggleMute() { if (useWall) return; audio.muted = !audio.muted; el.classList.toggle("muted", audio.muted); wake(); }
+  function toggleMute() { if (!aud) return sound(); audio.muted = !audio.muted; el.classList.toggle("muted", audio.muted); wake(); }
   function onClick(e) {
     var b = e.target.closest("[data-ki]");
-    if (!b) { if (started) wake(); return; }
+    if (!b) { if (started) { wake(); sound(); } return; }
     var k = b.getAttribute("data-ki");
-    if (k === "play") play();
+    if (k === "sound") sound();
     else if (k === "skip") close(false);
     else if (k === "done") close(true);
     else if (k === "mute") toggleMute();
@@ -338,9 +387,8 @@
   function onKey(e) {
     if (closing) return;
     if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(false); }
-    else if ((e.key === "Enter" || e.key === " ") && !started) { e.preventDefault(); e.stopPropagation(); play(); }
-    else if ((e.key === "m" || e.key === "M") && started) toggleMute();
-    else if (started) wake();
+    else if (e.key === "m" || e.key === "M") toggleMute();
+    else { wake(); sound(); }
   }
   function close(ended) {
     if (closing) return;
@@ -362,6 +410,6 @@
     }, ended ? 900 : 560);
   }
   // for screenshot checks: draw the intro as it is at second t, without the soundtrack
-  window.__kbcIntroAt = function (t) { if (!started) { started = true; el.classList.add("playing"); show.hidden = false; } cancelAnimationFrame(raf); draw(t); bar.style.transform = "scaleX(" + clamp(t / END, 0, 1) + ")"; };
+  window.__kbcIntroAt = function (t) { closing = closing || false; cancelAnimationFrame(raf); try { audio.pause(); } catch (e) {} aud = false; draw(t); bar.style.transform = "scaleX(" + clamp(t / END, 0, 1) + ")"; };
   if (document.body) mount(); else document.addEventListener("DOMContentLoaded", mount);
 })();

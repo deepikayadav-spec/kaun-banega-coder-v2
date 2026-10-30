@@ -399,3 +399,68 @@ html.intro-on body>.wrap,html.intro-on #bg3d,html.intro-on .aurora,html.intro-on
 @media (prefers-reduced-motion:reduce){#kintro *,#kintro{animation:none!important}}
 .kx-story .kx-pix,.kx-brand .kx-pix{position:absolute}
 @media (max-height:520px){.ki-skip{padding:6px 9px 6px 12px;font-size:12px;gap:6px}.ki-skip svg{width:12px;height:12px}.ki-mute{width:34px;height:34px}}
+
+/* ===== Motion: the intro never stands still (camera, background, light, cursor) ===== */
+/* --t is the intro's clock in seconds, set every frame by intro.js */
+#kintro{--t:0}
+.ki-show{animation:none}
+.ki-sky{inset:0 0 -45% 0;transform:translate3d(0,calc(var(--t) * -3.2px),0)}
+/* moving background: two big glows that drift, three slow spotlights, code words floating up */
+.kx-fx{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.kx-glow{position:absolute;width:70vmax;height:70vmax;border-radius:50%;filter:blur(40px);opacity:.55;mix-blend-mode:screen}
+.kx-glow.g1{left:-25vmax;top:-35vmax;background:radial-gradient(circle,rgba(110,70,230,.55),transparent 60%);transform:translate3d(calc(sin(var(--t) * .11rad) * 8vmax),calc(cos(var(--t) * .09rad) * 6vmax),0)}
+.kx-glow.g2{right:-30vmax;bottom:-40vmax;background:radial-gradient(circle,rgba(20,190,170,.45),transparent 60%);transform:translate3d(calc(cos(var(--t) * .08rad) * -9vmax),calc(sin(var(--t) * .12rad) * -6vmax),0)}
+.kx-beam{position:absolute;top:-20%;width:16vw;height:150%;background:linear-gradient(180deg,rgba(200,190,255,.10),rgba(200,190,255,0) 75%);transform-origin:50% 0;filter:blur(6px)}
+.kx-beam.b1{left:18%;transform:rotate(calc(18deg + sin(var(--t) * .35rad) * 9deg))}
+.kx-beam.b2{left:46%;transform:rotate(calc(sin(var(--t) * .28rad + 1rad) * 8deg))}
+.kx-beam.b3{left:74%;transform:rotate(calc(-18deg + sin(var(--t) * .31rad + 2rad) * 9deg))}
+.kx-tok{position:absolute;bottom:-40px;font:700 var(--fs,15px) var(--fm);color:rgba(94,234,212,.18);animation:kxTok var(--d,20s) linear infinite;animation-delay:var(--dl,0s);white-space:nowrap}
+.kx-tok:nth-child(3n){color:rgba(253,230,138,.16)}
+@keyframes kxTok{to{transform:translate3d(0,-118vh,0) rotate(10deg)}}
+/* the camera: a slow push on the story and the logo, and on the window through each chapter */
+.kx-story{transform:scale(calc(1 + min(var(--t),7.4) * .007));transform-origin:50% 45%}
+.kx-brand.on{transform:scale(calc(1.035 - min(max(var(--t) - 9.3,0),8) * .0045))}
+.kx-brand.on.out{transform:scale(1.06)}
+.kx-ch{--kb:0}
+.kx-win{transform:translate3d(calc(var(--kb) * -14px),calc(var(--kb) * -8px),0) scale(calc(1 + var(--kb) * .045)) perspective(1400px) rotateY(calc(-3deg + var(--kb) * 3deg));transform-origin:60% 50%}
+.kx-chpix{transform:translate3d(0,calc(var(--kb) * -10px),0)}
+.kx-head{transform:translate3d(calc(var(--kb) * 6px),0,0)}
+/* scene changes: a soft light sweeps across; the coin lands with a shock ring */
+.kx-sweep{left:-40%;top:-20%;width:40%;height:140%;background:linear-gradient(90deg,transparent,rgba(255,240,200,.16),rgba(120,240,220,.12),transparent);filter:blur(10px);transform:skewX(-18deg);opacity:0;pointer-events:none;z-index:4}
+.kx-sweep.on{animation:kxSweep .8s cubic-bezier(.4,0,.2,1)}
+@keyframes kxSweep{0%{opacity:0;left:-40%}20%{opacity:1}100%{opacity:0;left:110%}}
+.kx-burst{left:640px;top:178px;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;border:3px solid rgba(255,214,90,.9);box-shadow:0 0 30px rgba(255,200,61,.8);opacity:0;pointer-events:none}
+.kx-burst.on{animation:kxBurst 1s cubic-bezier(.1,.7,.3,1)}
+@keyframes kxBurst{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(46);border-width:.3px}}
+.kx-title{background-size:100% 100%}
+.kx-brand.on .kx-title::after{content:"Coder";position:absolute;inset:0;background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.85) 50%,transparent 62%) 0 0/260% 100% no-repeat;-webkit-background-clip:text;background-clip:text;color:transparent;animation:kxShine 3.2s ease-in-out .9s infinite}
+@keyframes kxShine{0%{background-position:150% 0}50%,100%{background-position:-60% 0}}
+/* Pixel's little face in the dialogue box moves while the line is being typed */
+.kx-dlg.talk .kx-av span{animation:kxAv .7s steps(7) infinite}
+@keyframes kxAv{to{background-position:100% 0}}
+.kx-dlg.talk .kx-av{box-shadow:0 0 0 2px rgba(94,234,212,.35),0 0 18px rgba(45,212,191,.35)}
+/* screens: their parts arrive one after another */
+.sc.on .hm-in>*,.sc.on.sc-fff>*,.sc-seat.on>*,.sc.on.sc-path>*,.sc.on .hf-main>*{animation:kxPart .7s cubic-bezier(.2,.9,.25,1) backwards}
+.sc.on .hm-in>:nth-child(2),.sc.on.sc-fff>:nth-child(2),.sc-seat.on>:nth-child(2),.sc.on.sc-path>:nth-child(2),.sc.on .hf-main>:nth-child(2){animation-delay:.08s}
+.sc.on .hm-in>:nth-child(3),.sc.on.sc-fff>:nth-child(3),.sc-seat.on>:nth-child(3),.sc.on.sc-path>:nth-child(3),.sc.on .hf-main>:nth-child(3){animation-delay:.16s}
+.sc.on .hm-in>:nth-child(4),.sc.on.sc-fff>:nth-child(4),.sc-seat.on>:nth-child(4),.sc.on.sc-path>:nth-child(4){animation-delay:.24s}
+.sc.on .hm-in>:nth-child(5),.sc-seat.on>:nth-child(5),.sc.on.sc-path>:nth-child(5){animation-delay:.32s}
+.sc.on .hm-in>:nth-child(6),.sc.on.sc-path>:nth-child(n+6){animation-delay:.4s}
+@keyframes kxPart{from{opacity:0;transform:translateY(16px)}}
+.kx-ch.same .sc.on *{animation-delay:0s}
+.kx-ch.same .sc.on .hm-in>*{animation:none}
+/* the cursor that works the game screens, and the ring where it clicks */
+.sc .kx-cursor{display:none!important}
+.kx-ptr{position:absolute;left:0;top:0;width:24px;height:24px;margin:-3px 0 0 -4px;z-index:9;pointer-events:none;opacity:0;transition:opacity .3s,scale .12s;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 2l15 11-7 1.4 4 7.6-3 1.6-4-7.8L4 21z' fill='%23fff' stroke='%23111' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;filter:drop-shadow(0 3px 5px rgba(0,0,0,.6))}
+.kx-ptr.down{scale:.82}
+.kx-click{position:absolute;left:0;top:0;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;border:2px solid rgba(253,230,138,.95);z-index:8;pointer-events:none;opacity:0}
+.kx-click.on{animation:kxClick .5s ease-out}
+@keyframes kxClick{0%{opacity:1;transform:scale(.4)}100%{opacity:0;transform:scale(3.6)}}
+/* sound: the intro starts at once; when the browser blocks sound, one tap brings it in */
+.ki-sound{position:absolute;left:50%;top:clamp(14px,2.6vw,30px);transform:translateX(-50%);display:none;align-items:center;gap:10px;padding:10px 18px;border-radius:999px;cursor:pointer;
+  font:800 14px var(--fb);color:#1A1205;background:linear-gradient(180deg,#FDE68A,#F59E0B);border:0;box-shadow:0 10px 30px -10px rgba(245,158,11,.8);animation:kxCta 1.8s ease-in-out infinite;z-index:5}
+.ki-sound svg{width:18px;height:18px}
+#kintro.nosnd .ki-sound{display:inline-flex}
+#kintro.nosnd .ki-mute{display:none}
+@media (prefers-reduced-motion:reduce){.ki-sky,.kx-glow,.kx-beam,.kx-story,.kx-brand.on,.kx-win,.kx-chpix,.kx-head{transform:none!important}}

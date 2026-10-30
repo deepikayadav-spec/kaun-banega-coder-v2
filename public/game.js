@@ -754,7 +754,7 @@ function dockHTML(mood,cls){const I=S.info,q=S.q;let say;
  else if(S.phase==="reveal")say=S.ok?(I&&I.rungUp?`You won ${fmtR(amountOf(I.after))}! Next question.`:CHEER[hashStr(q.id)%CHEER.length]):(S.practice?(S.timeout?"Time ran out. Read why, then try the next one.":"Not quite. Read why, then try the next one."):(S.timeout?"Too slow! Read why, then try a fresh variant.":"Not quite. Read why, then try a fresh variant."));
  else say=!S.practice&&S.run.en<=20?"Low battery! One more miss and we power down.":S.hint?"Hint's up there. You've got this.":S.run.answered===0?"First question! Read the code line by line.":CALM[hashStr(q.id)%CALM.length];
  const r=rungOf(),stake=r<OPEN?LADDER[r]:0;
- if(cls==="col")return `<aside class="mcol" aria-label="${esc(buddyName())}, your quiz buddy"><p class="say">${esc(say)}</p>${mascot(mood,176)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your quiz buddy</small></span></aside>`;
+ if(cls==="col")return `<aside class="mcol" aria-label="${esc(buddyName())}, your KBC buddy"><p class="say">${esc(say)}</p>${mascot(mood,176)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span></aside>`;
  return `<div class="coach">${mascot(mood,64)}<p class="say">${esc(say)}</p></div>`}
 
 /* ================= Sound ================= */
@@ -981,12 +981,12 @@ function ctxPose(){const h=istHour(),min=(Date.now()-T0)/60000;
  if(h>=5&&h<11)return "chai";
  return "pointq"}
 const buddyName=()=>(COSTUMES[CHAR]||COSTUMES.pixel).name;
-function homeLine(r,st){if(!P.answered)return `Hi! I'm ${buddyName()}, your quiz buddy.`+"  Win Fastest Finger First, then climb the money board one question at a time.";
+function homeLine(r,st){if(!P.answered)return `Hi! I'm ${buddyName()}, your KBC buddy.`+"  Win Fastest Finger First, then climb the money board one question at a time.";
  return `Welcome back! Every game starts fresh at 10. Wallet: ${fmtR(P.coins||0)}.`}
 function vHome(){const best=P.best||0,coins=P.coins||0;
  const greet=esc(quipText("homebubble"));
  return `<section class="home4 enter">
-<div class="h4-bot"><p class="say">${P.answered?greet:esc(`Hi! I'm ${buddyName()}, your quiz buddy. Win Fastest Finger First to take the hot seat!`)}</p>${mascot(ctxPose(),300)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your quiz buddy</small></span><button class="btn quiet sm" data-act="buddy">Change buddy</button></div>
+<div class="h4-bot"><p class="say">${P.answered?greet:esc(`Hi! I'm ${buddyName()}, your KBC buddy. Win Fastest Finger First to take the hot seat!`)}</p>${mascot(ctxPose(),300)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span><button class="btn quiet sm" data-act="buddy">Change buddy</button></div>
 <div class="h-hero">
 <span class="emb hlogo" aria-hidden="true"><i class="er"></i><i class="er er2"></i><span class="ec">{ }</span></span>
 <div class="wish3"><span class="wd3" aria-hidden="true">${DIYA}</span><div><b>Happy Diwali!</b><span class="wmsg">Wishes first, KBC Next!</span></div><span class="wd3" aria-hidden="true">${DIYA}</span></div>
@@ -1317,7 +1317,7 @@ function fbTick(){if(document.hidden)return;P.tOn=(P.tOn||0)+10000;P.fbAt=P.fbAt
 setInterval(fbTick,10000);
 /* Pixel can be hidden from the header; the hot seat then gives its space to the question */
 function syncBuddy(){const off=!!store.get("kbc-hide-buddy",false),b=$("#buddybtn");document.body.classList.toggle("nobuddy",off);
- if(b){const n=buddyName();b.setAttribute("aria-pressed",off);b.title=off?`Show ${n}`:`Hide ${n}`;b.setAttribute("aria-label",off?`Show ${n}, your quiz buddy`:`Hide ${n}, your quiz buddy`);const l=b.querySelector(".lbl");if(l)l.textContent=off?`Show ${n}`:`Hide ${n}`}}
+ if(b){const n=buddyName();b.setAttribute("aria-pressed",off);b.title=off?`Show ${n}`:`Hide ${n}`;b.setAttribute("aria-label",off?`Show ${n}, your KBC buddy`:`Hide ${n}, your KBC buddy`);const l=b.querySelector(".lbl");if(l)l.textContent=off?`Show ${n}`:`Hide ${n}`}}
 syncBuddy();
 /* The hot seat and Fastest Finger shrink their question column to fit the window instead of scrolling */
 function fitScreen(){const m=$("#mainc")||$(".fffw");if(!m||!(S.screen==="play"||S.screen==="fff"||S.screen==="seat"))return;
@@ -1518,7 +1518,7 @@ function fffBegin(){const F=S.fff;if(!F||!F.intro)return;F.intro=false;F.t0=Date
 function fffBot(){const F=S.fff,m=F.intro?"warm":F.done==="ok"?"finish":F.done?(F.timeout?"tired":"bonk"):F.panic?"panic":"run";
  const go=F.intro?"Read the rules, then hit Play. The clock waits for you!":F.panic?["Hurry! Clock is melting!","Faster faster faster!","Seconds left. GO!"][F.idx%3]:{sprint:"Type fast. Right answers jump ahead!",maze:"Find the path that hits the target!",cross:"Fill the blanks so every sum works!"}[F.mode];
  const say=F.done==="ok"?"Lightning fingers! The hot seat is yours.":F.done?(F.timeout?"Too slow! Try another round.":"Shake it off. Next round!"):go;
- return `<aside class="fffbot" data-m="${m}"><p class="say">${say}</p>${mascot(m,200)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your quiz buddy</small></span></aside>`}
+ return `<aside class="fffbot" data-m="${m}"><p class="say">${say}</p>${mascot(m,200)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span></aside>`}
 function fffHead(F){const M=FMODE[F.mode];return `<div class="qcard card fffhead"><div class="qtop"><span class="chip gold">Fastest Finger First</span><div class="clock ${F.time<=Math.min(10,F.max/3)?"low":""}" id="fclock" style="--p:${F.time/F.max}" role="timer" aria-label="Seconds left"><span>${F.time}</span></div></div>
 <h2 class="qtext">${M.icon} ${M.name}</h2><p class="fhow">${esc(M.how.join(" · "))}</p></div>`}
 function fffVerdict(F,expl){return F.done==="ok"?`<div class="verdict card good"><div><b>Done in ${F.secs.toFixed(1)} seconds! 🎉</b><span class="muted">You've earned the hot seat.</span></div><button class="btn gold" data-act="hotseat">Take the hot seat →</button></div>${expl}`
@@ -1532,7 +1532,7 @@ function fffDemo(mode){
 function seatDemo(){return `<div class="dm dm-seat"><div class="dm-qc">What does this print?<code>print(7 // 2)</code></div><div class="dm-opts"><span>A · 3.5</span><span class="pk">B · 3</span><span>C · 4</span><span>D · 2</span></div><div class="dm-lock">Lock answer</div><div class="dm-sol">💡 Reveal solution</div>${PTR}</div>`}
 /* Between winning Fastest Finger and the first question: what happens in the hot seat, with a demo */
 function vSeat(){const first=!P.runs;
- return `<div class="fffgrid"><aside class="fffbot"><p class="say">You made it! I'm ${esc(buddyName())}, and I'll be right here with you. Read this, then take your seat.</p>${mascot("finish",200)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your quiz buddy</small></span></aside><section class="fffw enter"><div class="qcard card fffhead fintro seatin"><span class="chip gold">The hot seat</span><div class="fi-ic" aria-hidden="true">🪑</div><h2 class="qtext">How the hot seat works</h2>
+ return `<div class="fffgrid"><aside class="fffbot"><p class="say">You made it! I'm ${esc(buddyName())}, and I'll be right here with you. Read this, then take your seat.</p>${mascot("finish",200)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span></aside><section class="fffw enter"><div class="qcard card fffhead fintro seatin"><span class="chip gold">The hot seat</span><div class="fi-ic" aria-hidden="true">🪑</div><h2 class="qtext">How the hot seat works</h2>
 <div class="fi-cols"><div><ol class="fi-steps"><li style="--i:0"><b>1</b><span>Read the question and the code</span></li><li style="--i:1"><b>2</b><span>Answer it the way the question asks: pick, tap, type or put in order</span></li><li style="--i:2"><b>3</b><span>Press <strong>Lock answer</strong>. Then tap <strong>Reveal solution</strong> to see the working</span></li></ol>
 <div class="fi-meta"><span>⏱ ${seatSecsNote()}</span><span>⚡ A miss costs energy; 3 right in a row gives some back</span><span>🛟 Stuck? Use a lifeline: 50:50, Ask the mentor or Flip</span></div></div>
 <figure class="demo" aria-label="How it looks: a short looping demo"><figcaption>Watch how it works</figcaption>${seatDemo()}</figure></div>

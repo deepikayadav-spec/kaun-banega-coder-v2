@@ -4,6 +4,8 @@ A KBC-style Python quiz game for university students. Students climb a 15-rung m
 
 The app follows the same pattern as Saturday Sprint: one Express app running as a single Vercel function, static pages in `public/`, Neon Postgres in production, and PGlite locally.
 
+**Live:** https://kaun-banega-coder-v2.vercel.app (admin at `/admin`). The Vercel project is `kaun-banega-coder-v2`, the function runs in `sin1` next to its Neon database, and pushes to `main` deploy to production.
+
 ## How it fits together
 
 | Piece | File | What it does |

@@ -155,7 +155,7 @@ test('a new skill graph changes every path at once and keeps earned progress', a
   assert.deepEqual(dry.body.diff.reqChanged, ['S2']);
   assert.deepEqual(dry.body.diff.rungs, { before: 15, after: 16 });
   assert.ok(dry.body.impact.orphanQuestions > 0);
-  assert.equal((await call('s', 'GET', '/api/boot')).body.graph.skills.length, 59, 'a dry run changes nothing');
+  assert.equal((await call('s', 'GET', '/api/boot')).body.graph.skills.length, JSON.parse(fs.readFileSync('server/content/skill-graph.json', 'utf8')).skills.length, 'a dry run changes nothing');
 
   const up = await call('a', 'POST', '/api/admin/graph/upload?name=g2.json', g);
   assert.equal(up.status, 200);
@@ -178,7 +178,7 @@ test('a new skill graph changes every path at once and keeps earned progress', a
   // Roll back: the original graph is live again and S2 opens again.
   const h = await call('a', 'GET', '/api/admin/graph/history');
   assert.equal(h.body.rows.find((r) => r.active).version, up.body.version);
-  assert.equal((await call('a', 'POST', '/api/admin/graph/activate', { version: 'skill-graph-2026-10-30' })).status, 200);
+  assert.equal((await call('a', 'POST', '/api/admin/graph/activate', { version: JSON.parse(fs.readFileSync('server/content/skill-graph.json', 'utf8')).version })).status, 200);
   const r = await call('s', 'GET', '/api/boot');
   assert.equal(r.body.graph.ladder.length, 15);
   assert.equal(r.body.engine.skills.S2.status, 'open');
@@ -186,16 +186,22 @@ test('a new skill graph changes every path at once and keeps earned progress', a
 });
 
 test('graphs with checkpoints as a list and group.checkpoint are understood', async () => {
+  // the built-in graph uses this shape (exported from the CT Skill Graph); upload it without any cp fields
   const live = JSON.parse(fs.readFileSync('server/content/skill-graph.json', 'utf8'));
-  const cps = Object.entries(live.checkpoints).map(([id, name]) => ({ id, name, groups: live.groups.filter((g) => g.cp === id).map((g) => g.id) }));
-  const g = { checkpoints: cps, groups: live.groups.map(({ cp, ...x }) => ({ ...x, checkpoint: cp })), skills: live.skills.map(({ cp, ...s }) => s) };
-  g.groups[0].skills = ['S4', 'S1', 'S2', 'S3', 'S5'];
+  const g = { checkpoints: live.checkpoints, groups: live.groups.map(({ cp, ...x }) => x), skills: live.skills.map(({ cp, ...s }) => s) };
+  g.groups[0].skills = ['S4', 'S1', 'S2', 'S5'];
   const up = await call('a', 'POST', '/api/admin/graph/upload', g);
   assert.equal(up.status, 200, JSON.stringify(up.body));
   const b = (await call('s', 'GET', '/api/boot')).body.graph;
-  assert.equal(b.checkpoints.C1, live.checkpoints.C1);
+  assert.equal(b.checkpoints.C1, live.checkpoints.find((c) => c.id === 'C1').name);
   assert.ok(b.groups.every((x) => x.cp), 'every group has its checkpoint');
   assert.ok(b.skills.every((x) => x.cp), 'every skill has its checkpoint');
   assert.deepEqual(b.skills.slice(0, 2).map((x) => x.id), ['S4', 'S1'], 'the group order is the path order');
-  await call('a', 'POST', '/api/admin/graph/activate', { version: 'skill-graph-2026-10-30' });
+  await call('a', 'POST', '/api/admin/graph/activate', { version: live.version });
+});
+
+test('feedback: once a student has sent it, the game knows not to ask again', async () => {
+  assert.equal((await call('s', 'GET', '/api/boot')).body.me.feedbackGiven, false);
+  assert.equal((await call('s', 'POST', '/api/feedback', { text: 'Loved the maze puzzle', ctx: { stars: 5, trigger: 'after 5 min on the platform' } })).status, 200);
+  assert.equal((await call('s', 'GET', '/api/boot')).body.me.feedbackGiven, true);
 });

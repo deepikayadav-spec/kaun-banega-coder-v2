@@ -1,1106 +1,1365 @@
 {
-  "checkpoints": {
-    "C1": "Basics: values, reading input, maths, decisions and functions",
-    "C2": "Loops and loop patterns",
-    "C3": "More list and text tools",
-    "C4": "Dictionaries and sets"
+ "version": "ct-graph-2026-10-30b",
+ "source": "CT L1 and L2(in).csv, the 105 L1 questions",
+ "checkpoints": [
+  {
+   "id": "C1",
+   "name": "Basics: values, input and output, maths, decisions and functions",
+   "groups": [
+    "G1",
+    "G2",
+    "G3",
+    "G4",
+    "G5",
+    "G6"
+   ]
   },
-  "groups": [
-    {
-      "id": "G1",
-      "cp": "C1",
-      "name": "Values and types"
-    },
-    {
-      "id": "G2",
-      "cp": "C1",
-      "name": "Input and output"
-    },
-    {
-      "id": "G3",
-      "cp": "C1",
-      "name": "Arithmetic"
-    },
-    {
-      "id": "G4",
-      "cp": "C1",
-      "name": "Conditions"
-    },
-    {
-      "id": "G5",
-      "cp": "C1",
-      "name": "Decisions"
-    },
-    {
-      "id": "G6",
-      "cp": "C1",
-      "name": "Functions"
-    },
-    {
-      "id": "G7",
-      "cp": "C2",
-      "name": "Loops"
-    },
-    {
-      "id": "G8",
-      "cp": "C2",
-      "name": "Going through a list"
-    },
-    {
-      "id": "G9",
-      "cp": "C2",
-      "name": "Loop patterns"
-    },
-    {
-      "id": "G10",
-      "cp": "C2",
-      "name": "Stopping early"
-    },
-    {
-      "id": "G11",
-      "cp": "C3",
-      "name": "More list tools"
-    },
-    {
-      "id": "G12",
-      "cp": "C3",
-      "name": "Text tools"
-    },
-    {
-      "id": "G13",
-      "cp": "C3",
-      "name": "Smarter searching"
-    },
-    {
-      "id": "G14",
-      "cp": "C4",
-      "name": "Dictionaries and sets"
-    }
-  ],
-  "skills": [
-    {
-      "id": "S1",
-      "address": "C1-G1-S1",
-      "name": "Tell whole numbers, decimals and text apart",
-      "group": "G1",
-      "cp": "C1",
-      "req": [],
-      "rmax": 1,
-      "check": "say whether 7, 7.5 and '7' are a whole number, a decimal or text",
-      "kps": {
-        "int": "Values: a number without a decimal point is a whole number (int), including 0 and negatives",
-        "float": "Values: a decimal point makes a decimal (float), even in 7.0",
-        "str": "Values: anything in quotes is text (str), even digits like \"7\"",
-        "type": "Values: type() names the kind as int, float or str",
-        "printq": "Values: print() shows text without its quotes, so 7 and \"7\" look the same when printed",
-        "plus": "Values: + adds numbers but joins text",
-        "mix": "Values: + cannot mix a number with text; Python stops with a TypeError"
-      },
-      "mistakes": {
-        "quotes": "Digits in quotes are text: \"45\" is text, not a number.",
-        "point": "A decimal point makes a decimal: 45.0 is a float, not a whole number.",
-        "whole": "A number with no decimal point is a whole number (int), even 0 or a negative number.",
-        "printq": "print() hides the quotes: \"45\" and 45 print the same, but they are different kinds.",
-        "join": "+ joins text: \"4\" + \"5\" is \"45\", not 9.",
-        "mix": "A number and text cannot be added: 4 + \"5\" stops with a TypeError.",
-        "names": "type() calls the kinds int, float and str, not 'integer', 'decimal' or 'string'."
-      },
-      "skipped_types": {
-        "path2": "Tap the Path (L1 T5): this skill's code runs straight down, line by line, so there is no path to choose.",
-        "sort": "Sort by Result (L2 T8): the results here are kinds of value (int, float, str), which have no smallest-to-largest order.",
-        "guess": "Guess the Code (L2 T11): probing hidden code needs input or decisions to vary; with values only, one guess gives it away.",
-        "path": "Choose the Path (L2 T7): needs if/else, which comes later (the engine already skips it for this skill).",
-        "cover": "Cover the Branches (L2 T12): needs if/else, which comes later (the engine already skips it for this skill)."
-      }
-    },
-    {
-      "id": "S2",
-      "address": "C1-G1-S2",
-      "name": "Know what a string is",
-      "group": "G1",
-      "cp": "C1",
-      "req": [
-        [
-          "S1"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S3",
-      "address": "C1-G1-S3",
-      "name": "Know what a list is",
-      "group": "G1",
-      "cp": "C1",
-      "req": [
-        [
-          "S1"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S4",
-      "address": "C1-G1-S4",
-      "name": "Store and update a value",
-      "group": "G1",
-      "cp": "C1",
-      "req": [],
-      "rmax": 1,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S5",
-      "address": "C1-G1-S5",
-      "name": "Convert between text and numbers",
-      "group": "G1",
-      "cp": "C1",
-      "req": [
-        [
-          "S1"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S6",
-      "address": "C1-G2-S1",
-      "name": "Read a line of input",
-      "group": "G2",
-      "cp": "C1",
-      "req": [
-        [
-          "S2"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S7",
-      "address": "C1-G2-S2",
-      "name": "Split text into pieces",
-      "group": "G2",
-      "cp": "C1",
-      "req": [
-        [
-          "S2"
-        ],
-        [
-          "S3"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S8",
-      "address": "C1-G2-S3",
-      "name": "Pick or change an item by position",
-      "group": "G2",
-      "cp": "C1",
-      "req": [
-        [
-          "S3",
-          "S2"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S9",
-      "address": "C1-G2-S4",
-      "name": "Find the length",
-      "group": "G2",
-      "cp": "C1",
-      "req": [
-        [
-          "S3",
-          "S2"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S10",
-      "address": "C1-G2-S5",
-      "name": "Print a value",
-      "group": "G2",
-      "cp": "C1",
-      "req": [],
-      "rmax": 1,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S11",
-      "address": "C1-G2-S6",
-      "name": "Print several values on one line",
-      "group": "G2",
-      "cp": "C1",
-      "req": [
-        [
-          "S10"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S12",
-      "address": "C1-G2-S7",
-      "name": "Show a number with fixed decimals",
-      "group": "G2",
-      "cp": "C1",
-      "req": [
-        [
-          "S1"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S13",
-      "address": "C1-G3-S1",
-      "name": "Calculate with + - *",
-      "group": "G3",
-      "cp": "C1",
-      "req": [
-        [
-          "S1"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {
-        "order": "Arithmetic: * is done before + and -, unless brackets say otherwise"
-      },
-      "mistakes": {
-        "order": "* comes before + and -: x * 3 - 2 multiplies first.",
-        "oneprobe": "One matching output does not prove the code: try a second input."
-      }
-    },
-    {
-      "id": "S14",
-      "address": "C1-G3-S2",
-      "name": "Divide with /, // and %",
-      "group": "G3",
-      "cp": "C1",
-      "req": [
-        [
-          "S1"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {
-        "floordiv": "Arithmetic: // divides and drops the decimal part",
-        "mod": "Arithmetic: % gives the remainder",
-        "truediv": "Arithmetic: / always gives a decimal (float)"
-      },
-      "mistakes": {
-        "floordiv": "// drops the decimal part: 17 // 5 is 3, not 3.4.",
-        "mod": "% gives the remainder, not the quotient: 17 % 5 is 2.",
-        "truediv": "/ keeps the decimal part: 10 / 4 is 2.5."
-      }
-    },
-    {
-      "id": "S15",
-      "address": "C1-G3-S3",
-      "name": "Use powers and square roots",
-      "group": "G3",
-      "cp": "C1",
-      "req": [
-        [
-          "S13"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S16",
-      "address": "C1-G3-S4",
-      "name": "Find the absolute difference",
-      "group": "G3",
-      "cp": "C1",
-      "req": [
-        [
-          "S13"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S17",
-      "address": "C1-G3-S5",
-      "name": "Round or cut a decimal to a whole number",
-      "group": "G3",
-      "cp": "C1",
-      "req": [
-        [
-          "S1"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S18",
-      "address": "C1-G4-S1",
-      "name": "Compare two values",
-      "group": "G4",
-      "cp": "C1",
-      "req": [
-        [
-          "S1"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S19",
-      "address": "C1-G4-S2",
-      "name": "Combine conditions with and, or, not",
-      "group": "G4",
-      "cp": "C1",
-      "req": [
-        [
-          "S18"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S20",
-      "address": "C1-G4-S3",
-      "name": "Check divisibility",
-      "group": "G4",
-      "cp": "C1",
-      "req": [
-        [
-          "S14"
-        ],
-        [
-          "S18"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S21",
-      "address": "C1-G5-S1",
-      "name": "Choose between two actions",
-      "group": "G5",
-      "cp": "C1",
-      "req": [
-        [
-          "S18"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {
-        "ifelse": "Decisions: exactly one of the if block and the else block runs",
-        "after": "Decisions: lines after the if/else run either way"
-      },
-      "mistakes": {
-        "both": "Only one of if and else runs, never both.",
-        "boundary": ">= includes the boundary: 40 >= 40 is True."
-      }
-    },
-    {
-      "id": "S22",
-      "address": "C1-G5-S2",
-      "name": "Choose one of several cases in order",
-      "group": "G5",
-      "cp": "C1",
-      "req": [
-        [
-          "S21"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {
-        "firsttrue": "Decisions: Python checks the conditions top to bottom and runs only the first one that is True",
-        "elsecatch": "Decisions: else catches everything the conditions above did not"
-      },
-      "mistakes": {
-        "boundary": ">= and < include or leave out the boundary: check the edge value exactly.",
-        "later": "Once one branch runs, the elif and else below it are skipped."
-      }
-    },
-    {
-      "id": "S23",
-      "address": "C1-G5-S3",
-      "name": "Handle the special case first",
-      "group": "G5",
-      "cp": "C1",
-      "req": [
-        [
-          "S21"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S24",
-      "address": "C1-G5-S4",
-      "name": "Keep a yes/no flag",
-      "group": "G5",
-      "cp": "C1",
-      "req": [
-        [
-          "S4"
-        ],
-        [
-          "S21"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S25",
-      "address": "C1-G6-S1",
-      "name": "Write a function that returns a value",
-      "group": "G6",
-      "cp": "C1",
-      "req": [
-        [
-          "S4"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S26",
-      "address": "C2-G7-S1",
-      "name": "Repeat for every number in a range",
-      "group": "G7",
-      "cp": "C2",
-      "req": [
-        [
-          "S4"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S27",
-      "address": "C2-G7-S2",
-      "name": "Include the end number of a range",
-      "group": "G7",
-      "cp": "C2",
-      "req": [
-        [
-          "S26"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S28",
-      "address": "C2-G7-S3",
-      "name": "Repeat while a condition holds",
-      "group": "G7",
-      "cp": "C2",
-      "req": [
-        [
-          "S18"
-        ],
-        [
-          "S4"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S29",
-      "address": "C2-G7-S4",
-      "name": "Put a loop inside a loop",
-      "group": "G7",
-      "cp": "C2",
-      "req": [
-        [
-          "S26",
-          "S32",
-          "S33",
-          "S28"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S30",
-      "address": "C2-G7-S5",
-      "name": "Read many lines in a loop",
-      "group": "G7",
-      "cp": "C2",
-      "req": [
-        [
-          "S6"
-        ],
-        [
-          "S5"
-        ],
-        [
-          "S26",
-          "S28"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S31",
-      "address": "C2-G7-S6",
-      "name": "Print one result per line in a loop",
-      "group": "G7",
-      "cp": "C2",
-      "req": [
-        [
-          "S10"
-        ],
-        [
-          "S26",
-          "S32",
-          "S33",
-          "S28"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S32",
-      "address": "C2-G8-S1",
-      "name": "Go through every item of a list or string",
-      "group": "G8",
-      "cp": "C2",
-      "req": [
-        [
-          "S3",
-          "S2"
-        ],
-        [
-          "S26"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S33",
-      "address": "C2-G8-S2",
-      "name": "Go through the positions of a list",
-      "group": "G8",
-      "cp": "C2",
-      "req": [
-        [
-          "S26"
-        ],
-        [
-          "S8"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S34",
-      "address": "C2-G8-S3",
-      "name": "Build a list by adding items",
-      "group": "G8",
-      "cp": "C2",
-      "req": [
-        [
-          "S3"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S35",
-      "address": "C2-G9-S1",
-      "name": "Keep a running total or product",
-      "group": "G9",
-      "cp": "C2",
-      "req": [
-        [
-          "S13"
-        ],
-        [
-          "S26",
-          "S32",
-          "S33",
-          "S28"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S36",
-      "address": "C2-G9-S2",
-      "name": "Count items that pass a test",
-      "group": "G9",
-      "cp": "C2",
-      "req": [
-        [
-          "S21"
-        ],
-        [
-          "S26",
-          "S32",
-          "S33",
-          "S28"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S37",
-      "address": "C2-G9-S3",
-      "name": "Remember the best value so far",
-      "group": "G9",
-      "cp": "C2",
-      "req": [
-        [
-          "S21"
-        ],
-        [
-          "S26",
-          "S32",
-          "S33",
-          "S28"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S38",
-      "address": "C2-G9-S4",
-      "name": "Break ties with a second rule",
-      "group": "G9",
-      "cp": "C2",
-      "req": [
-        [
-          "S37"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S39",
-      "address": "C2-G9-S5",
-      "name": "Start with a 'not found' answer",
-      "group": "G9",
-      "cp": "C2",
-      "req": [
-        [
-          "S4"
-        ],
-        [
-          "S21"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S40",
-      "address": "C2-G10-S1",
-      "name": "Stop a loop as soon as the answer is known",
-      "group": "G10",
-      "cp": "C2",
-      "req": [
-        [
-          "S26",
-          "S32",
-          "S33",
-          "S28"
-        ],
-        [
-          "S21"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S41",
-      "address": "C2-G10-S2",
-      "name": "Return as soon as the answer is found",
-      "group": "G10",
-      "cp": "C2",
-      "req": [
-        [
-          "S25"
-        ],
-        [
-          "S40"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S42",
-      "address": "C3-G11-S1",
-      "name": "Take a slice",
-      "group": "G11",
-      "cp": "C3",
-      "req": [
-        [
-          "S8"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S43",
-      "address": "C3-G11-S2",
-      "name": "Reverse a list or string",
-      "group": "G11",
-      "cp": "C3",
-      "req": [
-        [
-          "S3",
-          "S2"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S44",
-      "address": "C3-G11-S3",
-      "name": "Convert between 0-based and 1-based positions",
-      "group": "G11",
-      "cp": "C3",
-      "req": [
-        [
-          "S8"
-        ],
-        [
-          "S13"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S45",
-      "address": "C3-G11-S4",
-      "name": "Check whether a value is in a collection",
-      "group": "G11",
-      "cp": "C3",
-      "req": [
-        [
-          "S3",
-          "S2",
-          "S59",
-          "S54"
-        ],
-        [
-          "S18"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S46",
-      "address": "C3-G11-S5",
-      "name": "Find the largest or smallest in one go",
-      "group": "G11",
-      "cp": "C3",
-      "req": [
-        [
-          "S3",
-          "S2"
-        ],
-        [
-          "S18"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S47",
-      "address": "C3-G11-S6",
-      "name": "Find the total of a list",
-      "group": "G11",
-      "cp": "C3",
-      "req": [
-        [
-          "S3"
-        ],
-        [
-          "S13"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S48",
-      "address": "C3-G11-S7",
-      "name": "Sort a list",
-      "group": "G11",
-      "cp": "C3",
-      "req": [
-        [
-          "S3"
-        ],
-        [
-          "S18"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S49",
-      "address": "C3-G12-S1",
-      "name": "Join pieces of text into one string",
-      "group": "G12",
-      "cp": "C3",
-      "req": [
-        [
-          "S2"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S50",
-      "address": "C3-G12-S2",
-      "name": "Check what kind of character it is",
-      "group": "G12",
-      "cp": "C3",
-      "req": [
-        [
-          "S2"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S51",
-      "address": "C3-G12-S3",
-      "name": "Change text with string methods",
-      "group": "G12",
-      "cp": "C3",
-      "req": [
-        [
-          "S2"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S52",
-      "address": "C3-G13-S1",
-      "name": "Check every pair or every piece",
-      "group": "G13",
-      "cp": "C3",
-      "req": [
-        [
-          "S29"
-        ],
-        [
-          "S33",
-          "S42"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S53",
-      "address": "C3-G13-S2",
-      "name": "Update the answer instead of recomputing it",
-      "group": "G13",
-      "cp": "C3",
-      "req": [
-        [
-          "S35"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S54",
-      "address": "C4-G14-S1",
-      "name": "Know what a dictionary is",
-      "group": "G14",
-      "cp": "C4",
-      "req": [
-        [
-          "S1"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S55",
-      "address": "C4-G14-S2",
-      "name": "Look up a value by key",
-      "group": "G14",
-      "cp": "C4",
-      "req": [
-        [
-          "S54"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S56",
-      "address": "C4-G14-S3",
-      "name": "Store a value under a key",
-      "group": "G14",
-      "cp": "C4",
-      "req": [
-        [
-          "S54"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S57",
-      "address": "C4-G14-S4",
-      "name": "Go through a dictionary's keys",
-      "group": "G14",
-      "cp": "C4",
-      "req": [
-        [
-          "S32"
-        ],
-        [
-          "S55"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S58",
-      "address": "C4-G14-S5",
-      "name": "Count every value",
-      "group": "G14",
-      "cp": "C4",
-      "req": [
-        [
-          "S56",
-          "S8"
-        ],
-        [
-          "S26",
-          "S32",
-          "S33",
-          "S28"
-        ]
-      ],
-      "rmax": 3,
-      "kps": {},
-      "mistakes": {}
-    },
-    {
-      "id": "S59",
-      "address": "C4-G14-S6",
-      "name": "Keep unique values in a set",
-      "group": "G14",
-      "cp": "C4",
-      "req": [
-        [
-          "S3",
-          "S2"
-        ]
-      ],
-      "rmax": 2,
-      "kps": {},
-      "mistakes": {}
-    }
-  ]
+  {
+   "id": "C2",
+   "name": "Loops and loop patterns",
+   "groups": [
+    "G7",
+    "G8",
+    "G9"
+   ]
+  },
+  {
+   "id": "C3",
+   "name": "Lists and text",
+   "groups": [
+    "G10",
+    "G11",
+    "G12",
+    "G13"
+   ]
+  },
+  {
+   "id": "C4",
+   "name": "Dictionaries and sets",
+   "groups": [
+    "G14"
+   ]
+  }
+ ],
+ "groups": [
+  {
+   "id": "G1",
+   "checkpoint": "C1",
+   "name": "Values and types",
+   "skills": [
+    "S1",
+    "S2",
+    "S4",
+    "S5"
+   ]
+  },
+  {
+   "id": "G2",
+   "checkpoint": "C1",
+   "name": "Input and output",
+   "skills": [
+    "S6",
+    "S60",
+    "S10",
+    "S11",
+    "S12"
+   ]
+  },
+  {
+   "id": "G3",
+   "checkpoint": "C1",
+   "name": "Arithmetic",
+   "skills": [
+    "S13",
+    "S14",
+    "S15",
+    "S16",
+    "S17"
+   ]
+  },
+  {
+   "id": "G4",
+   "checkpoint": "C1",
+   "name": "Conditions",
+   "skills": [
+    "S18",
+    "S19",
+    "S20"
+   ]
+  },
+  {
+   "id": "G5",
+   "checkpoint": "C1",
+   "name": "Decisions",
+   "skills": [
+    "S21",
+    "S22",
+    "S23",
+    "S24"
+   ]
+  },
+  {
+   "id": "G6",
+   "checkpoint": "C1",
+   "name": "Functions",
+   "skills": [
+    "S25"
+   ]
+  },
+  {
+   "id": "G7",
+   "checkpoint": "C2",
+   "name": "Loops",
+   "skills": [
+    "S26",
+    "S27",
+    "S28",
+    "S29",
+    "S30",
+    "S31"
+   ]
+  },
+  {
+   "id": "G8",
+   "checkpoint": "C2",
+   "name": "Loop patterns",
+   "skills": [
+    "S35",
+    "S36",
+    "S37",
+    "S38",
+    "S39"
+   ]
+  },
+  {
+   "id": "G9",
+   "checkpoint": "C2",
+   "name": "Stopping early",
+   "skills": [
+    "S40",
+    "S41"
+   ]
+  },
+  {
+   "id": "G10",
+   "checkpoint": "C3",
+   "name": "Lists",
+   "skills": [
+    "S3",
+    "S7",
+    "S8",
+    "S9",
+    "S34",
+    "S32",
+    "S33"
+   ]
+  },
+  {
+   "id": "G11",
+   "checkpoint": "C3",
+   "name": "More list tools",
+   "skills": [
+    "S42",
+    "S43",
+    "S44",
+    "S45",
+    "S46",
+    "S47",
+    "S48"
+   ]
+  },
+  {
+   "id": "G12",
+   "checkpoint": "C3",
+   "name": "Text tools",
+   "skills": [
+    "S49",
+    "S50",
+    "S51"
+   ]
+  },
+  {
+   "id": "G13",
+   "checkpoint": "C3",
+   "name": "Smarter searching",
+   "skills": [
+    "S52",
+    "S53"
+   ]
+  },
+  {
+   "id": "G14",
+   "checkpoint": "C4",
+   "name": "Dictionaries and sets",
+   "skills": [
+    "S54",
+    "S55",
+    "S56",
+    "S57",
+    "S58",
+    "S59"
+   ]
+  }
+ ],
+ "skills": [
+  {
+   "id": "S1",
+   "address": "C1-G1-S1",
+   "name": "Tell whole numbers, decimals and text apart",
+   "short": "Data types",
+   "group": "G1",
+   "cp": "C1",
+   "req": [],
+   "rmax": 1,
+   "check": "say whether 7, 7.5 and '7' are a whole number, a decimal or text",
+   "kps": {
+    "int": "Values: a number without a decimal point is a whole number (int), including 0 and negatives",
+    "float": "Values: a decimal point makes a decimal (float), even in 7.0",
+    "str": "Values: anything in quotes is text (str), even digits like \"7\"",
+    "type": "Values: type() names the kind as int, float or str",
+    "printq": "Values: print() shows text without its quotes, so 7 and \"7\" look the same when printed",
+    "plus": "Values: + adds numbers but joins text",
+    "mix": "Values: + cannot mix a number with text; Python stops with a TypeError"
+   },
+   "mistakes": {
+    "quotes": "Digits in quotes are text: \"45\" is text, not a number.",
+    "point": "A decimal point makes a decimal: 45.0 is a float, not a whole number.",
+    "whole": "A number with no decimal point is a whole number (int), even 0 or a negative number.",
+    "printq": "print() hides the quotes: \"45\" and 45 print the same, but they are different kinds.",
+    "join": "+ joins text: \"4\" + \"5\" is \"45\", not 9.",
+    "mix": "A number and text cannot be added: 4 + \"5\" stops with a TypeError.",
+    "names": "type() calls the kinds int, float and str, not 'integer', 'decimal' or 'string'."
+   },
+   "skipped_types": {
+    "path2": "Tap the Path (L1 T5): this skill's code runs straight down, line by line, so there is no path to choose.",
+    "sort": "Sort by Result (L2 T8): the results here are kinds of value (int, float, str), which have no smallest-to-largest order.",
+    "guess": "Guess the Code (L2 T11): probing hidden code needs input or decisions to vary; with values only, one guess gives it away.",
+    "path": "Choose the Path (L2 T7): needs if/else, which comes later (the engine already skips it for this skill).",
+    "cover": "Cover the Branches (L2 T12): needs if/else, which comes later (the engine already skips it for this skill)."
+   }
+  },
+  {
+   "id": "S2",
+   "address": "C1-G1-S2",
+   "name": "Know what a string is",
+   "short": "Strings",
+   "group": "G1",
+   "cp": "C1",
+   "req": [
+    [
+     "S1"
+    ]
+   ],
+   "rmax": 2,
+   "check": "say that 'cat' is text made of 3 characters in a fixed order",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S3",
+   "address": "C3-G10-S3",
+   "name": "Know what a list is",
+   "short": "Lists",
+   "group": "G10",
+   "cp": "C3",
+   "req": [
+    [
+     "S1"
+    ]
+   ],
+   "rmax": 2,
+   "check": "say that [4, 1, 9] holds 3 values in a fixed order",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S4",
+   "address": "C1-G1-S4",
+   "name": "Store and update a value",
+   "short": "Variables",
+   "group": "G1",
+   "cp": "C1",
+   "req": [],
+   "rmax": 1,
+   "check": "keep a value in a named variable and change it later, e.g. price = 40, then price = price - 5",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S5",
+   "address": "C1-G1-S5",
+   "name": "Convert between text and numbers",
+   "short": "Type convert",
+   "group": "G1",
+   "cp": "C1",
+   "req": [
+    [
+     "S1"
+    ]
+   ],
+   "rmax": 2,
+   "check": "turn the text '42' into the number 42, and 42 back into '42'",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S6",
+   "address": "C1-G2-S6",
+   "name": "Read a line of input",
+   "short": "Input",
+   "group": "G2",
+   "cp": "C1",
+   "req": [
+    [
+     "S2"
+    ]
+   ],
+   "rmax": 2,
+   "check": "read one line the user types and keep it as text",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S7",
+   "address": "C3-G10-S7",
+   "name": "Split text into pieces",
+   "short": "Split text",
+   "group": "G10",
+   "cp": "C3",
+   "req": [
+    [
+     "S2"
+    ],
+    [
+     "S3"
+    ]
+   ],
+   "rmax": 3,
+   "check": "turn '10 20 30' into ['10', '20', '30']",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S8",
+   "address": "C3-G10-S8",
+   "name": "Pick or change an item by position",
+   "short": "Indexing",
+   "group": "G10",
+   "cp": "C3",
+   "req": [
+    [
+     "S3",
+     "S2"
+    ]
+   ],
+   "rmax": 2,
+   "check": "get the first item with nums[0], the last with nums[-1], and set nums[2] = 0",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S9",
+   "address": "C3-G10-S9",
+   "name": "Find the length",
+   "short": "Length",
+   "group": "G10",
+   "cp": "C3",
+   "req": [
+    [
+     "S3",
+     "S2"
+    ]
+   ],
+   "rmax": 2,
+   "check": "find how many items a list has, or how many letters a word has",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S10",
+   "address": "C1-G2-S10",
+   "name": "Print a value",
+   "short": "Print",
+   "group": "G2",
+   "cp": "C1",
+   "req": [],
+   "rmax": 1,
+   "check": "show a result on the screen",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S11",
+   "address": "C1-G2-S11",
+   "name": "Print several values on one line",
+   "short": "Print many",
+   "group": "G2",
+   "cp": "C1",
+   "req": [
+    [
+     "S10"
+    ]
+   ],
+   "rmax": 2,
+   "check": "print 3 and 7 on one line as '3 7'",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S12",
+   "address": "C1-G2-S12",
+   "name": "Show a number with fixed decimals",
+   "short": "Decimals",
+   "group": "G2",
+   "cp": "C1",
+   "req": [
+    [
+     "S1"
+    ]
+   ],
+   "rmax": 2,
+   "check": "print 2.5 as 2.50",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S13",
+   "address": "C1-G3-S13",
+   "name": "Calculate with + - *",
+   "short": "Maths",
+   "group": "G3",
+   "cp": "C1",
+   "req": [
+    [
+     "S1"
+    ]
+   ],
+   "rmax": 2,
+   "check": "work out 4 * 25 - 10",
+   "kps": {
+    "order": "Arithmetic: * is done before + and -, unless brackets say otherwise"
+   },
+   "mistakes": {
+    "order": "* comes before + and -: x * 3 - 2 multiplies first.",
+    "oneprobe": "One matching output does not prove the code: try a second input."
+   }
+  },
+  {
+   "id": "S14",
+   "address": "C1-G3-S14",
+   "name": "Divide with /, // and %",
+   "short": "Division",
+   "group": "G3",
+   "cp": "C1",
+   "req": [
+    [
+     "S1"
+    ]
+   ],
+   "rmax": 2,
+   "check": "say that 17 / 5 is 3.4, 17 // 5 is 3 and 17 % 5 is 2",
+   "kps": {
+    "floordiv": "Arithmetic: // divides and drops the decimal part",
+    "mod": "Arithmetic: % gives the remainder",
+    "truediv": "Arithmetic: / always gives a decimal (float)"
+   },
+   "mistakes": {
+    "floordiv": "// drops the decimal part: 17 // 5 is 3, not 3.4.",
+    "mod": "% gives the remainder, not the quotient: 17 % 5 is 2.",
+    "truediv": "/ keeps the decimal part: 10 / 4 is 2.5."
+   }
+  },
+  {
+   "id": "S15",
+   "address": "C1-G3-S15",
+   "name": "Use powers and square roots",
+   "short": "Powers",
+   "group": "G3",
+   "cp": "C1",
+   "req": [
+    [
+     "S13"
+    ]
+   ],
+   "rmax": 2,
+   "check": "work out 2 ** 10 and the square root of 49",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S16",
+   "address": "C1-G3-S16",
+   "name": "Find the absolute difference",
+   "short": "Difference",
+   "group": "G3",
+   "cp": "C1",
+   "req": [
+    [
+     "S13"
+    ]
+   ],
+   "rmax": 2,
+   "check": "find how far apart 3 and 10 are, whichever is bigger",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S17",
+   "address": "C1-G3-S17",
+   "name": "Round or cut a decimal to a whole number",
+   "short": "Rounding",
+   "group": "G3",
+   "cp": "C1",
+   "req": [
+    [
+     "S1"
+    ]
+   ],
+   "rmax": 2,
+   "check": "turn 7.6 into 8 by rounding, and into 7 by cutting",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S18",
+   "address": "C1-G4-S18",
+   "name": "Compare two values",
+   "short": "Compare",
+   "group": "G4",
+   "cp": "C1",
+   "req": [
+    [
+     "S1"
+    ]
+   ],
+   "rmax": 2,
+   "check": "decide whether marks >= 40",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S19",
+   "address": "C1-G4-S19",
+   "name": "Combine conditions with and, or, not",
+   "short": "And / or",
+   "group": "G4",
+   "cp": "C1",
+   "req": [
+    [
+     "S18"
+    ]
+   ],
+   "rmax": 2,
+   "check": "check age >= 18 and has_id at the same time, or whether x lies between L and R",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S20",
+   "address": "C1-G4-S20",
+   "name": "Check divisibility",
+   "short": "Divisibility",
+   "group": "G4",
+   "cp": "C1",
+   "req": [
+    [
+     "S14"
+    ],
+    [
+     "S18"
+    ]
+   ],
+   "rmax": 3,
+   "check": "decide whether 84 is divisible by 4",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S21",
+   "address": "C1-G5-S21",
+   "name": "Choose between two actions",
+   "short": "If-else",
+   "group": "G5",
+   "cp": "C1",
+   "req": [
+    [
+     "S18"
+    ]
+   ],
+   "rmax": 2,
+   "check": "print Pass if marks >= 40, otherwise Fail",
+   "kps": {
+    "ifelse": "Decisions: exactly one of the if block and the else block runs",
+    "after": "Decisions: lines after the if/else run either way"
+   },
+   "mistakes": {
+    "both": "Only one of if and else runs, never both.",
+    "boundary": ">= includes the boundary: 40 >= 40 is True."
+   }
+  },
+  {
+   "id": "S22",
+   "address": "C1-G5-S22",
+   "name": "Choose one of several cases in order",
+   "short": "Elif",
+   "group": "G5",
+   "cp": "C1",
+   "req": [
+    [
+     "S21"
+    ]
+   ],
+   "rmax": 3,
+   "check": "turn marks into a grade A to F, where the order of the checks decides the answer",
+   "kps": {
+    "firsttrue": "Decisions: Python checks the conditions top to bottom and runs only the first one that is True",
+    "elsecatch": "Decisions: else catches everything the conditions above did not"
+   },
+   "mistakes": {
+    "boundary": ">= and < include or leave out the boundary: check the edge value exactly.",
+    "later": "Once one branch runs, the elif and else below it are skipped."
+   }
+  },
+  {
+   "id": "S23",
+   "address": "C1-G5-S23",
+   "name": "Handle the special case first",
+   "short": "Special case",
+   "group": "G5",
+   "cp": "C1",
+   "req": [
+    [
+     "S21"
+    ]
+   ],
+   "rmax": 3,
+   "check": "print 'Invalid' for impossible input before doing anything else",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S24",
+   "address": "C1-G5-S24",
+   "name": "Keep a yes/no flag",
+   "short": "Flags",
+   "group": "G5",
+   "cp": "C1",
+   "req": [
+    [
+     "S4"
+    ],
+    [
+     "S21"
+    ]
+   ],
+   "rmax": 3,
+   "check": "set found = False, and change it to True when the item turns up",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S25",
+   "address": "C1-G6-S25",
+   "name": "Write a function that returns a value",
+   "short": "Functions",
+   "group": "G6",
+   "cp": "C1",
+   "req": [
+    [
+     "S4"
+    ]
+   ],
+   "rmax": 2,
+   "check": "complete def area(l, b) so it returns l * b",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S26",
+   "address": "C2-G7-S26",
+   "name": "Repeat for every number in a range",
+   "short": "For loops",
+   "group": "G7",
+   "cp": "C2",
+   "req": [
+    [
+     "S4"
+    ]
+   ],
+   "rmax": 2,
+   "check": "run code N times, once for each number 0, 1, … N - 1",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S27",
+   "address": "C2-G7-S27",
+   "name": "Include the end number of a range",
+   "short": "Range end",
+   "group": "G7",
+   "cp": "C2",
+   "req": [
+    [
+     "S26"
+    ]
+   ],
+   "rmax": 2,
+   "check": "loop from A to B with B included, using range(A, B + 1)",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S28",
+   "address": "C2-G7-S28",
+   "name": "Repeat while a condition holds",
+   "short": "While loops",
+   "group": "G7",
+   "cp": "C2",
+   "req": [
+    [
+     "S18"
+    ],
+    [
+     "S4"
+    ]
+   ],
+   "rmax": 3,
+   "check": "keep halving a number until it is 1",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S29",
+   "address": "C2-G7-S29",
+   "name": "Put a loop inside a loop",
+   "short": "Nested loops",
+   "group": "G7",
+   "cp": "C2",
+   "req": [
+    [
+     "S26",
+     "S32",
+     "S33",
+     "S28"
+    ]
+   ],
+   "rmax": 2,
+   "check": "print every (row, column) pair of a 3 by 3 grid, one pair per line",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S30",
+   "address": "C2-G7-S30",
+   "name": "Read many lines in a loop",
+   "short": "Read lines",
+   "group": "G7",
+   "cp": "C2",
+   "req": [
+    [
+     "S6"
+    ],
+    [
+     "S5"
+    ],
+    [
+     "S26",
+     "S28"
+    ]
+   ],
+   "rmax": 3,
+   "check": "read T lines, one per repeat of a loop",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S31",
+   "address": "C2-G7-S31",
+   "name": "Print one result per line in a loop",
+   "short": "Print lines",
+   "group": "G7",
+   "cp": "C2",
+   "req": [
+    [
+     "S10"
+    ],
+    [
+     "S26",
+     "S32",
+     "S33",
+     "S28"
+    ]
+   ],
+   "rmax": 3,
+   "check": "print the square of every number in a list, each on its own line",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S32",
+   "address": "C3-G10-S32",
+   "name": "Go through every item of a list or string",
+   "short": "For each",
+   "group": "G10",
+   "cp": "C3",
+   "req": [
+    [
+     "S3",
+     "S2"
+    ],
+    [
+     "S26"
+    ]
+   ],
+   "rmax": 3,
+   "check": "visit every number in a list, or every letter in a word",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S33",
+   "address": "C3-G10-S33",
+   "name": "Go through the positions of a list",
+   "short": "Positions",
+   "group": "G10",
+   "cp": "C3",
+   "req": [
+    [
+     "S26"
+    ],
+    [
+     "S8"
+    ]
+   ],
+   "rmax": 3,
+   "check": "visit i = 0, 1, 2 … and use nums[i] at each one",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S34",
+   "address": "C3-G10-S34",
+   "name": "Build a list by adding items",
+   "short": "Append",
+   "group": "G10",
+   "cp": "C3",
+   "req": [
+    [
+     "S3"
+    ]
+   ],
+   "rmax": 2,
+   "check": "start from [] and add numbers one by one",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S35",
+   "address": "C2-G8-S35",
+   "name": "Keep a running total or product",
+   "short": "Running total",
+   "group": "G8",
+   "cp": "C2",
+   "req": [
+    [
+     "S13"
+    ],
+    [
+     "S26",
+     "S32",
+     "S33",
+     "S28"
+    ]
+   ],
+   "rmax": 3,
+   "check": "add up, or multiply together, the numbers in a list one at a time inside a loop",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S36",
+   "address": "C2-G8-S36",
+   "name": "Count items that pass a test",
+   "short": "Counting",
+   "group": "G8",
+   "cp": "C2",
+   "req": [
+    [
+     "S21"
+    ],
+    [
+     "S26",
+     "S32",
+     "S33",
+     "S28"
+    ]
+   ],
+   "rmax": 3,
+   "check": "count how many numbers in a list are even",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S37",
+   "address": "C2-G8-S37",
+   "name": "Remember the best value so far",
+   "short": "Best value",
+   "group": "G8",
+   "cp": "C2",
+   "req": [
+    [
+     "S21"
+    ],
+    [
+     "S26",
+     "S32",
+     "S33",
+     "S28"
+    ]
+   ],
+   "rmax": 3,
+   "check": "find the highest score by checking one score at a time and replacing the best when a bigger one turns up",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S38",
+   "address": "C2-G8-S38",
+   "name": "Break ties with a second rule",
+   "short": "Tie break",
+   "group": "G8",
+   "cp": "C2",
+   "req": [
+    [
+     "S37"
+    ]
+   ],
+   "rmax": 3,
+   "check": "pick the right winner when two values are equal, for example by keeping the one that came first",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S39",
+   "address": "C2-G8-S39",
+   "name": "Start with a 'not found' answer",
+   "short": "Not found",
+   "group": "G8",
+   "cp": "C2",
+   "req": [
+    [
+     "S4"
+    ],
+    [
+     "S21"
+    ]
+   ],
+   "rmax": 3,
+   "check": "start the answer at -1 and change it only if a match turns up",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S40",
+   "address": "C2-G9-S40",
+   "name": "Stop a loop as soon as the answer is known",
+   "short": "Stop early",
+   "group": "G9",
+   "cp": "C2",
+   "req": [
+    [
+     "S26",
+     "S32",
+     "S33",
+     "S28"
+    ],
+    [
+     "S21"
+    ]
+   ],
+   "rmax": 3,
+   "check": "stop searching once the first negative number is found",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S41",
+   "address": "C2-G9-S41",
+   "name": "Return as soon as the answer is found",
+   "short": "Return early",
+   "group": "G9",
+   "cp": "C2",
+   "req": [
+    [
+     "S25"
+    ],
+    [
+     "S40"
+    ]
+   ],
+   "rmax": 3,
+   "check": "return True from inside the loop as soon as a match is found",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S42",
+   "address": "C3-G11-S42",
+   "name": "Take a slice",
+   "short": "Slicing",
+   "group": "G11",
+   "cp": "C3",
+   "req": [
+    [
+     "S8"
+    ]
+   ],
+   "rmax": 3,
+   "check": "get the middle part s[1:4]",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S43",
+   "address": "C3-G11-S43",
+   "name": "Reverse a list or string",
+   "short": "Reverse",
+   "group": "G11",
+   "cp": "C3",
+   "req": [
+    [
+     "S3",
+     "S2"
+    ]
+   ],
+   "rmax": 2,
+   "check": "turn 'abc' into 'cba'",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S44",
+   "address": "C3-G11-S44",
+   "name": "Convert between 0-based and 1-based positions",
+   "short": "Positions 1-n",
+   "group": "G11",
+   "cp": "C3",
+   "req": [
+    [
+     "S8"
+    ],
+    [
+     "S13"
+    ]
+   ],
+   "rmax": 3,
+   "check": "say that position 0 in Python is 'day 1' in the question",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S45",
+   "address": "C3-G11-S45",
+   "name": "Check whether a value is in a collection",
+   "short": "Membership",
+   "group": "G11",
+   "cp": "C3",
+   "req": [
+    [
+     "S3",
+     "S2",
+     "S59",
+     "S54"
+    ],
+    [
+     "S18"
+    ]
+   ],
+   "rmax": 3,
+   "check": "decide whether 'e' is one of the vowels",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S46",
+   "address": "C3-G11-S46",
+   "name": "Find the largest or smallest in one go",
+   "short": "Max & min",
+   "group": "G11",
+   "cp": "C3",
+   "req": [
+    [
+     "S3",
+     "S2"
+    ],
+    [
+     "S18"
+    ]
+   ],
+   "rmax": 3,
+   "check": "get the highest and lowest marks of a whole list at once, with max() and min()",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S47",
+   "address": "C3-G11-S47",
+   "name": "Find the total of a list",
+   "short": "Sum",
+   "group": "G11",
+   "cp": "C3",
+   "req": [
+    [
+     "S3"
+    ],
+    [
+     "S13"
+    ]
+   ],
+   "rmax": 3,
+   "check": "add up every number in a list in one go",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S48",
+   "address": "C3-G11-S48",
+   "name": "Sort a list",
+   "short": "Sorting",
+   "group": "G11",
+   "cp": "C3",
+   "req": [
+    [
+     "S3"
+    ],
+    [
+     "S18"
+    ]
+   ],
+   "rmax": 3,
+   "check": "put numbers smallest first",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S49",
+   "address": "C3-G12-S49",
+   "name": "Join pieces of text into one string",
+   "short": "Join text",
+   "group": "G12",
+   "cp": "C3",
+   "req": [
+    [
+     "S2"
+    ]
+   ],
+   "rmax": 2,
+   "check": "build 'a-b-c' from 'a', 'b' and 'c'",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S50",
+   "address": "C3-G12-S50",
+   "name": "Check what kind of character it is",
+   "short": "Char types",
+   "group": "G12",
+   "cp": "C3",
+   "req": [
+    [
+     "S2"
+    ]
+   ],
+   "rmax": 2,
+   "check": "decide whether a character is a digit, a capital letter or a space",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S51",
+   "address": "C3-G12-S51",
+   "name": "Change text with string methods",
+   "short": "Text methods",
+   "group": "G12",
+   "cp": "C3",
+   "req": [
+    [
+     "S2"
+    ]
+   ],
+   "rmax": 2,
+   "check": "turn ' Hi ' into 'HI' with strip() and upper(), or swap words with replace()",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S52",
+   "address": "C3-G13-S52",
+   "name": "Check every pair or every piece",
+   "short": "All pairs",
+   "group": "G13",
+   "cp": "C3",
+   "req": [
+    [
+     "S29"
+    ],
+    [
+     "S33",
+     "S42"
+    ]
+   ],
+   "rmax": 3,
+   "check": "look at every i < j pair in a list, or try every start and end of a piece of a list",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S53",
+   "address": "C3-G13-S53",
+   "name": "Update the answer instead of recomputing it",
+   "short": "Sliding",
+   "group": "G13",
+   "cp": "C3",
+   "req": [
+    [
+     "S35"
+    ]
+   ],
+   "rmax": 3,
+   "check": "move a window of k numbers one step: add the new one, take away the old one",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S54",
+   "address": "C4-G14-S54",
+   "name": "Know what a dictionary is",
+   "short": "Dictionaries",
+   "group": "G14",
+   "cp": "C4",
+   "req": [
+    [
+     "S1"
+    ]
+   ],
+   "rmax": 2,
+   "check": "say that {'tea': 10} links the key 'tea' to the value 10",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S55",
+   "address": "C4-G14-S55",
+   "name": "Look up a value by key",
+   "short": "Dict lookup",
+   "group": "G14",
+   "cp": "C4",
+   "req": [
+    [
+     "S54"
+    ]
+   ],
+   "rmax": 2,
+   "check": "find the price of 'tea' in a menu dictionary",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S56",
+   "address": "C4-G14-S56",
+   "name": "Store a value under a key",
+   "short": "Dict store",
+   "group": "G14",
+   "cp": "C4",
+   "req": [
+    [
+     "S54"
+    ]
+   ],
+   "rmax": 2,
+   "check": "add 'coffee': 30 to a menu dictionary",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S57",
+   "address": "C4-G14-S57",
+   "name": "Go through a dictionary's keys",
+   "short": "Dict loop",
+   "group": "G14",
+   "cp": "C4",
+   "req": [
+    [
+     "S32"
+    ],
+    [
+     "S55"
+    ]
+   ],
+   "rmax": 3,
+   "check": "print every item and its price from a menu dictionary",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S58",
+   "address": "C4-G14-S58",
+   "name": "Count every value",
+   "short": "Tally",
+   "group": "G14",
+   "cp": "C4",
+   "req": [
+    [
+     "S56",
+     "S8"
+    ],
+    [
+     "S26",
+     "S32",
+     "S33",
+     "S28"
+    ]
+   ],
+   "rmax": 3,
+   "check": "count how many times each digit 0 to 9 appears in a number, keeping one counter per digit",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S59",
+   "address": "C4-G14-S59",
+   "name": "Keep unique values in a set",
+   "short": "Sets",
+   "group": "G14",
+   "cp": "C4",
+   "req": [
+    [
+     "S3",
+     "S2"
+    ]
+   ],
+   "rmax": 2,
+   "check": "find the distinct numbers in a list",
+   "kps": {},
+   "mistakes": {}
+  },
+  {
+   "id": "S60",
+   "address": "C1-G2-S60",
+   "name": "Read several values from one line",
+   "short": "Read values",
+   "group": "G2",
+   "cp": "C1",
+   "req": [
+    [
+     "S6"
+    ],
+    [
+     "S4"
+    ]
+   ],
+   "rmax": 3,
+   "check": "read the line 100 85 into two variables with n, m = input().split()"
+  }
+ ]
 }

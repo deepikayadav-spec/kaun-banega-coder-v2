@@ -186,7 +186,10 @@ export function applyAnswer(G, st, id, type, ok) {
 export function skillProgress(sk) {
   if (!sk) return 0;
   if (sk.status === 'done') return 1;
-  return Math.min(0.99, ((sk.level - 1) * 2 + (sk.rightStreak ? 1 : 0)) / 8);
+  // At L1 a right answer first climbs R (R2 → R3) before the two-in-a-row streak; that climb counts as half a step,
+  // so the path shows movement from the first right answer.
+  const climb = sk.level === 1 ? Math.max(0, (sk.r || 1) - 2) * 0.5 : 0;
+  return Math.min(0.99, ((sk.level - 1) * 2 + (sk.rightStreak ? 1 : 0) + climb) / 8);
 }
 
 // A compact view of the state for the client: every skill's status, level, R and progress.

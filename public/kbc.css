@@ -2227,6 +2227,44 @@ body.nobuddy .fffgrid{grid-template-columns:minmax(0,880px)!important}
 body.nobuddy .fffsp{display:none!important}
 @media (min-width:1001px){body.nobuddy .home4 .h-hero{grid-column:2}}
 
+/* ===== My path redesign (new skill graph) ===== */
+/* the far end of the map melts into the background: no line, no text */
+.pworld{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 var(--fade,160px));mask-image:linear-gradient(to bottom,transparent 0,#000 var(--fade,160px))}
+.pworld .fog,.pworld .ckgate,.pworld .fog-msg{display:none!important}
+/* bubble labels: one or two words */
+.pworld .mnode small{max-width:120px!important;white-space:nowrap;font-size:12.5px!important;padding:3px 10px!important}
+/* prizes: no box, the money itself pops and glows */
+.pworld .chest,.pworld.univ .chest{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;overflow:visible!important;gap:4px!important;animation:none!important}
+.pworld.univ .chest::before,.pworld .chest::after,.pworld.univ .mprize.cur .chest::after{content:none!important;display:none!important}
+.pworld .chest .bnote,.pworld.univ .chest .bnote{display:block!important;width:84px!important;filter:drop-shadow(0 0 10px rgba(253,230,138,.85)) drop-shadow(0 6px 10px rgba(0,0,0,.5));animation:notePop 2.2s ease-in-out infinite}
+.pworld .chest .bnote svg{width:100%!important;height:auto}
+.pworld .chest b,.pworld.univ .chest b{font:900 17px var(--f-display)!important;color:#FDE68A!important;text-shadow:0 0 14px rgba(245,158,11,.8),0 2px 0 rgba(0,0,0,.5)!important}
+.pworld .mprize.cur .chest .bnote{width:100px!important;animation-duration:1.3s;filter:drop-shadow(0 0 18px rgba(253,230,138,1)) drop-shadow(0 6px 10px rgba(0,0,0,.5))}
+.pworld .mprize.won .chest .bnote{filter:drop-shadow(0 0 12px rgba(94,234,212,.9));animation:none}
+.pworld .mprize.lock .chest .bnote{filter:grayscale(.6) drop-shadow(0 0 6px rgba(253,230,138,.35));opacity:.8}
+.pworld .mprize .crown{display:none}
+@keyframes notePop{0%,100%{transform:scale(1) rotate(-2deg)}50%{transform:scale(1.14) rotate(2deg)}}
+@media (prefers-reduced-motion:reduce){.pworld .chest .bnote{animation:none!important}}
+.lg.prize{background:none!important;width:28px!important}.lg.prize .nthumb,.lg.prize svg{width:28px;display:block}
+html[data-theme="light"] .pworld .chest b{color:#B45309!important;text-shadow:0 0 10px rgba(245,158,11,.5)!important}
+.pworld .chest b::before,.pworld.univ .chest b::before{content:none!important}
+.pworld.univ .mprize .chest,.pworld.univ .mprize.cur .chest,.pworld.univ .mprize.won .chest,.pworld.univ .mprize.lock .chest{box-shadow:none!important;background:none!important;border:0!important;animation:none!important}
+.pworld .chest .nthumb{box-shadow:none!important;background:none!important}
+
+/* Home: the Diwali wish line always shows, even on short screens */
+.home4 .wish3 span.wmsg{display:block!important}
+
+/* Feedback: optional extra stars (Airbnb "11-star" idea); the main rating stays out of 5 */
+.fbx11{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:14px;border:1px dashed rgba(196,181,253,.45);background:rgba(124,58,237,.08)}
+.fbx11 .fbl{margin:0}
+.fbopt{margin-left:6px;padding:1px 8px;border-radius:999px;font:700 10.5px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:#C4B5FD;border:1px solid rgba(196,181,253,.45)}
+.fbx11 .fbs{width:36px!important;height:36px!important;font-size:19px!important}
+.fbx11 .fbs.on{background:linear-gradient(180deg,#C4B5FD,#7C3AED)!important;color:#fff!important;box-shadow:0 0 12px rgba(167,139,250,.6)!important}
+html[data-theme="light"] .fbx11{background:rgba(124,58,237,.06);border-color:rgba(124,58,237,.4)}
+html[data-theme="light"] .fbopt{color:#6D28D9;border-color:rgba(109,40,217,.4)}
+html[data-theme="light"] .fbx11 .fbs.on{background:linear-gradient(180deg,#A78BFA,#6D28D9)!important;color:#fff!important}
+@media (max-width:420px){.fbx11 .fbs{width:32px!important;height:32px!important}}
+
 /* Screen change: the new screen fades in (opacity only, so fixed-position sheets inside #app are not affected) */
 @keyframes kbcScrIn{from{opacity:0}}
 #app.scr-in{animation:kbcScrIn .26s cubic-bezier(.2,.8,.2,1)}

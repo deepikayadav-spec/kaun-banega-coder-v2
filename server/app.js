@@ -81,7 +81,7 @@ function graphForClient(c) {
     ladder: ladderFor(c.G.groups.length),
     checkpoints: c.graph.checkpoints,
     groups: c.graph.groups,
-    skills: c.graph.skills.map((s) => ({ id: s.id, name: s.name, group: s.group, cp: s.cp, req: s.req || [], rmax: s.rmax,
+    skills: c.graph.skills.map((s) => ({ id: s.id, name: s.name, short: s.short || null, group: s.group, cp: s.cp, req: s.req || [], rmax: s.rmax,
       check: s.check || null, kps: s.kps || {}, mistakes: s.mistakes || {} })),
     types: c.typesDoc.types.map((t) => ({ key: t.key, level: t.level, T: t.T, name: t.name, description: t.description, ui: t.ui,
       grading: t.grading, modes: t.modes, lifeline_5050: t.lifeline_5050 })),
@@ -94,8 +94,9 @@ app.get('/api/boot', requireStudent, wrap(async (req, res) => {
   const c = await content();
   const { st } = await loadState(req.student.roll_no, c.G);
   const gp = await one('SELECT data FROM game_progress WHERE roll_no = ?', req.student.roll_no);
+  const fb = await one('SELECT 1 AS x FROM feedback WHERE roll_no = ? LIMIT 1', req.student.roll_no);
   res.json({
-    me: { roll: req.student.roll_no, name: req.student.name, university: req.student.university || universityOf(req.student.roll_no) },
+    me: { roll: req.student.roll_no, name: req.student.name, university: req.student.university || universityOf(req.student.roll_no), feedbackGiven: !!fb },
     graph: graphForClient(c), engine: view(c, st), progress: gp ? gp.data : null
   });
 }));

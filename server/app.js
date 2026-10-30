@@ -94,8 +94,9 @@ app.get('/api/boot', requireStudent, wrap(async (req, res) => {
   const c = await content();
   const { st } = await loadState(req.student.roll_no, c.G);
   const gp = await one('SELECT data FROM game_progress WHERE roll_no = ?', req.student.roll_no);
+  const fb = await one('SELECT 1 AS x FROM feedback WHERE roll_no = ? LIMIT 1', req.student.roll_no);
   res.json({
-    me: { roll: req.student.roll_no, name: req.student.name, university: req.student.university || universityOf(req.student.roll_no) },
+    me: { roll: req.student.roll_no, name: req.student.name, university: req.student.university || universityOf(req.student.roll_no), feedbackGiven: !!fb },
     graph: graphForClient(c), engine: view(c, st), progress: gp ? gp.data : null
   });
 }));

@@ -1286,6 +1286,7 @@ const FB_AT=[5,15,30,60];
 function fbSafe(){const m=$("#fbm");if(m&&!m.hidden)return false;if(TI>=0)return false;if(document.querySelector(".modalx:not([hidden])"))return false;
  if(S.screen==="play"&&S.phase!=="reveal"&&S.phase!=="none")return false;if(S.screen==="fff"&&S.fff&&!S.fff.done&&!S.fff.intro)return false;return true}
 function fbTick(){if(document.hidden)return;P.tOn=(P.tOn||0)+10000;P.fbAt=P.fbAt||[];if(P.tOn%60000<10000)saveP();
+ if(P.fbSent||ME.feedbackGiven)return;   /* a student who has already sent feedback is never asked again */
  const due=FB_AT.filter(t=>P.tOn>=t*60000&&!P.fbAt.includes(t));if(!due.length||!fbSafe())return;
  P.fbAt.push(...due);saveP();FB.trigger=`after ${due[due.length-1]>=60?due[due.length-1]/60+" hour":due[due.length-1]+" min"} on the platform`;fbOpen();logEv({kind:"feedback_prompt",at:due[due.length-1]})}
 setInterval(fbTick,10000);
@@ -1666,7 +1667,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="fb-open"){FB.trigger="";fbOpen();return}
  if(a==="fb-close"){$("#fbm").hidden=true;return}
  if(a==="fb-star"){FB.stars=+b.dataset.n;FB.text=($("#fbtext")||{}).value||FB.text;$("#fbm").innerHTML=fbHTML();SFX.pick();return}
- if(a==="fb-send"){if(!(FB.stars>0&&FB.text.trim().length>=5))return;logEv({kind:"feedback",stars:FB.stars,text:FB.text.trim().slice(0,600),screen:S.screen});KBCQ.api("POST","/api/feedback",{text:FB.text.trim().slice(0,600),ctx:{stars:FB.stars,screen:S.screen,trigger:FB.trigger||"feedback button"}}).catch(()=>{});FB={stars:0,text:""};$("#fbm").innerHTML=fbHTML(true);ROBO.happy();return}
+ if(a==="fb-send"){if(!(FB.stars>0&&FB.text.trim().length>=5))return;logEv({kind:"feedback",stars:FB.stars,text:FB.text.trim().slice(0,600),screen:S.screen});P.fbSent=true;saveP();KBCQ.api("POST","/api/feedback",{text:FB.text.trim().slice(0,600),ctx:{stars:FB.stars,screen:S.screen,trigger:FB.trigger||"feedback button"}}).catch(()=>{});FB={stars:0,text:""};$("#fbm").innerHTML=fbHTML(true);ROBO.happy();return}
  if(a==="theme"){setTheme(document.documentElement.dataset.theme==="light"?"dark":"light");return}
  if(a==="pathjump"){pathJump(true);return}
  if(a==="pathsk"){if(b.classList.contains("lock"))return;const sk=b.dataset.sk,g=curGroup(),cur=curSkill(g);

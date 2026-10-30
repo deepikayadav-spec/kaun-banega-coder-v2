@@ -193,3 +193,9 @@ test('graphs with checkpoints as a list and group.checkpoint are understood', as
   assert.deepEqual(b.skills.slice(0, 2).map((x) => x.id), ['S4', 'S1'], 'the group order is the path order');
   await call('a', 'POST', '/api/admin/graph/activate', { version: live.version });
 });
+
+test('feedback: once a student has sent it, the game knows not to ask again', async () => {
+  assert.equal((await call('s', 'GET', '/api/boot')).body.me.feedbackGiven, false);
+  assert.equal((await call('s', 'POST', '/api/feedback', { text: 'Loved the maze puzzle', ctx: { stars: 5, trigger: 'after 5 min on the platform' } })).status, 200);
+  assert.equal((await call('s', 'GET', '/api/boot')).body.me.feedbackGiven, true);
+});

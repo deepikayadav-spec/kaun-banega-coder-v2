@@ -72,3 +72,20 @@
 .bq-legend code{color:var(--tx)}
 .bq-ta,.bq-code,.bq-gap select,.bq-tok select,.bq-probe input{background:#0B1222;color:#E2E8F0;border-color:var(--hl)}
 html[data-theme="light"] .bq-ta,html[data-theme="light"] .bq-code{background:#0F172A;color:#E2E8F0}
+
+/* the grouping question: numbered how-to, colour + letter for every group and piece, a note when a group is full */
+.bq-how{list-style:none;margin:0 0 4px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;border-radius:12px;background:rgba(94,234,212,.07);border:1px solid rgba(94,234,212,.35)}
+.bq-how li{display:flex;align-items:center;gap:10px;font:600 14.5px var(--f-body);color:var(--tx)}
+.bq-how b{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font:800 12px var(--f-mono);background:#5EEAD4;color:#04201B}
+.bq-how u{text-decoration:none;color:#FDE68A}
+.g0{--gc:#FFC83D}.g1{--gc:#5DE3C8}.g2{--gc:#A58FFF}.g3{--gc:#FF8FB1}
+.gtab{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--gc)!important}
+.gtab i,.gpc i,.bq-now b i{width:20px;height:20px;border-radius:50%;display:inline-grid;place-items:center;font:800 11px var(--f-mono);font-style:normal;background:var(--gc);color:#111;flex:none}
+.gtab.on{box-shadow:0 0 0 3px color-mix(in srgb,var(--gc) 40%,transparent)}
+.gtab.full:not(.on){opacity:.75}
+.gpc{display:inline-flex;align-items:center;gap:8px}
+.gpc.on i{background:#fff}
+.bq-now{margin:2px 0;font:600 14px var(--f-body);color:var(--tx2)}
+.bq-now b{display:inline-flex;align-items:center;gap:6px;padding:2px 10px 2px 4px;border-radius:999px;background:color-mix(in srgb,var(--gc) 22%,transparent);color:var(--tx)}
+.bq-warn{display:block;margin-top:6px;padding:6px 10px;border-radius:10px;background:rgba(251,113,133,.12);border:1px solid rgba(251,113,133,.5);color:#FDA4AF;font-weight:700}
+html[data-theme="light"] .bq-how{background:#F0FDFA}html[data-theme="light"] .bq-how u{color:#B45309}html[data-theme="light"] .bq-warn{color:#9F1239;background:#FFF1F2}

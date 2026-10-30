@@ -94,10 +94,11 @@ function render(q,S){const b=init(q,S),p=q.p,t=q.type,dis=S.phase!=="ask",rev=S.
    h=`<div class="tiles">${items.map((it,i)=>{const pos=b.order.indexOf(i);return btn("ord",`data-i="${i}" ${pos>-1?"disabled":""}`,"tile"+(pos>-1?" picked":""),`<span class="ord">${pos>-1?pos+1:""}</span>${code?`<code>${hl(it)}</code>`:esc(it)}`)}).join("")}</div>
    <div class="built${verdict}">${b.order.length?b.order.map(i=>`<span class="ln2">${code?hl(items[i]):esc(items[i])}</span>`).join(""):`<span class="muted">Tap the items above in order.</span>`}</div>
    ${!dis&&b.order.length?btn("clear","","btn quiet sm","Clear"):""}${t==="parsons"&&!dis&&b.order.length===items.length?btn("run","","btn quiet sm","▶ Run it"):""}${b.out?outBlock(b.out.error?"Python says":"Your program prints",b.out.error||b.out.stdout):""}`;break}
-  case "group":{const G=p.groups;
-   h=`<div class="bq-tabs" role="group">${G.map((g,gi)=>btn("gcur",`data-v="${esc(g)}"`,"hchip g"+gi+(b.cur===g?" on":""),esc(g)+` <small>${Object.values(b.assign).filter(x=>x===g).length}/4</small>`)).join("")}</div>
-   <div class="bq-grid">${p.pieces.map(pc=>{const g=b.assign[pc],gi=G.indexOf(g);return btn("grp",`data-v="${esc(pc)}"`,"mchip"+(g?" g"+gi+" on":""),esc(pc))}).join("")}</div>
-   <p class="muted bq-note">Choose a group above, then tap its pieces. Tap a piece again to take it out.</p>`;break}
+  case "group":{const G=p.groups,size=p.pieces.length/G.length,LT="ABCD",cnt=g=>Object.values(b.assign).filter(x=>x===g).length,ci=G.indexOf(b.cur);
+   h=`${dis?"":`<ol class="bq-how"><li><b>1</b><span>Tap a <u>group name</u> below. It lights up.</span></li><li><b>2</b><span>Tap the <u>${size} pieces</u> that belong to that group. They take its colour and letter.</span></li><li><b>3</b><span>Do the same for every group. Tap a piece again to take it out.</span></li></ol>`}
+   <div class="bq-tabs" role="group" aria-label="Groups">${G.map((g,gi)=>btn("gcur",`data-v="${esc(g)}" aria-pressed="${b.cur===g}"`,"hchip gtab g"+gi+(b.cur===g?" on":"")+(cnt(g)>=size?" full":""),`<i>${LT[gi]}</i>${esc(g)} <small>${cnt(g)}/${size}${cnt(g)>=size?" ✓":""}</small>`)).join("")}</div>
+   ${dis?"":`<p class="bq-now">Now filling: <b class="g${ci}"><i>${LT[ci]}</i>${esc(b.cur)}</b>${b.msg?`<span class="bq-warn">${esc(b.msg)}</span>`:""}</p>`}
+   <div class="bq-grid">${p.pieces.map(pc=>{const g=b.assign[pc],gi=G.indexOf(g);return btn("grp",`data-v="${esc(pc)}"`,"mchip gpc"+(g?" g"+gi+" on":""),`${g?`<i>${LT[gi]}</i>`:""}${esc(pc)}`)}).join("")}</div>`;break}
   case "gap":{const ans=det.answer;
    h=`<table class="bq-gap"><thead><tr><th>Line</th><th>Variable</th><th>Kind</th></tr></thead><tbody>${p.rows.map(r=>`<tr><td><code>${hl(r.line)}</code></td><td><code>${esc(r.var)}</code></td><td>${r.given?`<b>${esc(r.kind)}</b>`:
     `<select data-bq-in="gap" data-k="${esc(r.var)}" class="${rev&&ans?(String(b.cells[r.var]||"")===ans[r.var]?"right":"wrong"):""}" ${D}><option value="">choose…</option>${p.kinds.map(k=>`<option ${b.cells[r.var]===k?"selected":""}>${esc(k)}</option>`).join("")}</select>${rev&&ans&&b.cells[r.var]!==ans[r.var]?` <small>→ ${esc(ans[r.var])}</small>`:""}`}</td></tr>`).join("")}</tbody></table>`;break}
@@ -141,8 +142,11 @@ function act(btn,S){const q=S.q,b=S.bq,p=q.p,op=btn.dataset.op,v=btn.dataset.v,i
   case "bug":b.line=+btn.dataset.n;return true;
   case "ord":if(!b.order.includes(i))b.order.push(i);b.out=null;return true;
   case "clear":b.order=[];b.path=[];b.out=null;return true;
-  case "gcur":b.cur=v;return true;
-  case "grp":if(b.assign[v]===b.cur)delete b.assign[v];else if(Object.values(b.assign).filter(x=>x===b.cur).length<(p.pieces.length/p.groups.length))b.assign[v]=b.cur;return true;
+  case "gcur":b.cur=v;b.msg="";return true;
+  case "grp":{const size=p.pieces.length/p.groups.length,full=g=>Object.values(b.assign).filter(x=>x===g).length>=size;b.msg="";
+   if(b.assign[v]===b.cur){delete b.assign[v];return true}
+   if(full(b.cur)){b.msg=`This group already has ${size}. Tap one of its pieces to take it out, or pick another group.`;return true}
+   b.assign[v]=b.cur;if(full(b.cur)){const nx=p.groups.find(g=>!full(g));if(nx)b.cur=nx}return true}
   case "pathc":b.picks[i]=v;return true;
   case "cover":{const j=b.picks.indexOf(v);if(j>-1)b.picks.splice(j,1);else if(b.picks.length<p.need)b.picks.push(v);b.outs=null;return true}
   case "gpick":b.pick=i;return true;

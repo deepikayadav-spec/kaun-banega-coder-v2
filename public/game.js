@@ -844,7 +844,8 @@ async function loadFame(scope,uni,quiet){FQ={scope:scope||"all",uni:uni||""};con
   FAMEC=d;if(d.scope==="all")FAMEALL=d.rows;if(d.live!=null){LIVE=d.live;syncLive()}if(S.screen==="fame"||S.screen==="home")render()}
  catch(e){if(S.screen==="fame"&&e.status!==401){FAMEC={rows:[],err:e.message};render()}}}
 function initOnline(){loadFame("all");pingLive();setInterval(pingLive,30000);addEventListener("pagehide",()=>{flushEv(true);pushP(true)},SIG);
- if(!store.get("kbc-tour-"+ME.roll,false))setTimeout(()=>{if(S.screen==="home"&&TI<0)tourStart()},1200)}
+ /* the product tour waits for the intro film (intro.js) to finish */
+ (window.KBC_INTRO||Promise.resolve()).then(()=>{if(!store.get("kbc-tour-"+ME.roll,false))setTimeout(()=>{if(S.screen==="home"&&TI<0)tourStart()},900)})}
 function syncTeam(){const l=$("#teamlink");if(l)l.hidden=true}
 function saveFame(){pushP()}
 async function logout(){if(S.screen==="play")endRun("stop");await Promise.all([pushP(true),flushEv(true)]);try{await KBCQ.api("POST","/api/auth/logout")}catch(e){}

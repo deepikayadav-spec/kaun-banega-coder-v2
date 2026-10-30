@@ -1,0 +1,90 @@
+/* Intro film overlay (intro.js). Same night-sky, gold and cyan look as the login page and the game. */
+#kintro{--cy:#5EEAD4;--au:#FDE68A;--tx:#E2E8F0;--tx2:#94A3B8;
+  position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;overflow:hidden;color:var(--tx);
+  font-family:"Plus Jakarta Sans","Segoe UI",system-ui,sans-serif;
+  background:radial-gradient(ellipse 60% 45% at 50% 0%,rgba(245,158,11,.16),transparent 70%),radial-gradient(ellipse 50% 40% at 85% 30%,rgba(124,58,237,.2),transparent 70%),
+    radial-gradient(ellipse 50% 40% at 10% 85%,rgba(13,148,136,.18),transparent 70%),#04060E;
+  animation:kiIn .6s cubic-bezier(.2,.8,.2,1)}
+html.intro-on,html.intro-on body{overflow:hidden}
+/* nothing behind the overlay needs painting while it is up */
+html.intro-on body>.wrap,html.intro-on #bg3d,html.intro-on .aurora,html.intro-on .cosmos,html.intro-on #symfall{visibility:hidden}
+@keyframes kiIn{from{opacity:0}}
+
+.ki-sky{position:absolute;inset:0;pointer-events:none}
+.ki-sky i{position:absolute;border-radius:50%;background:#fff;animation:kiTw 3.4s ease-in-out infinite}
+@keyframes kiTw{50%{opacity:.2}}
+
+/* ---------- title card ---------- */
+.ki-card{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px;gap:0;transition:opacity .45s,transform .6s cubic-bezier(.2,.8,.2,1),filter .45s}
+.ki-card>*{animation:kiRise .9s cubic-bezier(.22,1,.36,1) backwards}
+.ki-card>:nth-child(2){animation-delay:.08s}.ki-card>:nth-child(3){animation-delay:.16s}.ki-card>:nth-child(4){animation-delay:.24s}
+.ki-card>:nth-child(5){animation-delay:.36s}.ki-card>:nth-child(6){animation-delay:.44s}.ki-card>:nth-child(7){animation-delay:.52s}
+@keyframes kiRise{from{opacity:0;transform:translateY(22px)}}
+.ki-emb{position:relative;width:118px;height:118px;display:grid;place-items:center;perspective:340px;margin-bottom:14px}
+.ki-coin{width:64%;height:64%;border-radius:50%;display:grid;place-items:center;font:800 26px "JetBrains Mono",ui-monospace,monospace;letter-spacing:-.06em;color:#3A2100;
+  background:radial-gradient(circle at 34% 30%,#FFF4C2,#FFC83D 45%,#D98A0B 85%);box-shadow:inset 0 -3px 0 #9A5A05,0 0 30px rgba(94,234,212,.45),0 0 60px rgba(255,200,61,.45);animation:kiSpin 6s ease-in-out infinite}
+.ki-ring{position:absolute;inset:0;border-radius:50%;border:2.5px solid #FFC83D;box-shadow:0 0 12px rgba(255,200,61,.6);animation:kiR1 7s linear infinite}
+.ki-ring.b{inset:-12px;border:1.5px solid var(--cy);box-shadow:0 0 12px rgba(94,234,212,.6);animation:kiR2 9s linear infinite}
+@keyframes kiR1{from{transform:rotateX(72deg) rotateZ(0)}to{transform:rotateX(72deg) rotateZ(360deg)}}
+@keyframes kiR2{from{transform:rotateY(72deg) rotateZ(0)}to{transform:rotateY(72deg) rotateZ(360deg)}}
+@keyframes kiSpin{50%{transform:rotateY(24deg)}0%,100%{transform:rotateY(-24deg)}}
+.ki-kicker{margin:0;font:700 clamp(13px,1.6vw,17px)/1 "Unbounded","Arial Black",sans-serif;letter-spacing:.5em;text-transform:uppercase;color:var(--tx2);padding-left:.5em}
+.ki-title{margin:8px 0 0;font:900 clamp(64px,11vw,132px)/.92 "Unbounded","Arial Black",sans-serif;letter-spacing:-.05em;
+  background:linear-gradient(180deg,#FFF4CC,#FFD25A 38%,#FFB21E 70%,#E07E06);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 28px rgba(253,230,138,.35));position:relative}
+.ki-title::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.75) 50%,transparent 65%) 0 0/250% 100% no-repeat;
+  -webkit-background-clip:text;background-clip:text;color:transparent;animation:kiShine 4.5s ease-in-out 1.2s infinite;pointer-events:none}
+.ki-title::after{content:"Coder"}
+@keyframes kiShine{0%{background-position:150% 0}45%,100%{background-position:-60% 0}}
+.ki-tag{margin:16px 0 30px;font:600 15px/1.4 "JetBrains Mono",ui-monospace,monospace;color:var(--tx2)}
+.ki-start{position:relative;display:inline-flex;align-items:center;gap:14px;min-height:60px;padding:0 34px 0 26px;border:0;border-radius:999px;cursor:pointer;
+  font:800 18px "Plus Jakarta Sans",system-ui,sans-serif;color:#1A1205;background:linear-gradient(180deg,#FDE68A,#F59E0B);
+  box-shadow:0 0 0 1px rgba(255,255,255,.25) inset,0 10px 30px -8px rgba(245,158,11,.7),0 0 46px rgba(245,158,11,.35);transition:transform .15s,filter .15s}
+.ki-start::before{content:"";position:absolute;inset:-6px;border-radius:inherit;border:1.5px solid rgba(253,230,138,.55);animation:kiPulse 2.2s ease-out infinite}
+@keyframes kiPulse{0%{opacity:.9;transform:scale(.96)}100%{opacity:0;transform:scale(1.18)}}
+.ki-start:hover{filter:brightness(1.07);transform:translateY(-2px)}
+.ki-start:active{transform:translateY(1px) scale(.98)}
+.ki-start:focus-visible,.ki-skiplink:focus-visible,.ki-skip:focus-visible,.ki-mute:focus-visible{outline:2px solid var(--cy);outline-offset:4px}
+.ki-tri{width:0;height:0;border-left:15px solid #1A1205;border-top:10px solid transparent;border-bottom:10px solid transparent;margin-left:4px}
+.ki-meta{margin:16px 0 0;font:600 12.5px "JetBrains Mono",monospace;color:var(--tx2);display:flex;align-items:center;gap:6px}
+.ki-meta kbd,.ki-skip kbd{font:700 10.5px "JetBrains Mono",monospace;padding:2px 6px;border-radius:6px;border:1px solid rgba(148,163,184,.4);color:var(--tx);background:rgba(255,255,255,.06)}
+.ki-dot{opacity:.5}
+.ki-skiplink{margin-top:22px;background:none;border:0;padding:6px 10px;color:var(--tx2);font:700 13px "Plus Jakarta Sans",sans-serif;cursor:pointer;letter-spacing:.02em;
+  text-decoration:underline;text-decoration-color:rgba(148,163,184,.4);text-underline-offset:4px;transition:color .15s}
+.ki-skiplink:hover{color:var(--tx)}
+#kintro.playing .ki-card{opacity:0;transform:scale(1.08);filter:blur(6px);pointer-events:none}
+
+/* ---------- the film ---------- */
+.ki-stage{position:absolute;inset:0;background:#000;animation:kiStage .7s cubic-bezier(.2,.8,.2,1)}
+@keyframes kiStage{from{opacity:0;transform:scale(1.03)}}
+.ki-video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+.ki-shade{position:absolute;inset:auto 0 0 0;height:140px;pointer-events:none;background:linear-gradient(transparent,rgba(0,0,0,.55));opacity:0;transition:opacity .4s}
+.ki-skip{position:absolute;right:clamp(14px,2.4vw,32px);bottom:clamp(18px,3vw,38px);display:inline-flex;align-items:center;gap:9px;padding:9px 12px 9px 16px;border-radius:999px;cursor:pointer;
+  color:#fff;font:800 14px "Plus Jakarta Sans",sans-serif;letter-spacing:.02em;background:rgba(8,12,24,.5);border:1px solid rgba(255,255,255,.22);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);opacity:.72;transition:opacity .3s,background .2s,transform .15s;animation:kiSkipIn .5s 1s backwards}
+@keyframes kiSkipIn{from{opacity:0;transform:translateX(10px)}}
+.ki-skip svg{width:15px;height:15px}
+.ki-skip:hover{opacity:1;background:rgba(8,12,24,.75);transform:translateY(-1px)}
+.ki-mute{position:absolute;left:clamp(14px,2.4vw,32px);bottom:clamp(18px,3vw,38px);width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:17px;line-height:1;
+  background:rgba(8,12,24,.5);border:1px solid rgba(255,255,255,.22);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);opacity:0;transition:opacity .3s}
+.ki-mute{display:grid;place-items:center;color:#fff}.ki-mute svg{width:18px;height:18px;display:block}
+.ki-mute .off,#kintro.muted .ki-mute .on{display:none}#kintro.muted .ki-mute .off{display:block}
+.ki-snd svg{width:14px;height:14px;display:block;color:var(--cy)}
+.ki-bar{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.12)}
+.ki-bar i{position:absolute;inset:0;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,#5EEAD4,#FDE68A,#F59E0B);box-shadow:0 0 10px rgba(253,230,138,.6)}
+#kintro.awake .ki-shade,#kintro.awake .ki-mute{opacity:1}
+#kintro.awake .ki-skip{opacity:1}
+#kintro.playing{cursor:none}#kintro.playing.awake{cursor:auto}
+
+/* ---------- leaving ---------- */
+#kintro.out{animation:kiOut .5s cubic-bezier(.4,0,.2,1) forwards}
+#kintro.out-end{animation:kiOutEnd .9s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes kiOut{to{opacity:0}}
+@keyframes kiOutEnd{0%{opacity:1}35%{opacity:1;filter:brightness(1.5)}100%{opacity:0;filter:brightness(1);transform:scale(1.04)}}
+
+/* touch screens: no keyboard hints; portrait phones get a nudge to turn sideways */
+@media (hover:none){.ki-skip kbd,.ki-k{display:none}}
+.ki-rot{display:none;position:absolute;left:0;right:0;top:max(18px,env(safe-area-inset-top));margin:0;text-align:center;font:700 12.5px "Plus Jakarta Sans",sans-serif;color:rgba(226,232,240,.75)}
+@media (orientation:portrait) and (max-width:600px){.ki-rot{display:block}}
+@media (max-width:560px){.ki-start{min-height:54px;font-size:16px;padding:0 26px 0 20px}.ki-tag{font-size:13px;margin-bottom:24px}.ki-meta{flex-wrap:wrap;justify-content:center}}
+@media (prefers-reduced-motion:reduce){#kintro *,#kintro{animation:none!important;transition:none!important}}

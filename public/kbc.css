@@ -2339,3 +2339,32 @@ header .tools#menu [data-act="logout"] svg{color:var(--p-mute)}
 .home4 .hlink:hover{color:var(--p-ivory)!important}
 .fbbtn{color:var(--p-gold-hi)!important;border-color:var(--p-line)!important;background:rgba(9,12,22,.85)!important}
 html[data-theme="light"] .fbbtn,html[data-theme="light"] .bname{background:#fff!important;color:var(--p-gold)!important;border-color:var(--p-line)!important}
+
+/* ===== Galaxy round: Pixel stands on a soft shadow (no name box), Diwali wish beside the diya ===== */
+.bname{display:none!important}
+.h4-bot .mascot,.mcol .mascot,.fffbot .mascot{position:relative;isolation:isolate}
+.h4-bot .mascot::after,.mcol .mascot::after,.fffbot .mascot::after{content:"";position:absolute;left:24%;right:24%;bottom:12%;height:8%;border-radius:50%;z-index:-1;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(2,3,10,.85),rgba(109,93,245,.35) 55%,rgba(255,79,176,.12) 75%,transparent);filter:blur(3px);animation:pxShadow 3.2s ease-in-out infinite}
+@keyframes pxShadow{50%{transform:scaleX(.82);opacity:.75}}
+@media (prefers-reduced-motion:reduce){.h4-bot .mascot::after,.mcol .mascot::after,.fffbot .mascot::after{animation:none}}
+.wishc{position:fixed;z-index:2;right:calc(max(16px,2.5vw) + 112px);bottom:30px;display:flex;flex-direction:column;align-items:flex-end;gap:2px;padding:10px 16px;border-radius:14px;
+  background:linear-gradient(135deg,rgba(255,79,176,.12),rgba(109,93,245,.12) 50%,rgba(59,130,246,.10));border:1px solid rgba(253,230,138,.3);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  box-shadow:0 12px 30px -12px rgba(0,0,0,.7);animation:wishIn .6s .3s cubic-bezier(.2,.8,.2,1) backwards}
+.wishc b{font:400 24px/1 "Great Vibes",cursive;color:#FDE68A;text-shadow:0 0 14px rgba(255,176,32,.55)}
+.wishc span{font:600 12.5px var(--f-body);color:#E2E8F0}
+@keyframes wishIn{from{opacity:0;transform:translateY(10px)}}
+html[data-theme="light"] .wishc{background:rgba(255,255,255,.9);border-color:rgba(161,98,7,.3)}
+html[data-theme="light"] .wishc b{color:#B45309;text-shadow:none}html[data-theme="light"] .wishc span{color:#334155}
+@media (max-width:760px){.wishc{right:16px;bottom:96px;padding:8px 12px}.wishc b{font-size:20px}.wishc span{font-size:11.5px}}
+@media (prefers-reduced-motion:reduce){.wishc{animation:none}}
+.home4 .ctready{margin-top:8px}
+.hbar .wchip{flex-direction:row!important;white-space:nowrap;min-height:0!important;height:36px}
+header .tools#menu #buddybtn{opacity:1!important}
+@media (max-width:600px){
+  header{flex-wrap:nowrap!important;gap:8px!important}
+  header .brand b{font-size:13px!important;white-space:nowrap}
+  header .livechip{margin-left:0!important}
+  .hbar{gap:6px}.menubtn{width:40px;height:36px}
+}
+@media (max-width:380px){header .brand b span{display:none}}
+@media (max-width:600px){header .livechip{display:none!important}header{min-width:0!important}header .brand{min-width:0;overflow:hidden}}

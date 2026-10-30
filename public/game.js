@@ -1684,7 +1684,9 @@ function pxTick(){const el=pxEl();if(!el){PXF.raf=0;return}const dt=1/60,F=PXF;
  const sp=(x,v,t,k,c)=>{const a=k*(t-x)-c*v;v+=a*dt;return [x+v*dt,v]};
  [F.rx,F.vrx]=sp(F.rx,F.vrx,F.trx,60,13);[F.ry,F.vry]=sp(F.ry,F.vry,F.try,60,13);[F.hy,F.vhy]=sp(F.hy,F.vhy,0,140,15);
  const sq=Math.max(-.04,Math.min(.04,-F.vhy/6000));const s=el.querySelector(".m3s")||el.firstElementChild;
- if(s)s.style.transform=`perspective(700px) translateY(${F.hy.toFixed(1)}px) rotateX(${F.rx.toFixed(2)}deg) rotateY(${F.ry.toFixed(2)}deg) scale(${(1-sq).toFixed(3)},${(1+sq).toFixed(3)})`;
+ /* Pixel is a picture of a 3D model: turning the picture in 3D (rotateX/rotateY) shows it as a flat card, so he follows the
+    cursor by leaning and drifting toward it instead, which keeps him looking solid */
+ if(s)s.style.transform=`translate(${(F.ry*.22).toFixed(1)}px,${(F.hy-F.rx*.18).toFixed(1)}px) rotate(${(F.ry*.13).toFixed(2)}deg) scale(${(1-sq).toFixed(3)},${(1+sq).toFixed(3)})`;
  const busy=F.hov||Math.abs(F.rx-F.trx)+Math.abs(F.ry-F.try)+Math.abs(F.vrx)+Math.abs(F.vry)+Math.abs(F.hy)+Math.abs(F.vhy)>.05;
  PXF.raf=busy||F.trx||F.try?requestAnimationFrame(pxTick):0}
 const pxKick=()=>{if(reduceMotion)return;PXF.vhy=-200;if(!PXF.raf)PXF.raf=requestAnimationFrame(pxTick)};

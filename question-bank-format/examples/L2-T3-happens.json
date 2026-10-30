@@ -1,0 +1,47 @@
+{
+  "id": "C1-G1-S1-L2-T3-R1-V1",
+  "skill": "S1",
+  "level": 2,
+  "type": "happens",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Edge",
+  "kps": [
+    "mix",
+    "str",
+    "int"
+  ],
+  "mistakes": [
+    "mix"
+  ],
+  "task": "What happens when this code runs?",
+  "code": "marks = 12\nextra = \"3\"\nprint(marks + extra)",
+  "payload": {
+    "options": [
+      {
+        "text": "It prints 123",
+        "why": "Python does not turn the number into text for you. A number and text cannot be added: 12 + \"3\" stops with a TypeError."
+      },
+      {
+        "text": "It prints 15",
+        "why": "Python does not turn the text into a number for you. A number and text cannot be added: 12 + \"3\" stops with a TypeError."
+      },
+      {
+        "text": "It stops with an error",
+        "correct": true
+      },
+      {
+        "text": "It never stops",
+        "why": "There is no loop here, so it always ends."
+      }
+    ],
+    "real": "TypeError: unsupported operand type(s) for +: 'int' and 'str'"
+  },
+  "ok": "marks is a whole number and extra is text. + cannot mix them, so Python stops with: TypeError: unsupported operand type(s) for +: 'int' and 'str'",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

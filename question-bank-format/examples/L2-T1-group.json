@@ -1,0 +1,64 @@
+{
+  "id": "C1-G1-S1-L2-T1-R1-V1",
+  "skill": "S1",
+  "level": 2,
+  "type": "group",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Edge",
+  "kps": [
+    "int",
+    "float",
+    "str"
+  ],
+  "mistakes": [
+    "quotes",
+    "point",
+    "whole"
+  ],
+  "task": "These twelve values hide three groups of four. Group them by their kind.",
+  "code": null,
+  "payload": {
+    "pieces": [
+      "-3",
+      "\"12.5\"",
+      "\"12\"",
+      "12.5",
+      "'Pune'",
+      "0",
+      "300",
+      "0.0",
+      "12.0",
+      "12",
+      "\"0\"",
+      "-3.5"
+    ],
+    "groups": {
+      "Whole numbers (int)": [
+        "12",
+        "-3",
+        "0",
+        "300"
+      ],
+      "Decimals (float)": [
+        "12.0",
+        "12.5",
+        "-3.5",
+        "0.0"
+      ],
+      "Text (str)": [
+        "\"12\"",
+        "\"12.5\"",
+        "'Pune'",
+        "\"0\""
+      ]
+    }
+  },
+  "ok": "Quotes make text, a decimal point makes a decimal, and the rest are whole numbers.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

@@ -1,0 +1,34 @@
+{
+  "id": "C1-G1-S1-L3-T2-R1-V1",
+  "skill": "S1",
+  "level": 3,
+  "type": "bug",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Typical",
+  "kps": [
+    "str",
+    "int"
+  ],
+  "mistakes": [
+    "quotes"
+  ],
+  "task": "Asha wants the age stored as a whole number, so the last line should print <class 'int'>. It prints <class 'str'>. Tap the wrong line.",
+  "code": null,
+  "payload": {
+    "answer": 2,
+    "lines": [
+      "name = \"Asha\"",
+      "age = \"12\"",
+      "height = 1.33",
+      "print(type(age))"
+    ]
+  },
+  "ok": "Line 2 puts the age in quotes, which makes it text. It should be age = 12.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

@@ -1,0 +1,195 @@
+// The KBC progression engine, ported from "KBC Progression Engine.html" (newState / address / applyAnswer).
+// Pure functions: no database, no clock. The server loads the graph and the bank's availability and stores the state.
+//
+// Address: C Checkpoint > G Skill group > S Skill > L Level > T Question type > R Difficulty > V Variant.
+// Rules (unchanged from the original):
+//   right: at L1 below rmax → R up one; otherwise first right arms a streak, second right in a row → next level at rmax
+//          (L4 → skill done, which opens every locked skill whose AND-of-OR prerequisites are now done).
+//   wrong: streak resets; at L1 on the starting R (>1) → drop to R1; otherwise next variant, and two misses on the
+//          same L-R cell switch to the next question type of that level.
+// Changes for the real bank:
+//   - the graph is skill-graph.json (stored rmax, skipped_types honoured);
+//   - a type is offered only if the bank has live questions for it at that skill and level;
+//   - hot seat serves only types whose modes include "hotseat" (practice-only types come up in Practice);
+//   - a skill with nothing to serve at its current level is "coming soon": it is not cleared, the next open skill is played.
+export const VARIANTS = 25;
+const LEVEL_NAMES = { 1: 'L1 Recognise', 2: 'L2 Reason', 3: 'L3 Repair', 4: 'L4 Create' };
+const R_NAMES = { 1: 'R1 Low', 2: 'R2 Medium', 3: 'R3 Hard' };
+
+export function compileGraph(graph, typesDoc) {
+  const types = {};
+  for (const t of typesDoc.types) types[t.key] = t;
+  const order = typesDoc.types.map((t) => t.key);
+  const branch = new Set(typesDoc.needs_branches || ['path', 'cover']);
+  const skills = graph.skills.map((s) => ({ ...s, req: s.req || [] }));
+  const idx = {};
+  skills.forEach((s, i) => { idx[s.id] = i; });
+  const decisions = (graph.groups.find((g) => /decision/i.test(g.name)) || { id: 'G5' }).id;
+  for (const S of skills) {
+    const seen = [], queue = S.req.flat();
+    while (queue.length) {
+      const n = queue.shift();
+      if (seen.includes(n) || idx[n] == null) continue;
+      seen.push(n);
+      queue.push(...skills[idx[n]].req.flat());
+    }
+    S.earlier = seen;
+    if (!S.rmax) S.rmax = seen.length >= 3 ? 3 : seen.length >= 1 ? 2 : 1;
+    S.skip = Object.keys(S.skipped_types || {});
+  }
+  for (const S of skills) S.branchOK = S.group === decisions || S.earlier.some((e) => skills[idx[e]].group === decisions);
+  const groups = graph.groups.map((g) => ({ ...g, skills: skills.filter((s) => s.group === g.id).map((s) => s.id) }));
+  return { checkpoints: graph.checkpoints, groups, skills, idx, types, order, branch };
+}
+
+// avail[skill][level][type][r] = sorted list of live variants
+export function buildAvail(rows) {
+  const a = {};
+  for (const q of rows) {
+    const t = (((a[q.skill] ||= {})[q.level] ||= {})[q.type] ||= {});
+    (t[q.difficulty] ||= []).push(q.variant);
+  }
+  for (const s in a) for (const l in a[s]) for (const t in a[s][l]) for (const r in a[s][l][t]) a[s][l][t][r].sort((x, y) => x - y);
+  return a;
+}
+
+export function typesFor(G, avail, S, l, mode) {
+  const base = G.order.filter((k) => G.types[k].level === l && (!G.branch.has(k) || S.branchOK) && !S.skip.includes(k)
+    && avail[S.id] && avail[S.id][l] && avail[S.id][l][k]);
+  if (!mode) return base;
+  const m = base.filter((k) => (G.types[k].modes || []).includes(mode));
+  return m.length ? m : base;
+}
+
+const blankSkill = (S) => ({ status: S.req.length ? 'locked' : 'open', level: 1, r: Math.min(2, S.rmax), cells: {},
+  streak: { key: null, count: 0 }, rightStreak: 0, tIdx: { 1: 0, 2: 0, 3: 0, 4: 0 }, vars: {}, q: 0, right: 0 });
+
+export function newState(G) {
+  const skills = {};
+  for (const S of G.skills) skills[S.id] = blankSkill(S);
+  return { v: 1, skills, q: 0, right: 0, drops: 0, retries: 0, used: {} };
+}
+
+// A state saved against an older graph: add new skills, re-check unlocks.
+export function upgradeState(G, st) {
+  if (!st || !st.skills) return newState(G);
+  for (const S of G.skills) if (!st.skills[S.id]) st.skills[S.id] = blankSkill(S);
+  unlock(G, st);
+  return st;
+}
+
+function unlock(G, st) {
+  const opened = [];
+  for (const S of G.skills) {
+    const ss = st.skills[S.id];
+    if (ss.status === 'locked' && S.req.every((alts) => alts.some((a) => st.skills[a] && st.skills[a].status === 'done'))) {
+      ss.status = 'open';
+      opened.push(S.id);
+    }
+  }
+  return opened;
+}
+
+export const playable = (G, avail, st, id) => typesFor(G, avail, G.skills[G.idx[id]], st.skills[id].level).length > 0;
+
+// The skill to play now: the first open skill (graph order) that has questions at its current level.
+export function activeSkill(G, avail, st) {
+  const open = G.skills.filter((S) => st.skills[S.id].status === 'open');
+  if (!open.length) return { id: null, allDone: true };
+  const p = open.find((S) => playable(G, avail, st, S.id));
+  return p ? { id: p.id } : { id: null, comingSoon: open.map((S) => S.id) };
+}
+
+export function typeFor(G, avail, st, id, mode) {
+  const S = G.skills[G.idx[id]], sk = st.skills[id], list = typesFor(G, avail, S, sk.level, mode);
+  return list.length ? list[sk.tIdx[sk.level] % list.length] : null;
+}
+
+export function nextV(st, id, type) {
+  const sk = st.skills[id], k = sk.level + '-' + type + '-' + sk.r;
+  return Math.min(VARIANTS, (sk.vars[k] || 0) + 1);
+}
+
+export function mixFor(G, id, r) {
+  const S = G.skills[G.idx[id]];
+  return r === 1 ? [] : r === 2 ? S.earlier.slice(0, 2) : S.earlier.slice(0, Math.max(3, S.earlier.length));
+}
+
+// Where the student is: the address of the next question. The bank may not have that exact R or V:
+// the nearest R it has is used, and the variant wraps round the variants it has.
+export function address(G, avail, st, id, mode) {
+  const S = G.skills[G.idx[id]], sk = st.skills[id], type = typeFor(G, avail, st, id, mode);
+  if (!type) return null;
+  const want = nextV(st, id, type), byR = avail[id][sk.level][type];
+  const rs = Object.keys(byR).map(Number);
+  const r = rs.includes(sk.r) ? sk.r : rs.sort((a, b) => Math.abs(a - sk.r) - Math.abs(b - sk.r) || a - b)[0];
+  const vs = byR[r], variant = vs.includes(want) ? want : vs[(want - 1) % vs.length];
+  return { skill: id, C: S.cp, G: S.group, level: sk.level, type, T: G.types[type].T, r: sk.r, difficulty: r, variant, wantV: want,
+    code: `${S.cp}·${S.group}·${id}·L${sk.level}·${G.types[type].T}·R${sk.r}·V${want}`, mix: mixFor(G, id, sk.r) };
+}
+
+// Apply one answer to the skill the question was served for. `type` is the type that was served.
+// Returns the transitions (for the history table) and a short message.
+export function applyAnswer(G, st, id, type, ok) {
+  const S = G.skills[G.idx[id]], sk = st.skills[id], tr = [];
+  if (!sk || sk.status !== 'open') return { transitions: tr, msg: '' };
+  const l = sk.level, r = sk.r, start = Math.min(2, S.rmax);
+  const vk = l + '-' + type + '-' + r;
+  sk.vars[vk] = Math.min(VARIANTS, (sk.vars[vk] || 0) + 1);
+  st.used[type] = (st.used[type] || 0) + 1;
+  const ck = l + '-' + r, cell = sk.cells[ck] || (sk.cells[ck] = { attempts: 0, wrong: 0, cleared: false });
+  cell.attempts++; st.q++; sk.q++;
+  if (ok) { st.right++; sk.right++; cell.cleared = true; } else cell.wrong++;
+  let nl = l, nr = r, done = false, msg = '';
+  if (ok) {
+    sk.streak = { key: null, count: 0 };
+    if (l === 1 && r < S.rmax) { nr = r + 1; msg = 'Up to ' + R_NAMES[nr] + '.'; tr.push({ kind: 'r_up', detail: { level: l, from: r, to: nr } }); }
+    else if (!sk.rightStreak) { sk.rightStreak = 1; msg = 'One more right to ' + (l < 4 ? 'reach ' + LEVEL_NAMES[l + 1] : 'finish the skill') + '.'; }
+    else if (l === 4) { done = true; msg = 'Skill done.'; }
+    else {
+      nl = l + 1; nr = S.rmax; sk.rightStreak = 0; msg = 'Promoted to ' + LEVEL_NAMES[nl] + '.';
+      tr.push({ kind: 'level_up', detail: { from: { l, r }, to: { l: nl, r: nr } } });
+    }
+  } else {
+    sk.rightStreak = 0;
+    if (sk.streak.key === ck) sk.streak.count++; else sk.streak = { key: ck, count: 1 };
+    if (l === 1 && r === start && r > 1) { nr = 1; st.drops++; msg = 'Down to R1 Low.'; tr.push({ kind: 'r_drop', detail: { level: l, from: r, to: 1 } }); }
+    else {
+      st.retries++;
+      if (sk.streak.count >= 2) {
+        sk.tIdx[l]++; sk.streak = { key: null, count: 0 };
+        msg = 'Two misses. Switching question type.';
+        tr.push({ kind: 'type_switch', detail: { level: l, from: type, tIdx: sk.tIdx[l] } });
+      } else msg = 'Next variant, V' + Math.min(VARIANTS, sk.vars[vk] + 1) + '.';
+    }
+  }
+  sk.level = nl; sk.r = nr;
+  if (done) {
+    sk.status = 'done';
+    tr.push({ kind: 'skill_done', detail: {} });
+    for (const o of unlock(G, st)) tr.push({ kind: 'unlock', skill: o, detail: { by: id } });
+  }
+  return { transitions: tr, msg, done };
+}
+
+// Progress of one skill, 0..1, for maps and rings: two rights per level, four levels.
+export function skillProgress(sk) {
+  if (!sk) return 0;
+  if (sk.status === 'done') return 1;
+  return Math.min(0.99, ((sk.level - 1) * 2 + (sk.rightStreak ? 1 : 0)) / 8);
+}
+
+// A compact view of the state for the client: every skill's status, level, R and progress.
+export function view(G, avail, st) {
+  const act = activeSkill(G, avail, st);
+  const skills = {};
+  for (const S of G.skills) {
+    const sk = st.skills[S.id];
+    const hasAny = !!avail[S.id];
+    skills[S.id] = { status: sk.status, level: sk.level, r: sk.r, rightStreak: sk.rightStreak, progress: skillProgress(sk),
+      content: hasAny ? (playable(G, avail, st, S.id) ? 'ready' : 'partial') : 'none',
+      cells: sk.cells, q: sk.q, right: sk.right };
+  }
+  const groupsDone = G.groups.map((g) => g.skills.every((id) => st.skills[id].status === 'done'));
+  return { active: act.id, allDone: !!act.allDone, comingSoon: act.comingSoon || null, skills, groupsDone, q: st.q, right: st.right };
+}

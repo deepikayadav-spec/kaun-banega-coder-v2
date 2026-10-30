@@ -1,0 +1,43 @@
+{
+  "id": "C1-G1-S1-L2-T13-R1-V1",
+  "skill": "S1",
+  "level": 2,
+  "type": "mystery",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Variant",
+  "kps": [
+    "str",
+    "plus"
+  ],
+  "mistakes": [
+    "join",
+    "quotes"
+  ],
+  "task": "Write code that prints this output. Join two pieces of text with + (do not type 123 as one value).",
+  "code": null,
+  "payload": {
+    "target": "123",
+    "require": [
+      "+"
+    ],
+    "require_any": [
+      [
+        "\"",
+        "'"
+      ]
+    ],
+    "sample": "print(\"12\" + \"3\")",
+    "forbid": [
+      "\"123\"",
+      "'123'"
+    ]
+  },
+  "ok": "Two texts joined with + sit side by side.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

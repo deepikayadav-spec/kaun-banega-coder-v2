@@ -1,0 +1,48 @@
+{
+  "id": "C1-G1-S1-L1-T1-R1-V1",
+  "skill": "S1",
+  "level": 1,
+  "type": "mcq",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Edge",
+  "kps": [
+    "float",
+    "int",
+    "str"
+  ],
+  "mistakes": [
+    "point",
+    "quotes",
+    "printq"
+  ],
+  "task": "Asha stores the marks like this. What kind of value is marks?",
+  "code": "marks = 12.0",
+  "payload": {
+    "options": [
+      {
+        "text": "Whole number (int)",
+        "why": "12.0 has a decimal point, so it is a decimal (float), not a whole number."
+      },
+      {
+        "text": "Decimal (float)",
+        "correct": true
+      },
+      {
+        "text": "Text (str)",
+        "why": "12.0 has no quotes, so it is not text."
+      },
+      {
+        "text": "It cannot be known until it is printed",
+        "why": "The kind is fixed by how the value is written, before anything is printed. 12.0 is written with a decimal point."
+      }
+    ]
+  },
+  "ok": "12.0 is a decimal (float): the decimal point makes it a decimal, even though it ends in .0.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

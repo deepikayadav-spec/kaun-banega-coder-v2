@@ -1,0 +1,35 @@
+{
+  "id": "C1-G1-S1-L2-T5-R1-V1",
+  "skill": "S1",
+  "level": 2,
+  "type": "same",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Edge",
+  "kps": [
+    "printq",
+    "str",
+    "int"
+  ],
+  "mistakes": [
+    "printq"
+  ],
+  "task": "Do these two programs print exactly the same thing?",
+  "code": null,
+  "payload": {
+    "answer": "Same",
+    "codeA": "print(12)",
+    "codeB": "print(\"12\")",
+    "outputs": [
+      "12",
+      "12"
+    ]
+  },
+  "ok": "Both print 12. The values are different kinds (int and str), but print() shows them the same way.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

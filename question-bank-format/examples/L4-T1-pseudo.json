@@ -1,0 +1,40 @@
+{
+  "id": "C1-G1-S1-L4-T1-R1-V1",
+  "skill": "S1",
+  "level": 4,
+  "type": "pseudo",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Typical",
+  "kps": [
+    "str",
+    "plus",
+    "type"
+  ],
+  "mistakes": [
+    "join"
+  ],
+  "task": "Plan a program that builds the text 123, prints it, and then prints its kind. Put the steps in order.",
+  "code": null,
+  "payload": {
+    "answer": [
+      "Store the digits 12 as text in first",
+      "Join the text \"3\" onto the end of first and store it in code",
+      "Print code",
+      "Print the kind of code"
+    ],
+    "items": [
+      "Print code",
+      "Store the digits 12 as text in first",
+      "Join the text \"3\" onto the end of first and store it in code",
+      "Print the kind of code"
+    ]
+  },
+  "ok": "A value has to be stored before it is joined, and joined before it is printed.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

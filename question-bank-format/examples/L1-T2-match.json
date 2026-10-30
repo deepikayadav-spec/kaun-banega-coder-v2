@@ -1,0 +1,51 @@
+{
+  "id": "C1-G1-S1-L1-T2-R1-V1",
+  "skill": "S1",
+  "level": 1,
+  "type": "match",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Typical",
+  "kps": [
+    "type",
+    "int",
+    "float",
+    "str",
+    "plus"
+  ],
+  "mistakes": [
+    "point",
+    "quotes",
+    "join",
+    "names"
+  ],
+  "task": "Match each line of code to what it prints.",
+  "code": null,
+  "payload": {
+    "answer": {
+      "print(type(12))": "<class 'int'>",
+      "print(type(12.0))": "<class 'float'>",
+      "print(type(\"12\"))": "<class 'str'>",
+      "print(\"12\" + \"12\")": "1212"
+    },
+    "left": [
+      "print(type(12))",
+      "print(type(12.0))",
+      "print(type(\"12\"))",
+      "print(\"12\" + \"12\")"
+    ],
+    "right": [
+      "<class 'str'>",
+      "<class 'int'>",
+      "<class 'float'>",
+      "1212"
+    ]
+  },
+  "ok": "12 is an int, 12.0 a float, \"12\" a str, and + joins two texts into 1212.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

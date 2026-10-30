@@ -1,0 +1,51 @@
+{
+  "id": "C1-G1-S1-L3-T4-R1-V1",
+  "skill": "S1",
+  "level": 3,
+  "type": "golf",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Variant",
+  "kps": [
+    "str",
+    "plus",
+    "int"
+  ],
+  "mistakes": [
+    "quotes",
+    "join"
+  ],
+  "task": "The code prints 123. Change as few values as you can so it prints 15.",
+  "code": "x = \"12\"\ny = \"3\"\nprint(x + y)",
+  "payload": {
+    "tokens": [
+      {
+        "line": 0,
+        "now": "\"12\"",
+        "choices": [
+          "\"12\"",
+          "12",
+          "12.0"
+        ]
+      },
+      {
+        "line": 1,
+        "now": "\"3\"",
+        "choices": [
+          "\"3\"",
+          "3",
+          "3.0"
+        ]
+      }
+    ],
+    "target": "15",
+    "par": 2
+  },
+  "ok": "Remove the quotes from both values: whole numbers are added, not joined.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

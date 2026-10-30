@@ -1,0 +1,72 @@
+{
+  "id": "C1-G5-S2-L2-T7-R1-V1",
+  "skill": "S22",
+  "level": 2,
+  "type": "path",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Edge",
+  "kps": [
+    "firsttrue",
+    "elsecatch"
+  ],
+  "mistakes": [
+    "boundary",
+    "later"
+  ],
+  "task": "For each input, pick the branch that runs.",
+  "code": "temp = int(input())\nif temp >= 35:\n    print(\"Hot\")\nelif temp >= 20:\n    print(\"Warm\")\nelse:\n    print(\"Cold\")",
+  "payload": {
+    "branches": [
+      {
+        "id": "A",
+        "line": 3,
+        "label": "print(\"Hot\")"
+      },
+      {
+        "id": "B",
+        "line": 5,
+        "label": "print(\"Warm\")"
+      },
+      {
+        "id": "C",
+        "line": 7,
+        "label": "print(\"Cold\")"
+      }
+    ],
+    "cases": [
+      {
+        "input": "35",
+        "answer": "A",
+        "why": "35 >= 35 is True: >= includes 35, so the first branch runs."
+      },
+      {
+        "input": "34",
+        "answer": "B",
+        "why": "34 >= 35 is False, then 34 >= 20 is True."
+      },
+      {
+        "input": "20",
+        "answer": "B",
+        "why": "20 >= 20 is True: >= includes 20."
+      },
+      {
+        "input": "19",
+        "answer": "C",
+        "why": "Both conditions are False, so else runs."
+      },
+      {
+        "input": "50",
+        "answer": "A",
+        "why": "50 >= 20 is also True, but Python stops at the first True condition."
+      }
+    ]
+  },
+  "ok": "Python checks the conditions in order and runs only the first True branch; else catches the rest.",
+  "hint": "Check the conditions from the top. Stop at the first True one.",
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

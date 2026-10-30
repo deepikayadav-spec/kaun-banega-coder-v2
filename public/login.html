@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><link rel="icon" href="data:,"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kaun Banega Coder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
+<style>
+:root{--bg:#0A0322;--surface:rgba(40,22,96,.62);--line:rgba(255,255,255,.13);--line-2:rgba(255,255,255,.24);--fg:#F6F2FF;--muted:#C3BAE8;--gold:#FFC83D;--gold-2:#FF9F1C;--gold-ink:#241500;--bad:#FDA4AF;
+ --f-display:"Unbounded","Arial Black",system-ui,sans-serif;--f-body:"Plus Jakarta Sans","Segoe UI",system-ui,sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px 16px;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(217,70,239,.35),transparent 70%),radial-gradient(ellipse 60% 55% at 0% 0%,rgba(109,40,217,.55),transparent 70%),var(--bg);color:var(--fg);font:16px/1.5 var(--f-body)}
+main{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--line);border-radius:28px;padding:32px 28px;backdrop-filter:blur(12px);box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.emb{width:64px;height:64px;border-radius:50%;margin:0 auto 14px;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#FFF4C2,#FFC83D 45%,#D98A0B);color:var(--gold-ink);font:900 20px var(--f-display);box-shadow:0 0 30px rgba(255,200,61,.45)}
+h1{margin:0;text-align:center;font:900 26px/1.15 var(--f-display);letter-spacing:-.01em}
+h1 b{display:block;color:var(--gold);font-size:34px}
+p.sub{text-align:center;color:var(--muted);margin:10px 0 22px;font-size:15px}
+label{display:block;font-weight:700;font-size:14px;margin:14px 0 6px}
+input{width:100%;padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid var(--line-2);color:var(--fg);font:600 16px var(--f-body)}
+input:focus{outline:2px solid var(--gold);outline-offset:1px}
+button{width:100%;margin-top:22px;padding:15px;border:0;border-radius:16px;background:linear-gradient(180deg,#FFE08A,var(--gold) 45%,var(--gold-2));color:var(--gold-ink);font:800 16px var(--f-body);cursor:pointer;box-shadow:0 5px 0 #B5650A}
+button:disabled{opacity:.6;cursor:default}
+.err{min-height:22px;margin:12px 0 0;color:var(--bad);font-weight:600;font-size:14px;text-align:center}
+.foot{margin-top:18px;text-align:center;font-size:13px;color:var(--muted)}
+</style></head>
+<body><main>
+<div class="emb" aria-hidden="true">{ }</div>
+<h1>Kaun Banega <b>Coder</b></h1>
+<p class="sub">Log in with your NIAT ID and your name as your college has it.</p>
+<form id="f" novalidate>
+<label for="roll">NIAT ID</label><input id="roll" autocomplete="username" autocapitalize="characters" spellcheck="false" placeholder="e.g. N26P02A0123" required>
+<label for="name">Full name</label><input id="name" autocomplete="name" placeholder="Your full name" required>
+<button id="go" type="submit">Let's play →</button>
+<p class="err" id="err" role="alert"></p>
+</form>
+<p class="foot">Trouble logging in? Ask your mentor to check that you're on the list.</p>
+</main>
+<script>
+const f=document.getElementById("f"),err=document.getElementById("err"),go=document.getElementById("go");
+fetch("/api/boot",{credentials:"same-origin"}).then(r=>{if(r.ok)location.replace("/")}).catch(()=>{});
+f.addEventListener("submit",async e=>{e.preventDefault();err.textContent="";
+ const roll=document.getElementById("roll").value.trim(),name=document.getElementById("name").value.trim();
+ if(!roll||!name){err.textContent="Enter your NIAT ID and your name.";return}
+ go.disabled=true;go.textContent="Checking…";
+ try{const r=await fetch("/api/auth/login",{method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify({roll,name})});
+  const j=await r.json().catch(()=>({}));
+  if(r.ok){location.replace("/");return}
+  err.textContent=j.error||"Could not log in. Try again.";
+ }catch(x){err.textContent="No connection. Check your internet and try again."}
+ go.disabled=false;go.textContent="Let's play →"});
+</script>
+</body></html>

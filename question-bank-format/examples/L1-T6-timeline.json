@@ -1,0 +1,40 @@
+{
+  "id": "C1-G1-S1-L1-T6-R1-V1",
+  "skill": "S1",
+  "level": 1,
+  "type": "timeline",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Typical",
+  "kps": [
+    "str",
+    "int",
+    "type"
+  ],
+  "mistakes": [
+    "quotes"
+  ],
+  "task": "Put the moments of this run in the order they happen.",
+  "code": "a = \"12\"\nb = 3\nprint(type(a))\nprint(type(b))",
+  "payload": {
+    "answer": [
+      "a gets the text \"12\"",
+      "b gets the whole number 3",
+      "<class 'str'> is printed",
+      "<class 'int'> is printed"
+    ],
+    "items": [
+      "<class 'str'> is printed",
+      "a gets the text \"12\"",
+      "b gets the whole number 3",
+      "<class 'int'> is printed"
+    ]
+  },
+  "ok": "Python runs the lines from top to bottom: first both values are stored, then each kind is printed.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

@@ -1,0 +1,30 @@
+{
+  "id": "C1-G1-S1-L2-T9-R1-V1",
+  "skill": "S1",
+  "level": 2,
+  "type": "fill",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Typical",
+  "kps": [
+    "float",
+    "type"
+  ],
+  "mistakes": [
+    "point",
+    "quotes"
+  ],
+  "task": "Type a marks value for the blank so the code prints <class 'float'>.",
+  "code": "marks = ____\nprint(type(marks))",
+  "payload": {
+    "target": "<class 'float'>",
+    "sample": "12.5"
+  },
+  "ok": "Any number with a decimal point and no quotes works, like 12.5.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

@@ -1,0 +1,42 @@
+{
+  "id": "C1-G1-S1-L4-T4-R1-V1",
+  "skill": "S1",
+  "level": 4,
+  "type": "write",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Typical",
+  "kps": [
+    "int",
+    "float",
+    "str",
+    "type"
+  ],
+  "mistakes": [
+    "point",
+    "quotes",
+    "whole"
+  ],
+  "task": "Store Asha's roll number 12, height 1.45 metres and city Pune in three variables. Then print the kind of each one, one per line, in that order.",
+  "code": null,
+  "payload": {
+    "target": "<class 'int'>\n<class 'float'>\n<class 'str'>",
+    "require": [
+      "type(",
+      "12",
+      "1.45",
+      "Pune"
+    ],
+    "sample": "roll = 12\nheight = 1.45\ncity = \"Pune\"\nprint(type(roll))\nprint(type(height))\nprint(type(city))",
+    "forbid": [
+      "<class"
+    ]
+  },
+  "ok": "A roll number is a whole number, a height with a point is a decimal, and a city is text.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

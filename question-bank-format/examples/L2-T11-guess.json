@@ -1,0 +1,52 @@
+{
+  "id": "C1-G3-S1-L2-T11-R1-V1",
+  "skill": "S13",
+  "level": 2,
+  "type": "guess",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Typical",
+  "kps": [
+    "order"
+  ],
+  "mistakes": [
+    "order",
+    "oneprobe"
+  ],
+  "task": "The code is hidden. Choose values for x to see what it prints, then pick the code.",
+  "code": null,
+  "payload": {
+    "probe": {
+      "var": "x",
+      "min": -5,
+      "max": 10,
+      "hidden_code": "print(x * 3 - 2)"
+    },
+    "max_probes": 4,
+    "options": [
+      {
+        "text": "print(x * 3 - 2)",
+        "correct": true
+      },
+      {
+        "text": "print(x * 2 + 1)",
+        "why": "Both give 7 when x is 3, but at x = 0 this gives 1 and the hidden code gives -2. One matching probe is not enough."
+      },
+      {
+        "text": "print((x - 2) * 3)",
+        "why": "Brackets change the order: at x = 1 this gives -3, the hidden code gives 1."
+      },
+      {
+        "text": "print(x * 3 + 2)",
+        "why": "At x = 0 this gives 2; the hidden code gives -2."
+      }
+    ]
+  },
+  "ok": "x = 0 gives -2 and each step of 1 in x adds 3, so the code is x * 3 - 2.",
+  "hint": "Try x = 0 first: it shows the number that is added or taken away.",
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

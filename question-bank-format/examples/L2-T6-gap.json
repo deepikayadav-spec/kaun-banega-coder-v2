@@ -1,0 +1,61 @@
+{
+  "id": "C1-G1-S1-L2-T6-R1-V1",
+  "skill": "S1",
+  "level": 2,
+  "type": "gap",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Typical",
+  "kps": [
+    "int",
+    "float",
+    "str",
+    "plus"
+  ],
+  "mistakes": [
+    "point",
+    "quotes",
+    "join"
+  ],
+  "task": "Fill in the kind of each variable (int, float or str). The first row is done for you.",
+  "code": "a = 12\nb = 12.0\nc = \"12\"\nd = \"3\" + \"3\"",
+  "payload": {
+    "rows": [
+      {
+        "line": "a = 12",
+        "var": "a",
+        "value": "12",
+        "kind": "int",
+        "given": true
+      },
+      {
+        "line": "b = 12.0",
+        "var": "b",
+        "value": "12.0",
+        "kind": "float",
+        "given": false
+      },
+      {
+        "line": "c = \"12\"",
+        "var": "c",
+        "value": "'12'",
+        "kind": "str",
+        "given": false
+      },
+      {
+        "line": "d = \"3\" + \"3\"",
+        "var": "d",
+        "value": "'33'",
+        "kind": "str",
+        "given": false
+      }
+    ]
+  },
+  "ok": "b has a decimal point, c is in quotes, and joining two texts gives text: the text '33'.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

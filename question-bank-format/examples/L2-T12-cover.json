@@ -1,0 +1,59 @@
+{
+  "id": "C1-G5-S2-L2-T12-R1-V1",
+  "skill": "S22",
+  "level": 2,
+  "type": "cover",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Edge",
+  "kps": [
+    "firsttrue",
+    "elsecatch"
+  ],
+  "mistakes": [
+    "boundary",
+    "later"
+  ],
+  "task": "Pick three ages so that each branch runs exactly once.",
+  "code": "age = int(input())\nif age < 13:\n    print(\"Child\")\nelif age < 18:\n    print(\"Teen\")\nelse:\n    print(\"Adult\")",
+  "payload": {
+    "values": [
+      "5",
+      "12",
+      "13",
+      "17",
+      "18",
+      "40"
+    ],
+    "need": 3,
+    "branches": [
+      {
+        "id": "A",
+        "line": 3,
+        "output": "Child"
+      },
+      {
+        "id": "B",
+        "line": 5,
+        "output": "Teen"
+      },
+      {
+        "id": "C",
+        "line": 7,
+        "output": "Adult"
+      }
+    ],
+    "sample": [
+      "12",
+      "13",
+      "18"
+    ]
+  },
+  "ok": "One age under 13, one from 13 to 17, and one 18 or over: each runs a different branch.",
+  "hint": "13 is not < 13, and 18 is not < 18.",
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

@@ -1,0 +1,51 @@
+{
+  "id": "C1-G1-S1-L4-T3-R1-V1",
+  "skill": "S1",
+  "level": 4,
+  "type": "grow",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Typical",
+  "kps": [
+    "int",
+    "float",
+    "type",
+    "plus"
+  ],
+  "mistakes": [
+    "point",
+    "join"
+  ],
+  "task": "One program grows. At each tier, add one rule to the same code.",
+  "code": null,
+  "payload": {
+    "tiers": [
+      {
+        "task": "Print the kind of the whole number 12.",
+        "expected": "<class 'int'>"
+      },
+      {
+        "task": "Add a line that prints the kind of the decimal 12.5.",
+        "expected": "<class 'int'>\n<class 'float'>"
+      },
+      {
+        "task": "Add a line that joins the texts \"12\" and \"3\" and prints the result.",
+        "expected": "<class 'int'>\n<class 'float'>\n123"
+      }
+    ],
+    "require": [
+      "type("
+    ],
+    "sample": "print(type(12))\nprint(type(12.5))\nprint(\"12\" + \"3\")",
+    "forbid": [
+      "<class"
+    ]
+  },
+  "ok": "Each tier keeps the earlier lines and adds one more.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

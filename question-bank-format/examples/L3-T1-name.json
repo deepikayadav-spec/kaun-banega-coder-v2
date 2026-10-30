@@ -1,0 +1,48 @@
+{
+  "id": "C1-G1-S1-L3-T1-R1-V1",
+  "skill": "S1",
+  "level": 3,
+  "type": "name",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Typical",
+  "kps": [
+    "str",
+    "plus"
+  ],
+  "mistakes": [
+    "quotes",
+    "point",
+    "printq",
+    "mix"
+  ],
+  "task": "Asha wants to add two marks values, 12 and 3. The code prints 123 instead of 15. Which mistake is this?",
+  "code": "marks_1 = \"12\"\nmarks_2 = \"3\"\nprint(marks_1 + marks_2)",
+  "payload": {
+    "options": [
+      {
+        "text": "Digits in quotes are text",
+        "correct": true
+      },
+      {
+        "text": "A decimal point makes a decimal",
+        "why": "There is no decimal point anywhere in this code."
+      },
+      {
+        "text": "print() hides the quotes",
+        "why": "The printed value is not the problem; the values were stored as text."
+      },
+      {
+        "text": "A number and text cannot be added",
+        "why": "Both values are text, so nothing is mixed and there is no error."
+      }
+    ]
+  },
+  "ok": "Both values are in quotes, so they are text, and + joins text: 123.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

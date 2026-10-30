@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><link rel="icon" href="data:,"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KBC Admin</title>
+<style>
+:root{--bg:#F6F5FB;--card:#fff;--fg:#1B1530;--muted:#6B6585;--line:#E4E1EF;--acc:#5B3CC4;--acc-2:#EFEAFF;--ok:#15803D;--bad:#B91C1C;--warn:#B45309;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F0B1E;--card:#1A1430;--fg:#F1EEFF;--muted:#A49CC4;--line:#2C2448;--acc:#A78BFA;--acc-2:#2A2050;--ok:#4ADE80;--bad:#FB7185;--warn:#FBBF24;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14.5px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
+header{display:flex;align-items:center;gap:16px;padding:12px 20px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+header h1{font-size:17px;margin:0}header h1 span{color:var(--acc)}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{background:none;border:0;padding:8px 12px;border-radius:8px;color:var(--muted);font:600 14px inherit;cursor:pointer}
+nav button.on{background:var(--acc-2);color:var(--acc)}
+.who{margin-left:auto;display:flex;gap:10px;align-items:center;color:var(--muted);font-size:13px}
+main{max-width:1240px;margin:0 auto;padding:20px 16px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+h2{font-size:16px;margin:0 0 12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input,select,button.b,textarea{font:inherit;padding:8px 12px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
+button.b{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600;cursor:pointer}
+button.b.q{background:var(--card);color:var(--fg);border-color:var(--line)}
+button.b:disabled{opacity:.5}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.kpi small{color:var(--muted);display:block}.kpi b{font-size:24px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12.5px;white-space:nowrap}
+tr.click{cursor:pointer}tr.click:hover{background:var(--acc-2)}
+.muted{color:var(--muted)}.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+.bar{height:8px;background:var(--acc-2);border-radius:4px;overflow:hidden;min-width:80px}.bar i{display:block;height:100%;background:var(--acc)}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;font:12.5px/1.45 ui-monospace,Consolas,monospace;max-height:420px;overflow:auto}
+.login{max-width:380px;margin:12vh auto}
+.login input{width:100%;margin:6px 0 12px}
+.err{color:var(--bad);min-height:20px}
+.pill{display:inline-block;padding:2px 8px;border-radius:99px;background:var(--acc-2);color:var(--acc);font-size:12px;font-weight:600}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media (max-width:820px){.grid2{grid-template-columns:1fr}}
+.sk{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.sk div{border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12.5px}
+.sk .done{border-color:var(--ok)}.sk .open{border-color:var(--acc)}
+</style></head>
+<body>
+<div id="root"></div>
+<script>
+(function(){"use strict";
+const $=s=>document.querySelector(s),esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const dt=t=>t?new Date(+t).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"—";
+const pct=(a,b)=>b?Math.round(a/b*100)+"%":"—";
+async function api(method,url,body,raw){const r=await fetch(url,{method,credentials:"same-origin",headers:raw?{"content-type":"application/octet-stream"}:body?{"content-type":"application/json"}:{},body:raw?body:body?JSON.stringify(body):undefined});
+ let j=null;try{j=await r.json()}catch(e){}if(r.status===401&&!url.endsWith("/login")){A=null;draw();throw new Error("Please log in.")}if(!r.ok)throw new Error((j&&j.error)||"Error "+r.status);return j}
+let A=null,TAB="overview",UNI="",UNIS=[];
+const isSuper=()=>A&&A.role==="super_admin";
+function draw(){if(!A){$("#root").innerHTML=`<div class="card login"><h2>KBC admin</h2><form id="lf"><label>Email<input id="em" type="email" autocomplete="username" required></label><label>Password<input id="pw" type="password" autocomplete="current-password" required></label><button class="b">Log in</button><p class="err" id="le"></p></form></div>`;
+  $("#lf").onsubmit=async e=>{e.preventDefault();try{const r=await api("POST","/api/admin/login",{email:$("#em").value,password:$("#pw").value});await me();if(r.mustChange){TAB="account"}draw()}catch(x){$("#le").textContent=x.message}};return}
+ const tabs=[["overview","Overview"],["students","Students"],["content","Question bank"],["feedback","Feedback"],...(isSuper()?[["admins","Admins"]]:[]),["account","Account"]];
+ $("#root").innerHTML=`<header><h1>Kaun Banega <span>Coder</span> · admin</h1><nav>${tabs.map(([k,n])=>`<button data-tab="${k}" class="${TAB===k?"on":""}">${n}</button>`).join("")}</nav>
+ <div class="who">${A.university?`<span class="pill">${esc(A.university)}</span>`:`<select id="uni"><option value="">All universities</option>${UNIS.map(u=>`<option ${u===UNI?"selected":""}>${esc(u)}</option>`).join("")}</select>`}<span>${esc(A.email)} · ${A.role==="super_admin"?"super admin":"admin"}</span><button class="b q" id="lo">Log out</button></div></header><main id="m"><p class="muted">Loading…</p></main>`;
+ document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{TAB=b.dataset.tab;draw()});
+ $("#lo").onclick=()=>api("POST","/api/admin/logout").finally(()=>{A=null;draw()});
+ const u=$("#uni");if(u)u.onchange=()=>{UNI=u.value;draw()};
+ ({overview,students,content,feedback,admins,account})[TAB]().catch(e=>{$("#m").innerHTML=`<p class="bad">${esc(e.message)}</p>`})}
+const uq=()=>UNI?"university="+encodeURIComponent(UNI):"";
+async function me(){A=(await api("GET","/api/admin/me")).admin;const u=await api("GET","/api/admin/universities");UNIS=u.rows.map(r=>r.university).filter(Boolean)}
+
+async function overview(){const d=await api("GET","/api/admin/analytics?"+uq()),u=await api("GET","/api/admin/universities");
+ const T=d.totals,maxDay=Math.max(1,...d.byDay.map(x=>x.n));
+ $("#m").innerHTML=`<div class="kpis"><div class="kpi"><small>Students on the list</small><b>${d.students.n}</b></div><div class="kpi"><small>Logged in at least once</small><b>${d.students.logged_in}</b></div><div class="kpi"><small>Played</small><b>${T.players}</b></div><div class="kpi"><small>Answers</small><b>${T.attempts}</b></div><div class="kpi"><small>Accuracy</small><b>${pct(T.correct,T.attempts)}</b></div></div>
+ <div class="row" style="margin-bottom:12px"><a class="b q" style="text-decoration:none" href="/api/admin/export/students.csv?${uq()}">Download students CSV</a><a class="b q" style="text-decoration:none" href="/api/admin/export/attempts.csv?${uq()}">Download all answers CSV</a></div>
+ <div class="grid2"><div class="card"><h2>Answers per day (last 30 days, IST)</h2>${d.byDay.length?`<table>${d.byDay.map(x=>`<tr><td>${x.day}</td><td style="width:60%"><div class="bar"><i style="width:${x.n/maxDay*100}%"></i></div></td><td>${x.n}</td><td class="muted">${x.players} players</td></tr>`).join("")}</table>`:'<p class="muted">No answers yet.</p>'}</div>
+ <div class="card"><h2>Accuracy by question type</h2><div class="tw"><table><tr><th>Level</th><th>Type</th><th>Answers</th><th>Right</th></tr>${d.byType.map(x=>`<tr><td>L${x.level}</td><td>${esc(x.type)}</td><td>${x.n}</td><td>${pct(x.right,x.n)}</td></tr>`).join("")||'<tr><td colspan=4 class="muted">No answers yet.</td></tr>'}</table></div></div></div>
+ ${d.byUni.length?`<div class="card"><h2>By university</h2><div class="tw"><table><tr><th>University</th><th>Students</th><th>Logged in</th><th>Players</th><th>Answers</th><th>Accuracy</th></tr>${u.rows.map(r=>{const x=d.byUni.find(b=>b.university===r.university)||{};return `<tr><td>${esc(r.university||"(none)")}</td><td>${r.active}</td><td>${r.logged_in}</td><td>${x.players||0}</td><td>${x.n||0}</td><td>${pct(x.right||0,x.n||0)}</td></tr>`}).join("")}</table></div></div>`:""}
+ <div class="card"><h2>Skill progress</h2><p class="muted">How many students have each skill open (by current level) or done.</p><div class="tw"><table><tr><th>Skill</th><th>Group</th><th>Open: L1</th><th>L2</th><th>L3</th><th>L4</th><th>Done</th></tr>${d.skills.filter(s=>s.open||s.done).map(s=>`<tr><td>${s.id} ${esc(s.name)}</td><td>${s.group}</td>${s.levels.map(n=>`<td>${n}</td>`).join("")}<td class="ok">${s.done}</td></tr>`).join("")||'<tr><td colspan=7 class="muted">No progress yet.</td></tr>'}</table></div></div>`}
+
+async function students(){const q=new URLSearchParams(location.hash.slice(1));
+ $("#m").innerHTML=`<div class="card"><div class="row"><input id="sq" placeholder="Search NIAT ID or name" style="flex:1;min-width:200px"><button class="b q" id="sgo">Search</button></div></div>
+ ${isSuper()?`<div class="card"><h2>Upload the student master list</h2><p class="muted">Excel (.xlsx) or CSV with a <b>NIAT ID</b> column, plus <b>Name</b>, and optionally <b>University</b>, Batch, Email, Phone. University is filled from the NIAT ID prefix when empty.</p>
+ <div class="row"><input type="file" id="sf" accept=".xlsx,.csv"><select id="smode"><option value="merge">Add and update</option><option value="sync">Full sync (deactivate missing students of these universities)</option></select><button class="b" id="sup">Upload</button></div><p id="sres" class="muted"></p>
+ <details><summary class="muted">Add one student</summary><div class="row" style="margin-top:8px"><input id="ar" placeholder="NIAT ID"><input id="an" placeholder="Full name"><input id="au" placeholder="University (optional)"><button class="b q" id="aadd">Add</button></div></details></div>`:""}
+ <div class="card"><h2>Students</h2><div id="sl" class="tw"><p class="muted">Loading…</p></div></div><div id="sd"></div>`;
+ const load=async()=>{const r=await api("GET",`/api/admin/students?${uq()}&q=${encodeURIComponent($("#sq").value)}&limit=1000`);
+  $("#sl").innerHTML=r.rows.length?`<table><tr><th>NIAT ID</th><th>Name</th><th>University</th><th>Answers</th><th>Right</th><th>Last answer</th><th>Wallet</th></tr>${r.rows.map(s=>`<tr class="click" data-r="${esc(s.roll_no)}"><td>${esc(s.roll_no)}${s.active?"":' <span class="bad">inactive</span>'}</td><td>${esc(s.name)}</td><td>${esc(s.university)}</td><td>${s.attempts||0}</td><td>${pct(s.correct||0,s.attempts||0)}</td><td>${dt(s.last_attempt)}</td><td>${s.coins||0}</td></tr>`).join("")}</table><p class="muted">${r.rows.length} shown</p>`:'<p class="muted">No students.</p>';
+  document.querySelectorAll("tr[data-r]").forEach(tr=>tr.onclick=()=>detail(tr.dataset.r))};
+ $("#sgo").onclick=load;$("#sq").onkeydown=e=>{if(e.key==="Enter")load()};
+ if($("#sup"))$("#sup").onclick=async()=>{const f=$("#sf").files[0];if(!f)return;$("#sres").textContent="Uploading…";
+  try{const r=await api("POST",`/api/admin/students/import?mode=${$("#smode").value}&name=${encodeURIComponent(f.name)}`,await f.arrayBuffer(),true);$("#sres").innerHTML=`<span class="ok">Done.</span> ${r.added} added, ${r.updated} updated, ${r.deactivated} deactivated.${r.errors.length?" Problems: "+esc(r.errors.slice(0,5).join("; ")):""}`;await me();load()}catch(e){$("#sres").innerHTML=`<span class="bad">${esc(e.message)}</span>`}};
+ if($("#aadd"))$("#aadd").onclick=async()=>{try{await api("POST","/api/admin/students",{roll:$("#ar").value,name:$("#an").value,university:$("#au").value});load()}catch(e){alert(e.message)}};
+ await load();if(q.get("s"))detail(q.get("s"))}
+async function detail(roll){const d=await api("GET","/api/admin/students/"+encodeURIComponent(roll)),s=d.student,E=d.engine;
+ $("#sd").innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><h2>${esc(s.roll_no)} · ${esc(s.name)} <span class="muted">${esc(s.university)}</span></h2>
+ <div class="row">${isSuper()?`<button class="b q" id="sact">${s.active?"Deactivate":"Activate"}</button><button class="b q" id="sreset">Reset progress</button>`:""}</div></div>
+ <p class="muted">Now on: <b>${E.active?`${E.active} L${E.skills[E.active].level} R${E.skills[E.active].r}`:E.allDone?"all done":"waiting for content"}</b> · ${E.right}/${E.q} right · last login ${dt(s.last_login_at)} · wallet ${d.progress?d.progress.coins:0}</p>
+ <div class="sk">${Object.entries(E.skills).filter(([k,v])=>v.status!=="locked").map(([k,v])=>`<div class="${v.status}"><b>${k}</b> ${v.status==="done"?"done":`L${v.level} R${v.r}`}<br><span class="muted">${v.right}/${v.q} right${v.content==="none"?" · no questions yet":""}</span></div>`).join("")}</div>
+ <div class="grid2" style="margin-top:14px"><div><h2>Answers (latest 500)</h2><div class="tw"><table><tr><th>When</th><th>Question</th><th>Type</th><th>Mode</th><th>Result</th><th>Time</th></tr>${d.attempts.map(a=>`<tr><td>${dt(a.at)}</td><td>${esc(a.question_id)}</td><td>${esc(a.type)}</td><td>${a.mode}</td><td class="${a.correct?"ok":"bad"}">${a.correct?"right":a.timeout?"timeout":"wrong"}</td><td>${Math.round((a.ms||0)/1000)}s</td></tr>`).join("")}</table></div></div>
+ <div><h2>Progression history</h2><div class="tw"><table><tr><th>When</th><th>Skill</th><th>Event</th><th>Detail</th></tr>${d.transitions.map(t=>`<tr><td>${dt(t.at)}</td><td>${t.skill}</td><td>${t.kind.replace("_"," ")}</td><td class="muted">${esc(JSON.stringify(t.detail||{}))}</td></tr>`).join("")}</table></div></div></div></div>`;
+ if($("#sact"))$("#sact").onclick=async()=>{await api("POST",`/api/admin/students/${encodeURIComponent(roll)}/active`,{active:!s.active});detail(roll)};
+ if($("#sreset"))$("#sreset").onclick=async()=>{if(!confirm(`Reset all progress of ${roll}? Their answer history is kept.`))return;await api("POST",`/api/admin/students/${encodeURIComponent(roll)}/reset`);detail(roll)};
+ $("#sd").scrollIntoView({behavior:"smooth"})}
+
+async function content(){const d=await api("GET","/api/admin/content"),G=d.graph;
+ const bySkill={};d.counts.forEach(c=>{(bySkill[c.skill]=bySkill[c.skill]||{n:0,types:{}}).n+=c.n;bySkill[c.skill].types[c.type]=c.n});
+ $("#m").innerHTML=`<div class="kpis"><div class="kpi"><small>Live questions</small><b>${d.total}</b></div><div class="kpi"><small>Skills with questions</small><b>${Object.keys(bySkill).length} / ${G.skills.length}</b></div><div class="kpi"><small>Question types</small><b>${G.types.length}</b></div><div class="kpi"><small>Skill graph</small><b style="font-size:14px">${esc(G.version)}</b></div></div>
+ ${isSuper()?`<div class="card"><h2>Upload a question bundle</h2><p class="muted">JSON in the bank format: <code>{"bank_version": "…", "questions": [ … ]}</code>. Questions are checked against question-types.json and the skill graph, then added or updated by id. Check first, then upload.</p>
+ <div class="row"><input type="file" id="bf" accept=".json"><button class="b q" id="bchk">Check</button><button class="b" id="bup">Upload</button></div><div id="bres"></div></div>
+ <div class="card"><h2>Replace the skill graph</h2><p class="muted">skill-graph.json: checkpoints, groups and skills with AND-of-OR prerequisites. Students keep their progress; new skills are added to it.</p><div class="row"><input type="file" id="gf" accept=".json"><button class="b" id="gup">Upload graph</button></div><p id="gres" class="muted"></p></div>`:""}
+ <div class="card"><h2>Coverage by skill</h2><div class="tw"><table><tr><th>Skill</th><th>Name</th><th>Group</th><th>Questions</th><th>Types</th></tr>${G.skills.map(s=>{const c=bySkill[s.id];return `<tr class="${c?"click":""}" ${c?`data-sk="${s.id}"`:""}><td>${s.id}</td><td>${esc(s.name)}</td><td>${s.group}</td><td>${c?c.n:'<span class="muted">0</span>'}</td><td class="muted">${c?Object.keys(c.types).length+" of 29":""}</td></tr>`}).join("")}</table></div></div>
+ <div id="ql"></div>
+ <div class="card"><h2>Recent uploads</h2><table><tr><th>When</th><th>Kind</th><th>File</th><th>Result</th></tr>${d.uploads.map(u=>`<tr><td>${dt(u.at)}</td><td>${u.kind}</td><td>${esc(u.file_name)}</td><td class="muted">${esc(JSON.stringify(u.counts))}</td></tr>`).join("")}</table></div>`;
+ document.querySelectorAll("tr[data-sk]").forEach(tr=>tr.onclick=()=>qlist(tr.dataset.sk));
+ const send=async dry=>{const f=$("#bf").files[0];if(!f)return;$("#bres").innerHTML='<p class="muted">Working…</p>';
+  try{const body=JSON.parse(await f.text());const r=await api("POST",`/api/admin/bank/upload?name=${encodeURIComponent(f.name)}${dry?"&dry=1":""}`,body);
+   $("#bres").innerHTML=`<p class="${r.ok?"ok":"warn"}">${r.counts.valid} of ${r.counts.received} questions valid.${dry?"":` ${r.counts.inserted} added, ${r.counts.updated} updated.`}</p>${r.errors.length?`<pre>${esc(r.errors.slice(0,100).map(e=>`${e.id||"?"}: ${e.errors.join("; ")}`).join("\n"))}</pre>`:""}`;if(!dry)setTimeout(content,1500)}
+  catch(e){$("#bres").innerHTML=`<p class="bad">${esc(e.message)}</p>`}};
+ if($("#bchk")){$("#bchk").onclick=()=>send(true);$("#bup").onclick=()=>send(false)}
+ if($("#gup"))$("#gup").onclick=async()=>{const f=$("#gf").files[0];if(!f)return;try{const r=await api("POST","/api/admin/graph/upload",JSON.parse(await f.text()));$("#gres").innerHTML=`<span class="ok">Graph ${esc(r.version)} is live.</span>`}catch(e){$("#gres").innerHTML=`<span class="bad">${esc(e.message)}</span>`}}}
+async function qlist(sk){const r=await api("GET","/api/admin/questions?skill="+sk);
+ $("#ql").innerHTML=`<div class="card"><h2>${sk} questions</h2><div class="tw"><table><tr><th>Id</th><th>Type</th><th>Status</th><th>Task</th></tr>${r.rows.map(q=>`<tr class="click" data-q="${esc(q.id)}"><td>${esc(q.id)}</td><td>${esc(q.type)}</td><td>${q.status}</td><td>${esc((q.task||"").slice(0,110))}</td></tr>`).join("")}</table></div><div id="qd"></div></div>`;
+ document.querySelectorAll("tr[data-q]").forEach(tr=>tr.onclick=()=>qdetail(tr.dataset.q));$("#ql").scrollIntoView({behavior:"smooth"})}
+async function qdetail(id){const d=await api("GET","/api/admin/questions/"+encodeURIComponent(id));
+ $("#qd").innerHTML=`<h2 style="margin-top:14px">${esc(id)} <span class="pill">${d.status}</span> <span class="muted">${d.stats.n} answers, ${pct(d.stats.right||0,d.stats.n)} right</span></h2>
+ ${isSuper()?`<div class="row">${["live","draft","archived"].filter(s=>s!==d.status).map(s=>`<button class="b q" data-st="${s}">Mark ${s}</button>`).join("")}</div>`:""}
+ <div class="grid2"><div><h2>What students see</h2><pre>${esc(JSON.stringify(d.preview,null,2))}</pre></div><div><h2>Stored question (with key)</h2><pre>${esc(JSON.stringify(d.question,null,2))}</pre></div></div>`;
+ document.querySelectorAll("[data-st]").forEach(b=>b.onclick=async()=>{await api("POST",`/api/admin/questions/${encodeURIComponent(id)}/status`,{status:b.dataset.st});qdetail(id)})}
+
+async function feedback(){const r=await api("GET","/api/admin/feedback?"+uq());
+ $("#m").innerHTML=`<div class="card"><h2>Feedback</h2><div class="tw"><table><tr><th>When</th><th>Student</th><th>University</th><th>Feedback</th></tr>${r.rows.map(f=>`<tr><td>${dt(f.at)}</td><td>${esc(f.roll_no)} ${esc(f.name||"")}</td><td>${esc(f.university||"")}</td><td>${esc(f.text)}</td></tr>`).join("")||'<tr><td colspan=4 class="muted">Nothing yet.</td></tr>'}</table></div></div>`}
+async function admins(){const r=await api("GET","/api/admin/admins");
+ $("#m").innerHTML=`<div class="card"><h2>Admins</h2><table><tr><th>Email</th><th>Name</th><th>Role</th><th>University</th><th>Last login</th></tr>${r.rows.map(a=>`<tr><td>${esc(a.email)}</td><td>${esc(a.name)}</td><td>${a.role}</td><td>${esc(a.university||"all")}</td><td>${dt(a.last_login_at)}</td></tr>`).join("")}</table></div>
+ <div class="card"><h2>Add or reset an admin</h2><p class="muted">A university admin sees only that university's students and numbers. They get a temporary password to change at first login.</p>
+ <div class="row"><input id="ne" type="email" placeholder="Email"><input id="nn" placeholder="Name"><select id="nr"><option value="admin">Admin</option><option value="super_admin">Super admin</option></select><select id="nu"><option value="">All universities</option>${UNIS.map(u=>`<option>${esc(u)}</option>`).join("")}</select><button class="b" id="nadd">Save</button></div><p id="nres"></p></div>`;
+ $("#nadd").onclick=async()=>{try{const x=await api("POST","/api/admin/admins",{email:$("#ne").value,name:$("#nn").value,role:$("#nr").value,university:$("#nu").value});$("#nres").innerHTML=`<span class="ok">Saved.</span> Temporary password for ${esc(x.email)}: <code>${esc(x.tempPassword)}</code> (shown once)`}catch(e){$("#nres").innerHTML=`<span class="bad">${esc(e.message)}</span>`}}}
+async function account(){$("#m").innerHTML=`<div class="card" style="max-width:420px"><h2>Change your password</h2>${A.must_change_pw?'<p class="warn">Please replace your temporary password.</p>':""}<input id="cp" type="password" placeholder="Current password" style="width:100%;margin-bottom:8px"><input id="np" type="password" placeholder="New password (10+ characters)" style="width:100%;margin-bottom:8px"><button class="b" id="cpb">Change</button><p id="cpr"></p></div>`;
+ $("#cpb").onclick=async()=>{try{await api("POST","/api/admin/password",{current:$("#cp").value,next:$("#np").value});A.must_change_pw=0;$("#cpr").innerHTML='<span class="ok">Password changed.</span>'}catch(e){$("#cpr").innerHTML=`<span class="bad">${esc(e.message)}</span>`}}}
+me().catch(()=>{A=null}).finally(draw);
+})();
+</script>
+</body></html>

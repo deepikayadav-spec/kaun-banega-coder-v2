@@ -1,0 +1,32 @@
+{
+  "id": "C1-G1-S1-L1-T3-R1-V1",
+  "skill": "S1",
+  "level": 1,
+  "type": "predict",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Variant",
+  "kps": [
+    "str",
+    "plus"
+  ],
+  "mistakes": [
+    "quotes",
+    "join"
+  ],
+  "task": "Read the code and type exactly what it prints.",
+  "code": "first = \"12\"\nsecond = \"3\"\nprint(first + second)",
+  "payload": {
+    "expected": "123",
+    "wrong": {
+      "15": "Both values are text, so + joins them: \"12\" + \"3\" gives 123, not 15."
+    }
+  },
+  "ok": "Both values are text, so + joins them: 123.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

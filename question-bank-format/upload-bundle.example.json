@@ -1,0 +1,1414 @@
+{
+  "bank_version": "2026-10-30",
+  "questions": [
+    {
+      "id": "C1-G1-S1-L1-T1-R1-V1",
+      "skill": "S1",
+      "level": 1,
+      "type": "mcq",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Edge",
+      "kps": [
+        "float",
+        "int",
+        "str"
+      ],
+      "mistakes": [
+        "point",
+        "quotes",
+        "printq"
+      ],
+      "task": "Asha stores the marks like this. What kind of value is marks?",
+      "code": "marks = 12.0",
+      "payload": {
+        "options": [
+          {
+            "text": "Whole number (int)",
+            "why": "12.0 has a decimal point, so it is a decimal (float), not a whole number."
+          },
+          {
+            "text": "Decimal (float)",
+            "correct": true
+          },
+          {
+            "text": "Text (str)",
+            "why": "12.0 has no quotes, so it is not text."
+          },
+          {
+            "text": "It cannot be known until it is printed",
+            "why": "The kind is fixed by how the value is written, before anything is printed. 12.0 is written with a decimal point."
+          }
+        ]
+      },
+      "ok": "12.0 is a decimal (float): the decimal point makes it a decimal, even though it ends in .0.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L1-T2-R1-V1",
+      "skill": "S1",
+      "level": 1,
+      "type": "match",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Typical",
+      "kps": [
+        "type",
+        "int",
+        "float",
+        "str",
+        "plus"
+      ],
+      "mistakes": [
+        "point",
+        "quotes",
+        "join",
+        "names"
+      ],
+      "task": "Match each line of code to what it prints.",
+      "code": null,
+      "payload": {
+        "answer": {
+          "print(type(12))": "<class 'int'>",
+          "print(type(12.0))": "<class 'float'>",
+          "print(type(\"12\"))": "<class 'str'>",
+          "print(\"12\" + \"12\")": "1212"
+        },
+        "left": [
+          "print(type(12))",
+          "print(type(12.0))",
+          "print(type(\"12\"))",
+          "print(\"12\" + \"12\")"
+        ],
+        "right": [
+          "<class 'str'>",
+          "<class 'int'>",
+          "<class 'float'>",
+          "1212"
+        ]
+      },
+      "ok": "12 is an int, 12.0 a float, \"12\" a str, and + joins two texts into 1212.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L1-T3-R1-V1",
+      "skill": "S1",
+      "level": 1,
+      "type": "predict",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Variant",
+      "kps": [
+        "str",
+        "plus"
+      ],
+      "mistakes": [
+        "quotes",
+        "join"
+      ],
+      "task": "Read the code and type exactly what it prints.",
+      "code": "first = \"12\"\nsecond = \"3\"\nprint(first + second)",
+      "payload": {
+        "expected": "123",
+        "wrong": {
+          "15": "Both values are text, so + joins them: \"12\" + \"3\" gives 123, not 15."
+        }
+      },
+      "ok": "Both values are text, so + joins them: 123.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L1-T4-R1-V1",
+      "skill": "S1",
+      "level": 1,
+      "type": "hunt",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Edge",
+      "kps": [
+        "float",
+        "str",
+        "int"
+      ],
+      "mistakes": [
+        "quotes",
+        "point"
+      ],
+      "task": "Tap every value that is a decimal (float).",
+      "code": null,
+      "payload": {
+        "answer": [
+          "0.5",
+          "12.0",
+          "3.25",
+          "-12.0"
+        ],
+        "values": [
+          "30",
+          "0.5",
+          "12.0",
+          "3.25",
+          "-3",
+          "\"12.5\"",
+          "12",
+          "-12.0",
+          "\"3\""
+        ],
+        "wrong_sets": [
+          {
+            "if": "\"12.5\"",
+            "why": "\"12.5\" is in quotes, so it is text (str), not a number."
+          },
+          {
+            "miss": "12.0",
+            "why": "12.0 has a decimal point, so it is a decimal (float), not a whole number. Ending in .0 does not change that."
+          }
+        ]
+      },
+      "ok": "A decimal has a decimal point and no quotes: 0.5, 12.0, 3.25, -12.0.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G5-S1-L1-T5-R1-V1",
+      "skill": "S21",
+      "level": 1,
+      "type": "path2",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Typical",
+      "kps": [
+        "ifelse",
+        "after"
+      ],
+      "mistakes": [
+        "both",
+        "boundary"
+      ],
+      "task": "Tap the lines in the order Python runs them.",
+      "code": "marks = 42\nif marks >= 40:\n    print(\"Pass\")\nelse:\n    print(\"Try again\")\nprint(\"Done\")",
+      "payload": {
+        "lines": [
+          "marks = 42",
+          "if marks >= 40:",
+          "    print(\"Pass\")",
+          "else:",
+          "    print(\"Try again\")",
+          "print(\"Done\")"
+        ],
+        "answer": [
+          1,
+          2,
+          3,
+          6
+        ],
+        "output": "Pass\nDone",
+        "wrong_paths": [
+          {
+            "path": [
+              1,
+              2,
+              4,
+              5,
+              6
+            ],
+            "why": "42 >= 40 is True, so the if block runs and the else block is skipped."
+          },
+          {
+            "path": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "why": "Only one of the if block and the else block runs, never both."
+          },
+          {
+            "path": [
+              1,
+              2,
+              3
+            ],
+            "why": "print(\"Done\") is outside the if/else, so it runs either way."
+          }
+        ]
+      },
+      "ok": "marks >= 40 is True, so Python runs line 3, skips the else block, then runs line 6.",
+      "hint": "Work out whether marks >= 40 is True first.",
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L1-T6-R1-V1",
+      "skill": "S1",
+      "level": 1,
+      "type": "timeline",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Typical",
+      "kps": [
+        "str",
+        "int",
+        "type"
+      ],
+      "mistakes": [
+        "quotes"
+      ],
+      "task": "Put the moments of this run in the order they happen.",
+      "code": "a = \"12\"\nb = 3\nprint(type(a))\nprint(type(b))",
+      "payload": {
+        "answer": [
+          "a gets the text \"12\"",
+          "b gets the whole number 3",
+          "<class 'str'> is printed",
+          "<class 'int'> is printed"
+        ],
+        "items": [
+          "<class 'str'> is printed",
+          "a gets the text \"12\"",
+          "b gets the whole number 3",
+          "<class 'int'> is printed"
+        ]
+      },
+      "ok": "Python runs the lines from top to bottom: first both values are stored, then each kind is printed.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L2-T1-R1-V1",
+      "skill": "S1",
+      "level": 2,
+      "type": "group",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Edge",
+      "kps": [
+        "int",
+        "float",
+        "str"
+      ],
+      "mistakes": [
+        "quotes",
+        "point",
+        "whole"
+      ],
+      "task": "These twelve values hide three groups of four. Group them by their kind.",
+      "code": null,
+      "payload": {
+        "pieces": [
+          "-3",
+          "\"12.5\"",
+          "\"12\"",
+          "12.5",
+          "'Pune'",
+          "0",
+          "300",
+          "0.0",
+          "12.0",
+          "12",
+          "\"0\"",
+          "-3.5"
+        ],
+        "groups": {
+          "Whole numbers (int)": [
+            "12",
+            "-3",
+            "0",
+            "300"
+          ],
+          "Decimals (float)": [
+            "12.0",
+            "12.5",
+            "-3.5",
+            "0.0"
+          ],
+          "Text (str)": [
+            "\"12\"",
+            "\"12.5\"",
+            "'Pune'",
+            "\"0\""
+          ]
+        }
+      },
+      "ok": "Quotes make text, a decimal point makes a decimal, and the rest are whole numbers.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L2-T2-R1-V1",
+      "skill": "S1",
+      "level": 2,
+      "type": "explain",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Edge",
+      "kps": [
+        "printq",
+        "str"
+      ],
+      "mistakes": [
+        "printq",
+        "quotes"
+      ],
+      "task": "Both lines print 12. Why do they look the same?",
+      "code": "print(12)\nprint(\"12\")",
+      "payload": {
+        "options": [
+          {
+            "text": "print() shows text without its quotes, so the number and the text look the same.",
+            "correct": true
+          },
+          {
+            "text": "Python turns \"12\" into a number before printing it.",
+            "why": "Python never changes a value's kind on its own. print() shows text without its quotes, so 12 and \"12\" print the same, but they are different kinds."
+          },
+          {
+            "text": "Both lines hold whole numbers.",
+            "why": "\"12\" is in quotes, so it is text (str), not a number."
+          },
+          {
+            "text": "Quotes are optional around numbers.",
+            "why": "Quotes change the kind. \"12\" is in quotes, so it is text (str), not a number."
+          }
+        ],
+        "printed": "12\n12"
+      },
+      "ok": "The first value is an int and the second is a str. print() shows both as 12.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L2-T3-R1-V1",
+      "skill": "S1",
+      "level": 2,
+      "type": "happens",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Edge",
+      "kps": [
+        "mix",
+        "str",
+        "int"
+      ],
+      "mistakes": [
+        "mix"
+      ],
+      "task": "What happens when this code runs?",
+      "code": "marks = 12\nextra = \"3\"\nprint(marks + extra)",
+      "payload": {
+        "options": [
+          {
+            "text": "It prints 123",
+            "why": "Python does not turn the number into text for you. A number and text cannot be added: 12 + \"3\" stops with a TypeError."
+          },
+          {
+            "text": "It prints 15",
+            "why": "Python does not turn the text into a number for you. A number and text cannot be added: 12 + \"3\" stops with a TypeError."
+          },
+          {
+            "text": "It stops with an error",
+            "correct": true
+          },
+          {
+            "text": "It never stops",
+            "why": "There is no loop here, so it always ends."
+          }
+        ],
+        "real": "TypeError: unsupported operand type(s) for +: 'int' and 'str'"
+      },
+      "ok": "marks is a whole number and extra is text. + cannot mix them, so Python stops with: TypeError: unsupported operand type(s) for +: 'int' and 'str'",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L2-T4-R1-V1",
+      "skill": "S1",
+      "level": 2,
+      "type": "problem",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Typical",
+      "kps": [
+        "int",
+        "float",
+        "str"
+      ],
+      "mistakes": [
+        "point",
+        "quotes"
+      ],
+      "task": "Which kind of value should each one be?",
+      "code": null,
+      "payload": {
+        "options": [
+          {
+            "text": "Roll number: whole number, height: decimal, city: text",
+            "correct": true
+          },
+          {
+            "text": "Roll number: whole number, height: whole number, city: text",
+            "why": "A height like 1.33 has a decimal point, so it is a decimal."
+          },
+          {
+            "text": "Roll number: text, height: decimal, city: text",
+            "why": "A roll number is counted and compared like a number, so it is stored as a whole number."
+          },
+          {
+            "text": "All three are numbers",
+            "why": "A city name is made of letters, so it is text."
+          }
+        ],
+        "spec": "A form stores a student's roll number (like 12), their height in metres (like 1.33) and their city (like Pune)."
+      },
+      "ok": "Counts like a roll number are whole numbers, measurements with a point are decimals, and names are text.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L2-T5-R1-V1",
+      "skill": "S1",
+      "level": 2,
+      "type": "same",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Edge",
+      "kps": [
+        "printq",
+        "str",
+        "int"
+      ],
+      "mistakes": [
+        "printq"
+      ],
+      "task": "Do these two programs print exactly the same thing?",
+      "code": null,
+      "payload": {
+        "answer": "Same",
+        "codeA": "print(12)",
+        "codeB": "print(\"12\")",
+        "outputs": [
+          "12",
+          "12"
+        ]
+      },
+      "ok": "Both print 12. The values are different kinds (int and str), but print() shows them the same way.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L2-T6-R1-V1",
+      "skill": "S1",
+      "level": 2,
+      "type": "gap",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Typical",
+      "kps": [
+        "int",
+        "float",
+        "str",
+        "plus"
+      ],
+      "mistakes": [
+        "point",
+        "quotes",
+        "join"
+      ],
+      "task": "Fill in the kind of each variable (int, float or str). The first row is done for you.",
+      "code": "a = 12\nb = 12.0\nc = \"12\"\nd = \"3\" + \"3\"",
+      "payload": {
+        "rows": [
+          {
+            "line": "a = 12",
+            "var": "a",
+            "value": "12",
+            "kind": "int",
+            "given": true
+          },
+          {
+            "line": "b = 12.0",
+            "var": "b",
+            "value": "12.0",
+            "kind": "float",
+            "given": false
+          },
+          {
+            "line": "c = \"12\"",
+            "var": "c",
+            "value": "'12'",
+            "kind": "str",
+            "given": false
+          },
+          {
+            "line": "d = \"3\" + \"3\"",
+            "var": "d",
+            "value": "'33'",
+            "kind": "str",
+            "given": false
+          }
+        ]
+      },
+      "ok": "b has a decimal point, c is in quotes, and joining two texts gives text: the text '33'.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G5-S2-L2-T7-R1-V1",
+      "skill": "S22",
+      "level": 2,
+      "type": "path",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Edge",
+      "kps": [
+        "firsttrue",
+        "elsecatch"
+      ],
+      "mistakes": [
+        "boundary",
+        "later"
+      ],
+      "task": "For each input, pick the branch that runs.",
+      "code": "temp = int(input())\nif temp >= 35:\n    print(\"Hot\")\nelif temp >= 20:\n    print(\"Warm\")\nelse:\n    print(\"Cold\")",
+      "payload": {
+        "branches": [
+          {
+            "id": "A",
+            "line": 3,
+            "label": "print(\"Hot\")"
+          },
+          {
+            "id": "B",
+            "line": 5,
+            "label": "print(\"Warm\")"
+          },
+          {
+            "id": "C",
+            "line": 7,
+            "label": "print(\"Cold\")"
+          }
+        ],
+        "cases": [
+          {
+            "input": "35",
+            "answer": "A",
+            "why": "35 >= 35 is True: >= includes 35, so the first branch runs."
+          },
+          {
+            "input": "34",
+            "answer": "B",
+            "why": "34 >= 35 is False, then 34 >= 20 is True."
+          },
+          {
+            "input": "20",
+            "answer": "B",
+            "why": "20 >= 20 is True: >= includes 20."
+          },
+          {
+            "input": "19",
+            "answer": "C",
+            "why": "Both conditions are False, so else runs."
+          },
+          {
+            "input": "50",
+            "answer": "A",
+            "why": "50 >= 20 is also True, but Python stops at the first True condition."
+          }
+        ]
+      },
+      "ok": "Python checks the conditions in order and runs only the first True branch; else catches the rest.",
+      "hint": "Check the conditions from the top. Stop at the first True one.",
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G3-S2-L2-T8-R1-V1",
+      "skill": "S14",
+      "level": 2,
+      "type": "sort",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Typical",
+      "kps": [
+        "floordiv",
+        "mod",
+        "truediv"
+      ],
+      "mistakes": [
+        "floordiv",
+        "mod",
+        "truediv"
+      ],
+      "task": "Sort these by the value they give, smallest first.",
+      "code": null,
+      "payload": {
+        "pieces": [
+          "17 // 5",
+          "10 / 4",
+          "9 % 4",
+          "17 / 5",
+          "17 % 5"
+        ],
+        "answer": [
+          "9 % 4",
+          "17 % 5",
+          "10 / 4",
+          "17 // 5",
+          "17 / 5"
+        ],
+        "results": {
+          "9 % 4": "1",
+          "17 % 5": "2",
+          "10 / 4": "2.5",
+          "17 // 5": "3",
+          "17 / 5": "3.4"
+        },
+        "wrong_pairs": [
+          {
+            "before": "17 / 5",
+            "after": "17 // 5",
+            "why": "// drops the decimal part: 17 // 5 is 3, which is less than 3.4."
+          },
+          {
+            "before": "17 // 5",
+            "after": "17 % 5",
+            "why": "% gives the remainder: 17 % 5 is 2, less than 17 // 5, which is 3."
+          },
+          {
+            "before": "17 // 5",
+            "after": "10 / 4",
+            "why": "/ keeps the decimal part: 10 / 4 is 2.5, less than 3."
+          }
+        ]
+      },
+      "ok": "9 % 4 = 1, 17 % 5 = 2, 10 / 4 = 2.5, 17 // 5 = 3, 17 / 5 = 3.4.",
+      "hint": "Work out each value first: // drops the decimal, % is the remainder, / keeps the decimal.",
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L2-T9-R1-V1",
+      "skill": "S1",
+      "level": 2,
+      "type": "fill",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Typical",
+      "kps": [
+        "float",
+        "type"
+      ],
+      "mistakes": [
+        "point",
+        "quotes"
+      ],
+      "task": "Type a marks value for the blank so the code prints <class 'float'>.",
+      "code": "marks = ____\nprint(type(marks))",
+      "payload": {
+        "target": "<class 'float'>",
+        "sample": "12.5"
+      },
+      "ok": "Any number with a decimal point and no quotes works, like 12.5.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L2-T10-R1-V1",
+      "skill": "S1",
+      "level": 2,
+      "type": "input",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Variant",
+      "kps": [
+        "str",
+        "type"
+      ],
+      "mistakes": [
+        "quotes",
+        "point",
+        "whole"
+      ],
+      "task": "Pick the value for the blank that makes the code print <class 'str'>.",
+      "code": "value = ___\nprint(type(value))",
+      "payload": {
+        "options": [
+          {
+            "text": "\"12\"",
+            "correct": true
+          },
+          {
+            "text": "12",
+            "why": "12 has no decimal point and no quotes, so it is a whole number (int). A minus sign does not change that."
+          },
+          {
+            "text": "12.0",
+            "why": "12.0 has a decimal point, so it is a decimal (float), not a whole number."
+          },
+          {
+            "text": "-12",
+            "why": "-12 has no decimal point and no quotes, so it is a whole number (int). A minus sign does not change that."
+          }
+        ]
+      },
+      "ok": "Only \"12\" has quotes, so it is text (str).",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G3-S1-L2-T11-R1-V1",
+      "skill": "S13",
+      "level": 2,
+      "type": "guess",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Typical",
+      "kps": [
+        "order"
+      ],
+      "mistakes": [
+        "order",
+        "oneprobe"
+      ],
+      "task": "The code is hidden. Choose values for x to see what it prints, then pick the code.",
+      "code": null,
+      "payload": {
+        "probe": {
+          "var": "x",
+          "min": -5,
+          "max": 10,
+          "hidden_code": "print(x * 3 - 2)"
+        },
+        "max_probes": 4,
+        "options": [
+          {
+            "text": "print(x * 3 - 2)",
+            "correct": true
+          },
+          {
+            "text": "print(x * 2 + 1)",
+            "why": "Both give 7 when x is 3, but at x = 0 this gives 1 and the hidden code gives -2. One matching probe is not enough."
+          },
+          {
+            "text": "print((x - 2) * 3)",
+            "why": "Brackets change the order: at x = 1 this gives -3, the hidden code gives 1."
+          },
+          {
+            "text": "print(x * 3 + 2)",
+            "why": "At x = 0 this gives 2; the hidden code gives -2."
+          }
+        ]
+      },
+      "ok": "x = 0 gives -2 and each step of 1 in x adds 3, so the code is x * 3 - 2.",
+      "hint": "Try x = 0 first: it shows the number that is added or taken away.",
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G5-S2-L2-T12-R1-V1",
+      "skill": "S22",
+      "level": 2,
+      "type": "cover",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Edge",
+      "kps": [
+        "firsttrue",
+        "elsecatch"
+      ],
+      "mistakes": [
+        "boundary",
+        "later"
+      ],
+      "task": "Pick three ages so that each branch runs exactly once.",
+      "code": "age = int(input())\nif age < 13:\n    print(\"Child\")\nelif age < 18:\n    print(\"Teen\")\nelse:\n    print(\"Adult\")",
+      "payload": {
+        "values": [
+          "5",
+          "12",
+          "13",
+          "17",
+          "18",
+          "40"
+        ],
+        "need": 3,
+        "branches": [
+          {
+            "id": "A",
+            "line": 3,
+            "output": "Child"
+          },
+          {
+            "id": "B",
+            "line": 5,
+            "output": "Teen"
+          },
+          {
+            "id": "C",
+            "line": 7,
+            "output": "Adult"
+          }
+        ],
+        "sample": [
+          "12",
+          "13",
+          "18"
+        ]
+      },
+      "ok": "One age under 13, one from 13 to 17, and one 18 or over: each runs a different branch.",
+      "hint": "13 is not < 13, and 18 is not < 18.",
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L2-T13-R1-V1",
+      "skill": "S1",
+      "level": 2,
+      "type": "mystery",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Variant",
+      "kps": [
+        "str",
+        "plus"
+      ],
+      "mistakes": [
+        "join",
+        "quotes"
+      ],
+      "task": "Write code that prints this output. Join two pieces of text with + (do not type 123 as one value).",
+      "code": null,
+      "payload": {
+        "target": "123",
+        "require": [
+          "+"
+        ],
+        "require_any": [
+          [
+            "\"",
+            "'"
+          ]
+        ],
+        "sample": "print(\"12\" + \"3\")",
+        "forbid": [
+          "\"123\"",
+          "'123'"
+        ]
+      },
+      "ok": "Two texts joined with + sit side by side.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L3-T1-R1-V1",
+      "skill": "S1",
+      "level": 3,
+      "type": "name",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Typical",
+      "kps": [
+        "str",
+        "plus"
+      ],
+      "mistakes": [
+        "quotes",
+        "point",
+        "printq",
+        "mix"
+      ],
+      "task": "Asha wants to add two marks values, 12 and 3. The code prints 123 instead of 15. Which mistake is this?",
+      "code": "marks_1 = \"12\"\nmarks_2 = \"3\"\nprint(marks_1 + marks_2)",
+      "payload": {
+        "options": [
+          {
+            "text": "Digits in quotes are text",
+            "correct": true
+          },
+          {
+            "text": "A decimal point makes a decimal",
+            "why": "There is no decimal point anywhere in this code."
+          },
+          {
+            "text": "print() hides the quotes",
+            "why": "The printed value is not the problem; the values were stored as text."
+          },
+          {
+            "text": "A number and text cannot be added",
+            "why": "Both values are text, so nothing is mixed and there is no error."
+          }
+        ]
+      },
+      "ok": "Both values are in quotes, so they are text, and + joins text: 123.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L3-T2-R1-V1",
+      "skill": "S1",
+      "level": 3,
+      "type": "bug",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Typical",
+      "kps": [
+        "str",
+        "int"
+      ],
+      "mistakes": [
+        "quotes"
+      ],
+      "task": "Asha wants the age stored as a whole number, so the last line should print <class 'int'>. It prints <class 'str'>. Tap the wrong line.",
+      "code": null,
+      "payload": {
+        "answer": 2,
+        "lines": [
+          "name = \"Asha\"",
+          "age = \"12\"",
+          "height = 1.33",
+          "print(type(age))"
+        ]
+      },
+      "ok": "Line 2 puts the age in quotes, which makes it text. It should be age = 12.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L3-T3-R1-V1",
+      "skill": "S1",
+      "level": 3,
+      "type": "parsons",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Typical",
+      "kps": [
+        "str",
+        "plus",
+        "type"
+      ],
+      "mistakes": [
+        "join"
+      ],
+      "task": "Put the lines in an order that prints exactly the target output.",
+      "code": null,
+      "payload": {
+        "items": [
+          "joined = left + right",
+          "right = \"3\"",
+          "left = \"12\"",
+          "print(type(joined))",
+          "print(joined)"
+        ],
+        "target": "123\n<class 'str'>",
+        "sample": "left = \"12\"\nright = \"3\"\njoined = left + right\nprint(joined)\nprint(type(joined))"
+      },
+      "ok": "Store both texts, join them, then print the result and its kind.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L3-T4-R1-V1",
+      "skill": "S1",
+      "level": 3,
+      "type": "golf",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Variant",
+      "kps": [
+        "str",
+        "plus",
+        "int"
+      ],
+      "mistakes": [
+        "quotes",
+        "join"
+      ],
+      "task": "The code prints 123. Change as few values as you can so it prints 15.",
+      "code": "x = \"12\"\ny = \"3\"\nprint(x + y)",
+      "payload": {
+        "tokens": [
+          {
+            "line": 0,
+            "now": "\"12\"",
+            "choices": [
+              "\"12\"",
+              "12",
+              "12.0"
+            ]
+          },
+          {
+            "line": 1,
+            "now": "\"3\"",
+            "choices": [
+              "\"3\"",
+              "3",
+              "3.0"
+            ]
+          }
+        ],
+        "target": "15",
+        "par": 2
+      },
+      "ok": "Remove the quotes from both values: whole numbers are added, not joined.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L3-T5-R1-V1",
+      "skill": "S1",
+      "level": 3,
+      "type": "fix",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Typical",
+      "kps": [
+        "str",
+        "plus"
+      ],
+      "mistakes": [
+        "quotes",
+        "join"
+      ],
+      "task": "Asha wants the total cost 15, but the code prints 123. Fix it. Keep the line print(price + tax).",
+      "code": "price = \"12\"\ntax = \"3\"\nprint(price + tax)",
+      "payload": {
+        "target": "15",
+        "require": [
+          "print(price + tax)",
+          "12",
+          "3"
+        ],
+        "sample": "price = 12\ntax = 3\nprint(price + tax)",
+        "forbid": [
+          "15"
+        ]
+      },
+      "ok": "Remove the quotes so price and tax are whole numbers.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L4-T1-R1-V1",
+      "skill": "S1",
+      "level": 4,
+      "type": "pseudo",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Typical",
+      "kps": [
+        "str",
+        "plus",
+        "type"
+      ],
+      "mistakes": [
+        "join"
+      ],
+      "task": "Plan a program that builds the text 123, prints it, and then prints its kind. Put the steps in order.",
+      "code": null,
+      "payload": {
+        "answer": [
+          "Store the digits 12 as text in first",
+          "Join the text \"3\" onto the end of first and store it in code",
+          "Print code",
+          "Print the kind of code"
+        ],
+        "items": [
+          "Print code",
+          "Store the digits 12 as text in first",
+          "Join the text \"3\" onto the end of first and store it in code",
+          "Print the kind of code"
+        ]
+      },
+      "ok": "A value has to be stored before it is joined, and joined before it is printed.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L4-T2-R1-V1",
+      "skill": "S1",
+      "level": 4,
+      "type": "faded",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Typical",
+      "kps": [
+        "int",
+        "float",
+        "str",
+        "type"
+      ],
+      "mistakes": [
+        "point",
+        "quotes"
+      ],
+      "task": "Finish steps 2 and 3. Together the three steps must print the kinds of a whole number, a decimal and a text.",
+      "code": null,
+      "payload": {
+        "steps": [
+          {
+            "label": "Step 1 (solved)",
+            "code": "age = 12\nprint(type(age))",
+            "solved": true
+          },
+          {
+            "label": "Step 2 (fill the gaps)",
+            "code": "height = ____\nprint(type(____))",
+            "solved": false,
+            "hint": "Store the height 1.45 and print its kind."
+          },
+          {
+            "label": "Step 3 (write it yourself)",
+            "code": "",
+            "solved": false,
+            "hint": "Store the city Pune as text in a variable, then print its kind."
+          }
+        ],
+        "target": "<class 'int'>\n<class 'float'>\n<class 'str'>",
+        "require": [
+          "type("
+        ],
+        "sample": "age = 12\nprint(type(age))\nheight = 1.45\nprint(type(height))\ncity = \"Pune\"\nprint(type(city))",
+        "forbid": [
+          "<class"
+        ]
+      },
+      "ok": "Each step stores one kind of value and prints its kind with type().",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L4-T3-R1-V1",
+      "skill": "S1",
+      "level": 4,
+      "type": "grow",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Typical",
+      "kps": [
+        "int",
+        "float",
+        "type",
+        "plus"
+      ],
+      "mistakes": [
+        "point",
+        "join"
+      ],
+      "task": "One program grows. At each tier, add one rule to the same code.",
+      "code": null,
+      "payload": {
+        "tiers": [
+          {
+            "task": "Print the kind of the whole number 12.",
+            "expected": "<class 'int'>"
+          },
+          {
+            "task": "Add a line that prints the kind of the decimal 12.5.",
+            "expected": "<class 'int'>\n<class 'float'>"
+          },
+          {
+            "task": "Add a line that joins the texts \"12\" and \"3\" and prints the result.",
+            "expected": "<class 'int'>\n<class 'float'>\n123"
+          }
+        ],
+        "require": [
+          "type("
+        ],
+        "sample": "print(type(12))\nprint(type(12.5))\nprint(\"12\" + \"3\")",
+        "forbid": [
+          "<class"
+        ]
+      },
+      "ok": "Each tier keeps the earlier lines and adds one more.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L4-T4-R1-V1",
+      "skill": "S1",
+      "level": 4,
+      "type": "write",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Typical",
+      "kps": [
+        "int",
+        "float",
+        "str",
+        "type"
+      ],
+      "mistakes": [
+        "point",
+        "quotes",
+        "whole"
+      ],
+      "task": "Store Asha's roll number 12, height 1.45 metres and city Pune in three variables. Then print the kind of each one, one per line, in that order.",
+      "code": null,
+      "payload": {
+        "target": "<class 'int'>\n<class 'float'>\n<class 'str'>",
+        "require": [
+          "type(",
+          "12",
+          "1.45",
+          "Pune"
+        ],
+        "sample": "roll = 12\nheight = 1.45\ncity = \"Pune\"\nprint(type(roll))\nprint(type(height))\nprint(type(city))",
+        "forbid": [
+          "<class"
+        ]
+      },
+      "ok": "A roll number is a whole number, a height with a point is a decimal, and a city is text.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    },
+    {
+      "id": "C1-G1-S1-L4-T5-R1-V1",
+      "skill": "S1",
+      "level": 4,
+      "type": "diverge",
+      "difficulty": 1,
+      "variant": 1,
+      "mix_skills": [],
+      "form": "Variant",
+      "kps": [
+        "printq",
+        "plus",
+        "str",
+        "int"
+      ],
+      "mistakes": [
+        "printq",
+        "join"
+      ],
+      "task": "Write up to three programs that each print 1212, as different from each other as possible. Two different ones pass.",
+      "code": null,
+      "payload": {
+        "target": "1212",
+        "need": 2,
+        "samples": [
+          "print(\"1212\")",
+          "print(\"12\" + \"12\")",
+          "print(1212)"
+        ]
+      },
+      "ok": "The same output can come from text, from joined texts, or from a whole number, because print() hides quotes.",
+      "hint": null,
+      "status": "live",
+      "version": 1,
+      "author": "pedagogy",
+      "verified": null
+    }
+  ]
+}

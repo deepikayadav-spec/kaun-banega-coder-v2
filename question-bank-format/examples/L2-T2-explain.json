@@ -1,0 +1,47 @@
+{
+  "id": "C1-G1-S1-L2-T2-R1-V1",
+  "skill": "S1",
+  "level": 2,
+  "type": "explain",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Edge",
+  "kps": [
+    "printq",
+    "str"
+  ],
+  "mistakes": [
+    "printq",
+    "quotes"
+  ],
+  "task": "Both lines print 12. Why do they look the same?",
+  "code": "print(12)\nprint(\"12\")",
+  "payload": {
+    "options": [
+      {
+        "text": "print() shows text without its quotes, so the number and the text look the same.",
+        "correct": true
+      },
+      {
+        "text": "Python turns \"12\" into a number before printing it.",
+        "why": "Python never changes a value's kind on its own. print() shows text without its quotes, so 12 and \"12\" print the same, but they are different kinds."
+      },
+      {
+        "text": "Both lines hold whole numbers.",
+        "why": "\"12\" is in quotes, so it is text (str), not a number."
+      },
+      {
+        "text": "Quotes are optional around numbers.",
+        "why": "Quotes change the kind. \"12\" is in quotes, so it is text (str), not a number."
+      }
+    ],
+    "printed": "12\n12"
+  },
+  "ok": "The first value is an int and the second is a str. print() shows both as 12.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

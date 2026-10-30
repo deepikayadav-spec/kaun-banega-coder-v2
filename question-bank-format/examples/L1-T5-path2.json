@@ -1,0 +1,74 @@
+{
+  "id": "C1-G5-S1-L1-T5-R1-V1",
+  "skill": "S21",
+  "level": 1,
+  "type": "path2",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Typical",
+  "kps": [
+    "ifelse",
+    "after"
+  ],
+  "mistakes": [
+    "both",
+    "boundary"
+  ],
+  "task": "Tap the lines in the order Python runs them.",
+  "code": "marks = 42\nif marks >= 40:\n    print(\"Pass\")\nelse:\n    print(\"Try again\")\nprint(\"Done\")",
+  "payload": {
+    "lines": [
+      "marks = 42",
+      "if marks >= 40:",
+      "    print(\"Pass\")",
+      "else:",
+      "    print(\"Try again\")",
+      "print(\"Done\")"
+    ],
+    "answer": [
+      1,
+      2,
+      3,
+      6
+    ],
+    "output": "Pass\nDone",
+    "wrong_paths": [
+      {
+        "path": [
+          1,
+          2,
+          4,
+          5,
+          6
+        ],
+        "why": "42 >= 40 is True, so the if block runs and the else block is skipped."
+      },
+      {
+        "path": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "why": "Only one of the if block and the else block runs, never both."
+      },
+      {
+        "path": [
+          1,
+          2,
+          3
+        ],
+        "why": "print(\"Done\") is outside the if/else, so it runs either way."
+      }
+    ]
+  },
+  "ok": "marks >= 40 is True, so Python runs line 3, skips the else block, then runs line 6.",
+  "hint": "Work out whether marks >= 40 is True first.",
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

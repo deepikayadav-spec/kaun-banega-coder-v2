@@ -1,0 +1,47 @@
+{
+  "id": "C1-G1-S1-L2-T10-R1-V1",
+  "skill": "S1",
+  "level": 2,
+  "type": "input",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Variant",
+  "kps": [
+    "str",
+    "type"
+  ],
+  "mistakes": [
+    "quotes",
+    "point",
+    "whole"
+  ],
+  "task": "Pick the value for the blank that makes the code print <class 'str'>.",
+  "code": "value = ___\nprint(type(value))",
+  "payload": {
+    "options": [
+      {
+        "text": "\"12\"",
+        "correct": true
+      },
+      {
+        "text": "12",
+        "why": "12 has no decimal point and no quotes, so it is a whole number (int). A minus sign does not change that."
+      },
+      {
+        "text": "12.0",
+        "why": "12.0 has a decimal point, so it is a decimal (float), not a whole number."
+      },
+      {
+        "text": "-12",
+        "why": "-12 has no decimal point and no quotes, so it is a whole number (int). A minus sign does not change that."
+      }
+    ]
+  },
+  "ok": "Only \"12\" has quotes, so it is text (str).",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

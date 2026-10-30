@@ -1,0 +1,48 @@
+{
+  "id": "C1-G1-S1-L2-T4-R1-V1",
+  "skill": "S1",
+  "level": 2,
+  "type": "problem",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Typical",
+  "kps": [
+    "int",
+    "float",
+    "str"
+  ],
+  "mistakes": [
+    "point",
+    "quotes"
+  ],
+  "task": "Which kind of value should each one be?",
+  "code": null,
+  "payload": {
+    "options": [
+      {
+        "text": "Roll number: whole number, height: decimal, city: text",
+        "correct": true
+      },
+      {
+        "text": "Roll number: whole number, height: whole number, city: text",
+        "why": "A height like 1.33 has a decimal point, so it is a decimal."
+      },
+      {
+        "text": "Roll number: text, height: decimal, city: text",
+        "why": "A roll number is counted and compared like a number, so it is stored as a whole number."
+      },
+      {
+        "text": "All three are numbers",
+        "why": "A city name is made of letters, so it is text."
+      }
+    ],
+    "spec": "A form stores a student's roll number (like 12), their height in metres (like 1.33) and their city (like Pune)."
+  },
+  "ok": "Counts like a roll number are whole numbers, measurements with a point are decimals, and names are text.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

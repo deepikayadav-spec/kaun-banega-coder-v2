@@ -1,0 +1,37 @@
+{
+  "id": "C1-G1-S1-L4-T5-R1-V1",
+  "skill": "S1",
+  "level": 4,
+  "type": "diverge",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Variant",
+  "kps": [
+    "printq",
+    "plus",
+    "str",
+    "int"
+  ],
+  "mistakes": [
+    "printq",
+    "join"
+  ],
+  "task": "Write up to three programs that each print 1212, as different from each other as possible. Two different ones pass.",
+  "code": null,
+  "payload": {
+    "target": "1212",
+    "need": 2,
+    "samples": [
+      "print(\"1212\")",
+      "print(\"12\" + \"12\")",
+      "print(1212)"
+    ]
+  },
+  "ok": "The same output can come from text, from joined texts, or from a whole number, because print() hides quotes.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

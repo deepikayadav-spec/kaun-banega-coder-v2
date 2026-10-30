@@ -1,0 +1,37 @@
+{
+  "id": "C1-G1-S1-L3-T3-R1-V1",
+  "skill": "S1",
+  "level": 3,
+  "type": "parsons",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Typical",
+  "kps": [
+    "str",
+    "plus",
+    "type"
+  ],
+  "mistakes": [
+    "join"
+  ],
+  "task": "Put the lines in an order that prints exactly the target output.",
+  "code": null,
+  "payload": {
+    "items": [
+      "joined = left + right",
+      "right = \"3\"",
+      "left = \"12\"",
+      "print(type(joined))",
+      "print(joined)"
+    ],
+    "target": "123\n<class 'str'>",
+    "sample": "left = \"12\"\nright = \"3\"\njoined = left + right\nprint(joined)\nprint(type(joined))"
+  },
+  "ok": "Store both texts, join them, then print the result and its kind.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

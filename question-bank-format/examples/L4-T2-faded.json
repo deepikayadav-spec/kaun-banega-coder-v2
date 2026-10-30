@@ -1,0 +1,57 @@
+{
+  "id": "C1-G1-S1-L4-T2-R1-V1",
+  "skill": "S1",
+  "level": 4,
+  "type": "faded",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Typical",
+  "kps": [
+    "int",
+    "float",
+    "str",
+    "type"
+  ],
+  "mistakes": [
+    "point",
+    "quotes"
+  ],
+  "task": "Finish steps 2 and 3. Together the three steps must print the kinds of a whole number, a decimal and a text.",
+  "code": null,
+  "payload": {
+    "steps": [
+      {
+        "label": "Step 1 (solved)",
+        "code": "age = 12\nprint(type(age))",
+        "solved": true
+      },
+      {
+        "label": "Step 2 (fill the gaps)",
+        "code": "height = ____\nprint(type(____))",
+        "solved": false,
+        "hint": "Store the height 1.45 and print its kind."
+      },
+      {
+        "label": "Step 3 (write it yourself)",
+        "code": "",
+        "solved": false,
+        "hint": "Store the city Pune as text in a variable, then print its kind."
+      }
+    ],
+    "target": "<class 'int'>\n<class 'float'>\n<class 'str'>",
+    "require": [
+      "type("
+    ],
+    "sample": "age = 12\nprint(type(age))\nheight = 1.45\nprint(type(height))\ncity = \"Pune\"\nprint(type(city))",
+    "forbid": [
+      "<class"
+    ]
+  },
+  "ok": "Each step stores one kind of value and prints its kind with type().",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

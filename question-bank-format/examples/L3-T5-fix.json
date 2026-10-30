@@ -1,0 +1,38 @@
+{
+  "id": "C1-G1-S1-L3-T5-R1-V1",
+  "skill": "S1",
+  "level": 3,
+  "type": "fix",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Typical",
+  "kps": [
+    "str",
+    "plus"
+  ],
+  "mistakes": [
+    "quotes",
+    "join"
+  ],
+  "task": "Asha wants the total cost 15, but the code prints 123. Fix it. Keep the line print(price + tax).",
+  "code": "price = \"12\"\ntax = \"3\"\nprint(price + tax)",
+  "payload": {
+    "target": "15",
+    "require": [
+      "print(price + tax)",
+      "12",
+      "3"
+    ],
+    "sample": "price = 12\ntax = 3\nprint(price + tax)",
+    "forbid": [
+      "15"
+    ]
+  },
+  "ok": "Remove the quotes so price and tax are whole numbers.",
+  "hint": null,
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

@@ -1,0 +1,68 @@
+{
+  "id": "C1-G3-S2-L2-T8-R1-V1",
+  "skill": "S14",
+  "level": 2,
+  "type": "sort",
+  "difficulty": 1,
+  "variant": 1,
+  "mix_skills": [],
+  "form": "Typical",
+  "kps": [
+    "floordiv",
+    "mod",
+    "truediv"
+  ],
+  "mistakes": [
+    "floordiv",
+    "mod",
+    "truediv"
+  ],
+  "task": "Sort these by the value they give, smallest first.",
+  "code": null,
+  "payload": {
+    "pieces": [
+      "17 // 5",
+      "10 / 4",
+      "9 % 4",
+      "17 / 5",
+      "17 % 5"
+    ],
+    "answer": [
+      "9 % 4",
+      "17 % 5",
+      "10 / 4",
+      "17 // 5",
+      "17 / 5"
+    ],
+    "results": {
+      "9 % 4": "1",
+      "17 % 5": "2",
+      "10 / 4": "2.5",
+      "17 // 5": "3",
+      "17 / 5": "3.4"
+    },
+    "wrong_pairs": [
+      {
+        "before": "17 / 5",
+        "after": "17 // 5",
+        "why": "// drops the decimal part: 17 // 5 is 3, which is less than 3.4."
+      },
+      {
+        "before": "17 // 5",
+        "after": "17 % 5",
+        "why": "% gives the remainder: 17 % 5 is 2, less than 17 // 5, which is 3."
+      },
+      {
+        "before": "17 // 5",
+        "after": "10 / 4",
+        "why": "/ keeps the decimal part: 10 / 4 is 2.5, less than 3."
+      }
+    ]
+  },
+  "ok": "9 % 4 = 1, 17 % 5 = 2, 10 / 4 = 2.5, 17 // 5 = 3, 17 / 5 = 3.4.",
+  "hint": "Work out each value first: // drops the decimal, % is the remainder, / keeps the decimal.",
+  "status": "live",
+  "version": 1,
+  "author": "pedagogy",
+  "verified": null
+}

@@ -70,10 +70,20 @@ export function newState(G) {
   return { v: 1, skills, q: 0, right: 0, drops: 0, retries: 0, used: {} };
 }
 
-// A state saved against an older graph: add new skills, re-check unlocks.
+const reqMet = (S, st) => S.req.every((alts) => alts.some((a) => st.skills[a] && st.skills[a].status === 'done'));
+
+// A state saved against an older (or newer) graph. Earned progress is kept: done skills stay done and a started skill
+// stays open. New skills are added; an untouched open skill whose prerequisites changed is locked again; skills whose
+// prerequisites are now met open; R is clamped to the skill's rmax. State for skills no longer in the graph is left
+// alone (nothing reads it) so it comes back if the skill does. Idempotent: it runs on every load.
 export function upgradeState(G, st) {
   if (!st || !st.skills) return newState(G);
-  for (const S of G.skills) if (!st.skills[S.id]) st.skills[S.id] = blankSkill(S);
+  for (const S of G.skills) {
+    const sk = st.skills[S.id];
+    if (!sk) { st.skills[S.id] = blankSkill(S); continue; }
+    if (sk.status === 'open' && !sk.q && !reqMet(S, st)) sk.status = 'locked';
+    if (sk.r > S.rmax) sk.r = S.rmax;
+  }
   unlock(G, st);
   return st;
 }
@@ -82,7 +92,7 @@ function unlock(G, st) {
   const opened = [];
   for (const S of G.skills) {
     const ss = st.skills[S.id];
-    if (ss.status === 'locked' && S.req.every((alts) => alts.some((a) => st.skills[a] && st.skills[a].status === 'done'))) {
+    if (ss.status === 'locked' && reqMet(S, st)) {
       ss.status = 'open';
       opened.push(S.id);
     }
@@ -132,7 +142,7 @@ export function address(G, avail, st, id, mode) {
 // Returns the transitions (for the history table) and a short message.
 export function applyAnswer(G, st, id, type, ok) {
   const S = G.skills[G.idx[id]], sk = st.skills[id], tr = [];
-  if (!sk || sk.status !== 'open') return { transitions: tr, msg: '' };
+  if (!S || !sk || sk.status !== 'open') return { transitions: tr, msg: '' };
   const l = sk.level, r = sk.r, start = Math.min(2, S.rmax);
   const vk = l + '-' + type + '-' + r;
   sk.vars[vk] = Math.min(VARIANTS, (sk.vars[vk] || 0) + 1);
@@ -180,7 +190,7 @@ export function skillProgress(sk) {
 }
 
 // A compact view of the state for the client: every skill's status, level, R and progress.
-export function view(G, avail, st) {
+export function view(G, avail, st, graphVersion = null) {
   const act = activeSkill(G, avail, st);
   const skills = {};
   for (const S of G.skills) {
@@ -191,5 +201,22 @@ export function view(G, avail, st) {
       cells: sk.cells, q: sk.q, right: sk.right };
   }
   const groupsDone = G.groups.map((g) => g.skills.every((id) => st.skills[id].status === 'done'));
-  return { active: act.id, allDone: !!act.allDone, comingSoon: act.comingSoon || null, skills, groupsDone, q: st.q, right: st.right };
+  return { graphVersion, active: act.id, allDone: !!act.allDone, comingSoon: act.comingSoon || null, skills, groupsDone, q: st.q, right: st.right };
+}
+
+// The prize ladder: one rung per skill group plus the finale, always from ₹10 to ₹7 crore. The original 15-rung
+// ladder is kept exactly when the graph has 14 groups; otherwise rungs are picked evenly from a pool of round amounts.
+export const CLASSIC_LADDER = [10, 20, 50, 100, 200, 500, 1000, 5000, 10000, 1e5, 1e6, 5e6, 1e7, 3e7, 7e7];
+const POOL = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 1e4, 2e4, 5e4, 1e5, 2e5, 5e5, 1e6, 2e6, 5e6, 1e7, 2e7, 3e7, 5e7, 7e7];
+export function ladderFor(nGroups) {
+  const n = Math.max(2, nGroups + 1);
+  if (n === CLASSIC_LADDER.length) return CLASSIC_LADDER.slice();
+  if (n <= POOL.length) return Array.from({ length: n }, (_, i) => POOL[Math.round(i * (POOL.length - 1) / (n - 1))]);
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const v = 10 * Math.pow(7e6, i / (n - 1)), p = Math.pow(10, Math.floor(Math.log10(v)) - 1);
+    out.push(Math.max(Math.round(v / p) * p, (out[i - 1] || 0) + 1));
+  }
+  out[n - 1] = 7e7;
+  return out;
 }

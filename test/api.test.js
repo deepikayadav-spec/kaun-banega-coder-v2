@@ -119,3 +119,56 @@ test('admin: login, scoping, student history, bank dry-run, export', async () =>
   assert.deepEqual(ms.body.rows.map((r) => r.roll_no), ['N26H02A0007']);
   assert.equal((await call('m', 'POST', '/api/admin/bank/upload?dry=1', { questions: [] })).status, 403);
 });
+
+test('a new skill graph changes every path at once and keeps earned progress', async () => {
+  const live = JSON.parse(fs.readFileSync('server/content/skill-graph.json', 'utf8'));
+  const g = structuredClone(live);
+  g.skills = g.skills.filter((s) => s.id !== 'S22');                       // removed (it has example questions)
+  g.skills.find((s) => s.id === 'S2').req = [['S1'], ['S10']];               // S2 now also needs S10
+  g.groups.push({ id: 'G15', cp: 'C4', name: 'Bonus round' });
+  g.skills.push({ id: 'S99', name: 'A new skill', group: 'G15', cp: 'C4', req: [['S1']], rmax: 2 });
+
+  // A question still open on the skill that is about to go.
+  await run("UPDATE engine_state SET pending = ? WHERE roll_no = 'N26P02A0001'",
+    JSON.stringify({ qid: 'gone', skill: 'S22', mode: 'hotseat', servedAt: Date.now(), client: { id: 'gone' }, address: {}, lifelines: [] }));
+
+  const bad = await call('a', 'POST', '/api/admin/graph/upload?dry=1', { ...g, skills: [...g.skills, { id: 'S98', name: 'x', group: 'G1', req: [['S98']] }] });
+  assert.equal(bad.status, 400);
+  assert.match(bad.body.error, /requires itself/);
+
+  const dry = await call('a', 'POST', '/api/admin/graph/upload?dry=1', g);
+  assert.equal(dry.status, 200);
+  assert.deepEqual(dry.body.diff.added, ['S99']);
+  assert.deepEqual(dry.body.diff.removed, ['S22']);
+  assert.deepEqual(dry.body.diff.reqChanged, ['S2']);
+  assert.deepEqual(dry.body.diff.rungs, { before: 15, after: 16 });
+  assert.ok(dry.body.impact.orphanQuestions > 0);
+  assert.equal((await call('s', 'GET', '/api/boot')).body.graph.skills.length, 59, 'a dry run changes nothing');
+
+  const up = await call('a', 'POST', '/api/admin/graph/upload?name=g2.json', g);
+  assert.equal(up.status, 200);
+  const b = await call('s', 'GET', '/api/boot');
+  assert.equal(b.body.graph.version, up.body.version);
+  assert.equal(b.body.engine.graphVersion, up.body.version);
+  assert.equal(b.body.graph.ladder.length, 16);
+  assert.equal(b.body.graph.ladder[15], 7e7);
+  const sk = b.body.engine.skills;
+  assert.equal(sk.S1.status, 'done', 'earned progress kept');
+  assert.equal(sk.S99.status, 'open', 'new skill joins the path');
+  assert.equal(sk.S2.status, 'locked', 'untouched skill follows its new prerequisites');
+  assert.equal(sk.S22, undefined, 'removed skill leaves the path');
+  assert.equal((await call('s', 'GET', '/api/version')).body.graph, up.body.version);
+
+  const n = await call('s', 'GET', '/api/play/next?mode=hotseat');
+  assert.notEqual(n.body.resumed, true, 'the question on the removed skill is not served again');
+  assert.equal(n.body.engine.graphVersion, up.body.version);
+
+  // Roll back: the original graph is live again and S2 opens again.
+  const h = await call('a', 'GET', '/api/admin/graph/history');
+  assert.equal(h.body.rows.find((r) => r.active).version, up.body.version);
+  assert.equal((await call('a', 'POST', '/api/admin/graph/activate', { version: 'skill-graph-2026-10-30' })).status, 200);
+  const r = await call('s', 'GET', '/api/boot');
+  assert.equal(r.body.graph.ladder.length, 15);
+  assert.equal(r.body.engine.skills.S2.status, 'open');
+  assert.equal(r.body.engine.skills.S1.status, 'done');
+});

@@ -5,7 +5,8 @@ const AC=new AbortController();window.__kbcR1=AC;const SIG={signal:AC.signal};
 /* ================= Config ================= */
 const CFG={mastery:2,secs:60,dropAfterCheckpoint:false,variants:10,lockMs:1300};
 /* 15 rungs: one per skill group of the CT skill graph (14 groups), and the last for finishing every group. */
-const LADDER=[10,20,50,100,200,500,1000,5000,10000,1e5,1e6,5e6,1e7,3e7,7e7];
+/* one rung per skill group plus the finale, sized by the server from the live skill graph */
+const LADDER=(window.KBC_BOOT&&KBC_BOOT.graph&&KBC_BOOT.graph.ladder)||[10,20,50,100,200,500,1000,5000,10000,1e5,1e6,5e6,1e7,3e7,7e7];
 /* ================= Taxonomy from the server: checkpoint › skill group (row) › skill ================= */
 const BOOT=window.KBC_BOOT,GR=BOOT.graph,ME=BOOT.me;
 let ENGINE=BOOT.engine; /* progression state from the server (server/engine.js view) */
@@ -15,8 +16,8 @@ const ROWS=GR.groups.map(g=>({id:g.id,c:g.cp,name:g.name,skills:GR.skills.filter
 const SK={};ROWS.forEach((r,i)=>r.skills.forEach(s=>{s.row=i;SK[s.id]=s}));
 /* checkpoint labels sit on the rung of the last group of each checkpoint */
 const CK={};ROWS.forEach((r,i)=>{if(!ROWS[i+1]||ROWS[i+1].c!==r.c)CK[i]=r.c});CK[LADDER.length-1]="FIN";
-const TAG={10:"Silver",14:"Gold"};
-const OPEN=15;
+const TAG={[Math.round(LADDER.length*2/3)]:"Silver",[LADDER.length-1]:"Gold"};
+const OPEN=LADDER.length;
 /* Rung count reached at the last checkpoint at or below r (checkpoints sit at rung indexes in CK) */
 const lastCkOf=r=>Object.keys(CK).map(Number).filter(i=>i+1<=r).reduce((m,i)=>Math.max(m,i+1),0);
 
@@ -826,7 +827,17 @@ function startPractice(){ctx();goFull();clearInterval(qInt);clearInterval(fInt);
  logEv({kind:"practice_start"});newQ();render();scrollTo({top:0})}
 /* The next question comes from the progression engine on the server: it decides skill, level, type, difficulty and variant. */
 const blankQ=()=>({enLoss:0,enGain:0,thinkLong:false,pick:null,gone:[],hint:false,hintText:"",fill:"",ord:[],msel:[],bq:{},deadline:0,away:0,timeout:false,info:null,ok:null,res:null,pendingRes:null,revealing:false,noQ:null});
-function setQ(r){const practice=!!S.practice;if(r.engine)ENGINE=r.engine;
+/* The admin can upload a new skill graph at any time. Every engine view names the live graph; when it differs from the
+   one this page was built from, the page reloads at the next safe screen (never mid-question) to show the new path. */
+function graphCheck(e){if(e&&e.graphVersion&&GR.version&&e.graphVersion!==GR.version)S.graphChanged=1}
+const SAFE_SCREENS=["home","path","result","fame","wallet","buddy","guide","team"];
+function pathReload(){if(pathReload.on)return;pathReload.on=1;try{clearTimeout(saveT);pushP()}catch(e){}
+ document.body.insertAdjacentHTML("beforeend",`<div role="status" style="position:fixed;left:50%;top:24px;transform:translateX(-50%);z-index:99999;background:#FFC83D;color:#241500;font:800 15px var(--f-body,system-ui);padding:12px 20px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.4)">Your path has been updated. Loading it…</div>`);
+ setTimeout(()=>location.reload(),1200)}
+let graphPolled=Date.now();
+function pollGraph(){graphPolled=Date.now();KBCQ.api("GET","/api/version").then(r=>{if(r&&r.graph&&r.graph!==GR.version){S.graphChanged=1;if(SAFE_SCREENS.includes(S.screen))pathReload()}}).catch(()=>{})}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pollGraph()});
+function setQ(r){const practice=!!S.practice;if(r.engine){ENGINE=r.engine;graphCheck(ENGINE)}
  if(!r.question){Object.assign(S,blankQ(),{q:null,phase:"none",noQ:r});return}
  const q=KBCQ.adapt(r.question,r.address,GR),secs=practice?CFG.secs:secsFor(rungOf());
  Object.assign(S,blankQ(),{q,phase:"ask",time:secs,secsMax:secs,qT0:Date.now()})}
@@ -853,7 +864,7 @@ async function submitAnswer(){const q=S.q,ms=Date.now()-S.qT0;
  return KBCQ.api("POST","/api/play/answer",{qid:q.id,answer,ms,timeout:!!S.timeout})}
 function apply(ok,res){const q=S.q,sk=q.sk,before=res&&res.rungBefore!=null?res.rungBefore:rungOf(),info={before,mastered:false,rungUp:false,ck:null,drop:null,msg:res&&res.msg};
  if(ok){P.correct++;P.streak[sk]=(P.streak[sk]||0)+1}else P.streak[sk]=0;
- if(res&&res.engine)ENGINE=res.engine;
+ if(res&&res.engine){ENGINE=res.engine;graphCheck(ENGINE)}
  P.answered++;dayTick();comboTick(ok);const after=rungOf();info.after=after;
  if(after>before){info.rungUp=true;if(CK[after-1])info.ck=CK[after-1];logEv({kind:"rung",rung:after});P.paid=P.paid||{};for(let r=before+1;r<=after;r++)if(!P.paid[r]){P.paid[r]=1;const amt=amountOf(r);P.coins=(P.coins||0)+amt;if(S.run)S.run.earned=(S.run.earned||0)+amt}}
  if(res&&res.transitions)info.mastered=res.transitions.some(t=>t.kind==="level_up"||t.kind==="skill_done");
@@ -1081,6 +1092,9 @@ function diwaliHTML(items,H,TP,fogTop){let h="";
  return {far:`<div class="diwali" aria-hidden="true">${h}</div>`,near:`<div class="diwali dnear" aria-hidden="true">${near}</div>`}}
 /* Universe layer: starfield, one planet per checkpoint, a couple of shooting stars */
 const PLC={C1:["#2DD4BF","#0F766E"],C2:["#60A5FA","#1E3A8A"],C3:["#A78BFA","#4C1D95"],C4:["#F59E0B","#78350F"],C5:["#F472B6","#831843"],C6:["#FDE68A","#B45309"]};
+/* checkpoints of the uploaded graph: the name is the text before ":"; a new checkpoint id borrows a colour */
+Object.keys(GR.checkpoints||{}).forEach((c,i)=>{const t=String(GR.checkpoints[c]||"").split(":")[0].trim(),k="C"+(i%5+1);
+ if(t)CKNAME[c]=t.length>26?t.slice(0,25)+"…":t;if(!CKCOL[c])CKCOL[c]=CKCOL[k];if(!PLC[c])PLC[c]=PLC[k]});
 function spaceHTML(zones,H){const R=rng(7331);let h="";const n=Math.round(H/9);
  for(let i=0;i<n;i++){const sz=R()<.85?1+R()*1.4:2.2+R()*1.6;h+=`<i class="st" style="left:${(R()*100).toFixed(2)}%;top:${(R()*H).toFixed(0)}px;width:${sz.toFixed(1)}px;height:${sz.toFixed(1)}px;opacity:${(.35+R()*.6).toFixed(2)};animation-delay:${(R()*4).toFixed(1)}s"></i>`}
  zones.forEach((z,i)=>{const c=PLC[z.c]||PLC.C1,y=(z.hi+z.lo)/2,sz=120+((i*53)%90),left=i%2===0;
@@ -1224,7 +1238,8 @@ document.addEventListener("keydown",e=>{const m=$("#fbm");if(m&&!m.hidden&&e.key
 function diwaliDecor(){cosmos();const t=$(".toran");if(t&&(!t.childElementCount||Math.abs((+t.dataset.w||0)-innerWidth)>40))buildToran();
  const k=$(".kandil");if(k&&!k.childElementCount)k.innerHTML=KANDIL;const d=$(".bigdiya");if(d&&!d.childElementCount)d.innerHTML=BIGDIYA;
  document.body.classList.toggle("onhome",S.screen==="home")}
-function render(){const app=$("#app");stopQ();diwaliDecor();if(!render.th&&window.KB3D&&KB3D.theme){render.th=1;KB3D.theme(document.documentElement.dataset.theme)}
+function render(){if(SAFE_SCREENS.includes(S.screen)){if(S.graphChanged)return pathReload();if(Date.now()-graphPolled>30e3)pollGraph()}
+ const app=$("#app");stopQ();diwaliDecor();if(!render.th&&window.KB3D&&KB3D.theme){render.th=1;KB3D.theme(document.documentElement.dataset.theme)}
  const ow=S.screen==="fff"&&$(".fffw");
  if(ow&&ow.dataset.r===S.fff.idx+"-"+S.fff.t0){const t=document.createElement("div");t.innerHTML=vFFF();const nw=t.querySelector(".fffw");nw.classList.remove("enter");ow.replaceWith(nw);
   const ob=$(".fffbot"),nb=t.querySelector(".fffbot");if(ob&&nb&&ob.dataset.m!==nb.dataset.m)ob.replaceWith(nb);

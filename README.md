@@ -85,6 +85,25 @@ The Vercel project is connected to this repository, so every push to `main` depl
 
 Bundles use the format in `question-bank-format/`: `{"bank_version": "…", "questions": [ … ]}`. Upload them in **Admin → Question bank**, using **Check** first. Questions are validated against `question-types.json` and the skill graph, then added or updated by `id`. Uploads take effect for every instance within a minute.
 
+### Changing the skill graph
+
+Upload a new `skill-graph.json` in **Admin → Question bank → Replace the skill graph**. Use **Check** first: it validates the graph and lists what changes, how many students it touches, and how many questions are left without a skill.
+
+The upload goes live for every student at once:
+- **Every server instance** switches on its next request, because the active graph version is checked on each request.
+- **Open games** pick up the change on their next question, or when their tab comes back into view. They reload into the new path at the next safe screen, never mid-question.
+
+How students' progress follows the new graph:
+- Skills they finished stay finished, and a skill they started stays open.
+- An untouched skill follows its new prerequisites.
+- New skills join the path.
+- Removed skills drop off it; their history stays in the database.
+- R is capped at a lowered `rmax`.
+
+The prize ladder has one rung per skill group plus the finale, from ₹10 to ₹7 crore. 14 groups give the original 15 rungs. Checkpoint names on the map come from the graph's `checkpoints`, using the text before ":".
+
+To roll back, open **Graph versions** under the upload and use **Make live again** on an earlier version.
+
 ## Known limits
 
 - Only skill S1 has a full bank (600 questions). Other skills show "coming soon" until their bundles are uploaded.

@@ -4,8 +4,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import { ready, one, all, run, tx, json, dbKind, audit } from './db.js';
-import { content, loadQuestion, questionById, uploadBank, uploadGraph, seedIfEmpty } from './bank.js';
-import { newState, upgradeState, activeSkill, address, applyAnswer, view, VARIANTS } from './engine.js';
+import { content, loadQuestion, questionById, uploadBank, uploadGraph, activateGraph, graphHistory, seedIfEmpty } from './bank.js';
+import { newState, upgradeState, activeSkill, address, applyAnswer, view as engineView, ladderFor, VARIANTS } from './engine.js';
 import { present, grade, fifty } from './grade.js';
 import { universityOf, normRoll } from './universities.js';
 import {
@@ -15,7 +15,6 @@ import {
 import { parseStudents } from './students.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const LADDER = [10, 20, 50, 100, 200, 500, 1000, 5000, 10000, 1e5, 1e6, 5e6, 1e7, 3e7, 7e7];
 const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', true);
@@ -35,6 +34,9 @@ app.get('/api/health', wrap(async (req, res) => {
   const c = await content();
   res.json({ ok: true, db: dbKind(), questions: c.count, graph: c.version, skills: c.G.skills.length });
 }));
+
+// The active graph version, polled by an open game when its tab comes back into view.
+app.get('/api/version', wrap(async (req, res) => { res.json({ graph: (await content()).version }); }));
 
 // ---------- student auth
 app.post('/api/auth/login', jsonBody, wrap(async (req, res) => {
@@ -67,12 +69,16 @@ async function saveState(roll, st, pending) {
     ON CONFLICT (roll_no) DO UPDATE SET state = excluded.state, pending = excluded.pending, updated_at = excluded.updated_at`,
   roll, json(st), json(pending), Date.now());
 }
-const rungOf = (v) => { let r = 0; for (const d of v.groupsDone) { if (!d) break; r++; } return r >= v.groupsDone.length ? LADDER.length : r; };
-const sumLadder = (r) => LADDER.slice(0, r).reduce((a, b) => a + b, 0);
+// Every engine view carries the graph version, so an open game can tell that the path changed and reload it.
+const view = (c, st) => engineView(c.G, c.avail, st, c.version);
+// One rung per skill group; clearing every group reaches the last rung (the finale).
+const rungOf = (v) => { let r = 0; for (const d of v.groupsDone) { if (!d) break; r++; } return r >= v.groupsDone.length ? v.groupsDone.length + 1 : r; };
+const sumLadder = (c, r) => ladderFor(c.G.groups.length).slice(0, r).reduce((a, b) => a + b, 0);
 
 function graphForClient(c) {
   return {
     version: c.version,
+    ladder: ladderFor(c.G.groups.length),
     checkpoints: c.graph.checkpoints,
     groups: c.graph.groups,
     skills: c.graph.skills.map((s) => ({ id: s.id, name: s.name, group: s.group, cp: s.cp, req: s.req || [], rmax: s.rmax,
@@ -90,7 +96,7 @@ app.get('/api/boot', requireStudent, wrap(async (req, res) => {
   const gp = await one('SELECT data FROM game_progress WHERE roll_no = ?', req.student.roll_no);
   res.json({
     me: { roll: req.student.roll_no, name: req.student.name, university: req.student.university || universityOf(req.student.roll_no) },
-    graph: graphForClient(c), engine: view(c.G, c.avail, st), progress: gp ? gp.data : null
+    graph: graphForClient(c), engine: view(c, st), progress: gp ? gp.data : null
   });
 }));
 
@@ -99,18 +105,19 @@ async function serveNext(roll, mode, { force = false } = {}) {
   const c = await content();
   return tx(async () => {
     const { st, pending } = await loadState(roll, c.G, true);
-    if (!force && pending && pending.mode === mode && Date.now() - pending.servedAt < 6 * 3600e3) {
-      return { question: pending.client, address: pending.address, engine: view(c.G, c.avail, st), resumed: true };
+    const stale = pending && c.G.idx[pending.skill] == null; // its skill left the graph: serve afresh
+    if (!force && !stale && pending && pending.mode === mode && Date.now() - pending.servedAt < 6 * 3600e3) {
+      return { question: pending.client, address: pending.address, engine: view(c, st), resumed: true };
     }
     const act = activeSkill(c.G, c.avail, st);
-    if (!act.id) { await saveState(roll, st, null); return { question: null, engine: view(c.G, c.avail, st), allDone: !!act.allDone, comingSoon: act.comingSoon || null }; }
+    if (!act.id) { await saveState(roll, st, null); return { question: null, engine: view(c, st), allDone: !!act.allDone, comingSoon: act.comingSoon || null }; }
     const addr = address(c.G, c.avail, st, act.id, mode);
     const q = addr && await loadQuestion(addr.skill, addr.level, addr.type, addr.difficulty, addr.variant);
-    if (!q) { await saveState(roll, st, null); return { question: null, engine: view(c.G, c.avail, st), comingSoon: [act.id] }; }
+    if (!q) { await saveState(roll, st, null); return { question: null, engine: view(c, st), comingSoon: [act.id] }; }
     const { client, key } = present(q);
     const p = { qid: q.id, skill: addr.skill, type: addr.type, level: addr.level, r: addr.r, variant: addr.variant, mode, key, client, address: addr, servedAt: Date.now(), lifelines: [] };
     await saveState(roll, st, p);
-    return { question: client, address: addr, engine: view(c.G, c.avail, st) };
+    return { question: client, address: addr, engine: view(c, st) };
   });
 }
 
@@ -129,7 +136,7 @@ app.post('/api/play/answer', requireStudent, jsonBody, wrap(async (req, res) => 
     if (!q) return { status: 409, body: { error: 'Question not found.' } };
     const g = grade(q, answer, pending.key);
     if (timeout) { g.correct = false; g.why = q.ok || g.why; }
-    const before = view(c.G, c.avail, st);
+    const before = view(c, st);
     const { transitions, msg } = applyAnswer(c.G, st, pending.skill, pending.type, g.correct);
     await saveState(roll, st, null);
     const now = Date.now();
@@ -138,7 +145,7 @@ app.post('/api/play/answer', requireStudent, jsonBody, wrap(async (req, res) => 
     roll, req.student.university || universityOf(roll), qid, pending.skill, pending.level, pending.type, pending.r, pending.variant, pending.mode,
     g.correct ? 1 : 0, timeout ? 1 : 0, json(answer ?? null), Math.max(0, Math.min(Number(ms) || 0, 3600e3)), json(pending.lifelines), now);
     for (const t of transitions) await run('INSERT INTO transitions (roll_no, skill, kind, detail, at) VALUES (?, ?, ?, ?, ?)', roll, t.skill || pending.skill, t.kind, json(t.detail), now);
-    const after = view(c.G, c.avail, st);
+    const after = view(c, st);
     return { status: 200, body: { correct: g.correct, show: g.show, why: g.why, ok: q.ok || '', detail: g.detail || null, msg, transitions,
       rungBefore: rungOf(before), rungAfter: rungOf(after), engine: after } };
   });
@@ -197,8 +204,8 @@ app.put('/api/progress', requireStudent, express.json({ limit: '256kb' }), wrap(
   delete d.seen; // the server keeps question history; the old client map is not needed
   // Coins and best rung can only come from rungs the engine says were reached.
   const c = await content(), { st } = await loadState(req.student.roll_no, c.G);
-  const rung = rungOf(view(c.G, c.avail, st));
-  const coins = Math.max(0, Math.min(Number(d.coins) || 0, sumLadder(rung))), best = Math.max(0, Math.min(Number(d.best) || 0, rung));
+  const rung = rungOf(view(c, st));
+  const coins = Math.max(0, Math.min(Number(d.coins) || 0, sumLadder(c, rung))), best = Math.max(0, Math.min(Number(d.best) || 0, rung));
   await run(`INSERT INTO game_progress (roll_no, data, coins, best, updated_at) VALUES (?, ?, ?, ?, ?)
     ON CONFLICT (roll_no) DO UPDATE SET data = excluded.data, coins = excluded.coins, best = excluded.best, updated_at = excluded.updated_at`,
   req.student.roll_no, json(d), coins, best, Date.now());
@@ -293,7 +300,7 @@ admin.get('/students/:roll', wrap(async (req, res) => {
   const attempts = await all('SELECT question_id, skill, level, type, r, variant, mode, correct, timeout, ms, lifelines, at FROM attempts WHERE roll_no = ? ORDER BY at DESC LIMIT 500', roll);
   const transitions = await all('SELECT skill, kind, detail, at FROM transitions WHERE roll_no = ? ORDER BY at DESC LIMIT 500', roll);
   const gp = await one('SELECT data, coins, best FROM game_progress WHERE roll_no = ?', roll);
-  res.json({ student: m, engine: view(c.G, c.avail, st), pending: pending ? { qid: pending.qid, mode: pending.mode, servedAt: pending.servedAt } : null,
+  res.json({ student: m, engine: view(c, st), pending: pending ? { qid: pending.qid, mode: pending.mode, servedAt: pending.servedAt } : null,
     attempts, transitions, progress: gp });
 }));
 
@@ -359,9 +366,16 @@ admin.post('/bank/upload', requireSuper, bigJson, wrap(async (req, res) => {
   res.json(r);
 }));
 admin.post('/graph/upload', requireSuper, bigJson, wrap(async (req, res) => {
-  const r = await uploadGraph(req.body, { adminId: req.admin.id });
-  if (r.ok) await audit(req.admin.id, 'graph_upload', r.version, null);
+  const dryRun = req.query.dry === '1';
+  const r = await uploadGraph(req.body, { adminId: req.admin.id, fileName: String(req.query.name || ''), dryRun });
+  if (r.ok && !dryRun) await audit(req.admin.id, 'graph_upload', r.version, r.diff);
   res.status(r.ok ? 200 : 400).json(r);
+}));
+admin.get('/graph/history', wrap(async (req, res) => { res.json({ rows: await graphHistory() }); }));
+admin.post('/graph/activate', requireSuper, jsonBody, wrap(async (req, res) => {
+  const r = await activateGraph(String(req.body?.version || ''), { adminId: req.admin.id });
+  if (r.ok) await audit(req.admin.id, 'graph_activate', r.version, r.diff);
+  res.status(r.ok ? 200 : 404).json(r);
 }));
 admin.get('/content', wrap(async (req, res) => {
   const c = await content();

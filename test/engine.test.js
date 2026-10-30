@@ -92,3 +92,34 @@ test('real S1 bank: skipped types never served, hot seat avoids practice-only ty
   assert.ok(v.comingSoon.includes('S2'));
   assert.ok(served.size >= 4);
 });
+
+test('upgradeState follows a new graph but keeps earned progress', async () => {
+  const { upgradeState, ladderFor } = await import('../server/engine.js');
+  const A = fullAvail(), st = newState(G);
+  // finish S1, start S2 (one answer), leave S3 untouched
+  const play = (id, ok) => { const a = address(G, A, st, id, 'hotseat'); applyAnswer(G, st, id, a.type, ok); };
+  while (st.skills.S1.status !== 'done') play('S1', true);
+  play('S2', false);
+  const g2 = structuredClone(graph);
+  for (const id of ['S2', 'S3']) g2.skills.find((s) => s.id === id).req = [['S1'], ['S10']];
+  g2.skills.find((s) => s.id === 'S5').rmax = 1;
+  g2.skills = g2.skills.filter((s) => s.id !== 'S12');
+  g2.skills.push({ id: 'S99', name: 'New', group: 'G1', cp: 'C1', req: [['S1']] });
+  const G2 = compileGraph(g2, typesDoc);
+  st.skills.S5.r = 2;
+  upgradeState(G2, st);
+  assert.equal(st.skills.S1.status, 'done');
+  assert.equal(st.skills.S2.status, 'open', 'started skill stays open');
+  assert.equal(st.skills.S3.status, 'locked', 'untouched skill re-locked');
+  assert.equal(st.skills.S99.status, 'open', 'new skill with met prerequisites opens');
+  assert.equal(st.skills.S5.r, 1, 'R clamped to the new rmax');
+  assert.deepEqual(applyAnswer(G2, st, 'S12', 'mcq', true).transitions, [], 'removed skill is ignored');
+  assert.equal(JSON.stringify(upgradeState(G2, structuredClone(st))), JSON.stringify(st), 'idempotent');
+  assert.deepEqual(ladderFor(14), [10, 20, 50, 100, 200, 500, 1000, 5000, 10000, 1e5, 1e6, 5e6, 1e7, 3e7, 7e7]);
+  for (const n of [3, 10, 15, 21, 22, 40]) {
+    const l = ladderFor(n);
+    assert.equal(l.length, n + 1);
+    assert.equal(l[0], 10); assert.equal(l[n], 7e7);
+    assert.ok(l.every((v, i) => !i || v > l[i - 1]), 'strictly rising ' + n);
+  }
+});

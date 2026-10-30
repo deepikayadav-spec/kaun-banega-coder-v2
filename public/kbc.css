@@ -2213,3 +2213,16 @@ body.qscreen .side .board:not(.min) .rung{flex:1 1 0!important;min-height:0!impo
 .guide.g2 .ghead h2{font-size:clamp(26px,4.2vh,40px)}
 .guide.g2 .gdemo{height:58px}
 @media (max-height:800px){.guide.g2>.quip{display:none}}
+
+/* ===== Round 4: Pixel's name tag, hiding Pixel, coin stacks ===== */
+.bname{display:flex;flex-direction:column;align-items:center;gap:0;margin-top:2px;padding:3px 12px;border-radius:999px;background:rgba(9,14,28,.85);border:1px solid rgba(94,234,212,.55);font:800 13px var(--f-display);color:#5EEAD4;letter-spacing:.02em;line-height:1.2;text-align:center}
+.bname small{font:600 10px var(--f-body);color:#94A3B8;letter-spacing:0}
+.h4-bot,.mcol,.fffbot{align-items:center}
+html[data-theme="light"] .bname{background:#fff;color:#0F766E;border-color:#0D9488}
+body.nobuddy .h4-bot,body.nobuddy .mcol,body.nobuddy .fffbot,body.nobuddy .pworld .mav,body.nobuddy .coach>.mascot,body.nobuddy .ghead>.mascot{display:none!important}
+body.nobuddy .play{grid-template-columns:minmax(0,1fr) minmax(0,385px)!important}
+body.nobuddy .play:has(.board.min){grid-template-columns:minmax(0,1fr) minmax(0,250px)!important}
+body.nobuddy .fffgrid{grid-template-columns:minmax(0,880px)!important}
+#buddybtn[aria-pressed="true"]{color:var(--cy,#5EEAD4)!important}
+body.nobuddy .fffsp{display:none!important}
+@media (min-width:1001px){body.nobuddy .home4 .h-hero{grid-column:2}}

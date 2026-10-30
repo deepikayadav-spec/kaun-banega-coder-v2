@@ -135,7 +135,9 @@ const MONEY={
  10000000:pyr([500,200,100,50,500,200]),
  30000000:pyr([200,500,50,100,200,500])+gcoin(4,26,3.5)+gcoin(56,26,3.5)+gcoin(9,27,3),
  70000000:pyr([500,100,200,500,50,200])+`<path d="M22 2l3-5 3 3 2-4 2 4 3-3 3 5z" fill="#FFC83D" stroke="#9A5A05" stroke-width=".7"/>`+spk(4,6,4)+spk(57,10,3.5)+gcoin(56,26,3.5)+gcoin(4,26,3.5)};
-function boardNote(v){if(NOTE[v])return `<span class="bnote">${noteThumb(v)}</span>`;return MONEY[v]?`<span class="bnote"><svg viewBox="0 -6 60 36" aria-hidden="true">${MONEY[v]}</svg></span>`:""}
+function boardNote(v){if(NOTE[v])return `<span class="bnote">${noteThumb(v)}</span>`;return `<span class="bnote"><svg viewBox="0 -6 60 36" aria-hidden="true">${MONEY[v]||COINSTACK}</svg></span>`}
+/* any amount without its own banknote art (e.g. 2,000, 50,000, 2 lakh) still shows money: a small stack of coins */
+const COINSTACK=gcoin(18,22,7)+gcoin(30,22,7)+gcoin(42,22,7)+gcoin(24,14,7)+gcoin(36,14,7)+gcoin(30,6,7);
 
 /* Buddies: every character is the same rigged person in a different costume, so all poses and expressions work for each.
    All designs are original (no licensed characters). head/gold/white = gradient stops for helmet, suit and belly panel;
@@ -728,7 +730,7 @@ function dockHTML(mood,cls){const I=S.info,q=S.q;let say;
  else if(S.phase==="reveal")say=S.ok?(I&&I.rungUp?`You won ${fmtR(amountOf(I.after))}! Next question.`:CHEER[hashStr(q.id)%CHEER.length]):(S.practice?(S.timeout?"Time ran out. Read why, then try the next one.":"Not quite. Read why, then try the next one."):(S.timeout?"Too slow! Read why, then try a fresh variant.":"Not quite. Read why, then try a fresh variant."));
  else say=!S.practice&&S.run.en<=20?"Low battery! One more miss and we power down.":S.hint?"Hint's up there. You've got this.":S.run.answered===0?"First question! Read the code line by line.":CALM[hashStr(q.id)%CALM.length];
  const r=rungOf(),stake=r<OPEN?LADDER[r]:0;
- if(cls==="col")return `<aside class="mcol" aria-label="Your quiz bot"><p class="say">${esc(say)}</p>${mascot(mood,176)}</aside>`;
+ if(cls==="col")return `<aside class="mcol" aria-label="${esc(buddyName())}, your quiz buddy"><p class="say">${esc(say)}</p>${mascot(mood,176)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your quiz buddy</small></span></aside>`;
  return `<div class="coach">${mascot(mood,64)}<p class="say">${esc(say)}</p></div>`}
 
 /* ================= Sound ================= */
@@ -945,12 +947,13 @@ function ctxPose(){const h=istHour(),min=(Date.now()-T0)/60000;
  if(typeof liveDay==="function"&&liveDay()>=3)return "streak";
  if(h>=5&&h<11)return "chai";
  return "pointq"}
-function homeLine(r,st){if(!P.answered)return "Hi! I'm Bolt, your quiz bot. Win Fastest Finger First, then climb the money board one question at a time.";
+const buddyName=()=>(COSTUMES[CHAR]||COSTUMES.pixel).name;
+function homeLine(r,st){if(!P.answered)return `Hi! I'm ${buddyName()}, your quiz buddy.`+"  Win Fastest Finger First, then climb the money board one question at a time.";
  return `Welcome back! Every game starts fresh at 10. Wallet: ${fmtR(P.coins||0)}.`}
 function vHome(){const best=P.best||0,coins=P.coins||0;
  const greet=esc(quipText("homebubble"));
  return `<section class="home4 enter">
-<div class="h4-bot"><p class="say">${greet}</p>${mascot(ctxPose(),300)}<button class="btn quiet sm" data-act="buddy">Change buddy</button></div>
+<div class="h4-bot"><p class="say">${P.answered?greet:esc(`Hi! I'm ${buddyName()}, your quiz buddy. Win Fastest Finger First to take the hot seat!`)}</p>${mascot(ctxPose(),300)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your quiz buddy</small></span><button class="btn quiet sm" data-act="buddy">Change buddy</button></div>
 <div class="h-hero">
 <span class="emb hlogo" aria-hidden="true"><i class="er"></i><i class="er er2"></i><span class="ec">{ }</span></span>
 <div class="codefloat" aria-hidden="true"><i>{ }</i><i>&lt;/&gt;</i><i>def</i><i>for i in</i><i>==</i><i>[ ]</i><i>print()</i><i>True</i></div>
@@ -1261,6 +1264,26 @@ function fbHTML(sent){if(sent)return `<div class="fbbox" role="dialog" aria-moda
 <label class="fbl" for="fbtext">Tell us more <i>*</i></label><textarea id="fbtext" maxlength="600" rows="4" placeholder="What did you like? What should we change?">${esc(FB.text)}</textarea>
 <p class="fbhint" id="fbhint">${ok?"Ready to send.":FB.stars?"Write at least 5 characters.":"Pick a rating and write a few words. Both are required."}</p>
 <button class="btn gold fbsend" data-act="fb-send" ${ok?"":"disabled"}>Send feedback</button></div>`}
+/* Time on the platform counts only while the page is visible, and is saved with the student's progress, so it carries
+   across sessions and devices. Each reminder shows once; it waits until no question or puzzle is running. */
+const FB_AT=[5,15,30,60];
+function fbSafe(){const m=$("#fbm");if(m&&!m.hidden)return false;if(TI>=0)return false;if(document.querySelector(".modalx:not([hidden])"))return false;
+ if(S.screen==="play"&&S.phase!=="reveal"&&S.phase!=="none")return false;if(S.screen==="fff"&&S.fff&&!S.fff.done&&!S.fff.intro)return false;return true}
+function fbTick(){if(document.hidden)return;P.tOn=(P.tOn||0)+10000;P.fbAt=P.fbAt||[];if(P.tOn%60000<10000)saveP();
+ const due=FB_AT.filter(t=>P.tOn>=t*60000&&!P.fbAt.includes(t));if(!due.length||!fbSafe())return;
+ P.fbAt.push(...due);saveP();FB.trigger=`after ${due[due.length-1]>=60?due[due.length-1]/60+" hour":due[due.length-1]+" min"} on the platform`;fbOpen();logEv({kind:"feedback_prompt",at:due[due.length-1]})}
+setInterval(fbTick,10000);
+/* Pixel can be hidden from the header; the hot seat then gives its space to the question */
+function syncBuddy(){const off=!!store.get("kbc-hide-buddy",false),b=$("#buddybtn");document.body.classList.toggle("nobuddy",off);
+ if(b){const n=buddyName();b.setAttribute("aria-pressed",off);b.title=off?`Show ${n}`:`Hide ${n}`;b.setAttribute("aria-label",off?`Show ${n}, your quiz buddy`:`Hide ${n}, your quiz buddy`);const l=b.querySelector(".lbl");if(l)l.textContent=off?`Show ${n}`:`Hide ${n}`}}
+syncBuddy();
+/* The hot seat and Fastest Finger shrink their question column to fit the window instead of scrolling */
+function fitScreen(){const m=$("#mainc")||$(".fffw");if(!m||!(S.screen==="play"||S.screen==="fff"||S.screen==="seat"))return;
+ m.style.zoom="";const top=m.getBoundingClientRect().top,avail=innerHeight-top-10,need=m.scrollHeight;
+ if(need>avail&&avail>200)m.style.zoom=String(Math.max(.6,Math.floor(avail/need*100)/100))}
+let fitT=null;const fitSoon=()=>{cancelAnimationFrame(fitT);fitT=requestAnimationFrame(()=>requestAnimationFrame(fitScreen))};
+new MutationObserver(fitSoon).observe(document.getElementById("app"),{childList:true,subtree:true});
+addEventListener("resize",fitSoon,SIG);
 function fbOpen(){const m=$("#fbm");m.hidden=false;m.innerHTML=fbHTML();setTimeout(()=>{const t=$("#fbtext");t&&t.focus()},50)}
 function fbSync(){const ok=FB.stars>0&&FB.text.trim().length>=5,b=$(".fbsend"),h=$("#fbhint");if(b)b.disabled=!ok;if(h)h.textContent=ok?"Ready to send.":FB.stars?"Write at least 5 characters.":"Pick a rating and write a few words. Both are required."}
 
@@ -1444,7 +1467,7 @@ function fffBegin(){const F=S.fff;if(!F||!F.intro)return;F.intro=false;F.t0=Date
 function fffBot(){const F=S.fff,m=F.intro?"warm":F.done==="ok"?"finish":F.done?(F.timeout?"tired":"bonk"):F.panic?"panic":"run";
  const go=F.intro?"Read the rules, then hit Play. The clock waits for you!":F.panic?["Hurry! Clock is melting!","Faster faster faster!","Seconds left. GO!"][F.idx%3]:{sprint:"Type fast. Right answers jump ahead!",maze:"Find the path that hits the target!",cross:"Fill the blanks so every sum works!"}[F.mode];
  const say=F.done==="ok"?"Lightning fingers! The hot seat is yours.":F.done?(F.timeout?"Too slow! Try another round.":"Shake it off. Next round!"):go;
- return `<aside class="fffbot" data-m="${m}"><p class="say">${say}</p>${mascot(m,200)}</aside>`}
+ return `<aside class="fffbot" data-m="${m}"><p class="say">${say}</p>${mascot(m,200)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your quiz buddy</small></span></aside>`}
 function fffHead(F){const M=FMODE[F.mode];return `<div class="qcard card fffhead"><div class="qtop"><span class="chip gold">Fastest Finger First</span><div class="clock ${F.time<=Math.min(10,F.max/3)?"low":""}" id="fclock" style="--p:${F.time/F.max}" role="timer" aria-label="Seconds left"><span>${F.time}</span></div></div>
 <h2 class="qtext">${M.icon} ${M.name}</h2><p class="fhow">${esc(M.how.join(" · "))}</p></div>`}
 function fffVerdict(F,expl){return F.done==="ok"?`<div class="verdict card good"><div><b>Done in ${F.secs.toFixed(1)} seconds! 🎉</b><span class="muted">You've earned the hot seat.</span></div><button class="btn gold" data-act="hotseat">Take the hot seat →</button></div>${expl}`
@@ -1458,7 +1481,7 @@ function fffDemo(mode){
 function seatDemo(){return `<div class="dm dm-seat"><div class="dm-qc">What does this print?<code>print(7 // 2)</code></div><div class="dm-opts"><span>A · 3.5</span><span class="pk">B · 3</span><span>C · 4</span><span>D · 2</span></div><div class="dm-lock">Lock answer</div><div class="dm-sol">💡 Reveal solution</div>${PTR}</div>`}
 /* Between winning Fastest Finger and the first question: what happens in the hot seat, with a demo */
 function vSeat(){const first=!P.runs;
- return `<div class="fffgrid"><aside class="fffbot"><p class="say">You made it! Read this, then take your seat.</p>${mascot("finish",200)}</aside><section class="fffw enter"><div class="qcard card fffhead fintro seatin"><span class="chip gold">The hot seat</span><div class="fi-ic" aria-hidden="true">🪑</div><h2 class="qtext">How the hot seat works</h2>
+ return `<div class="fffgrid"><aside class="fffbot"><p class="say">You made it! I'm ${esc(buddyName())}, and I'll be right here with you. Read this, then take your seat.</p>${mascot("finish",200)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your quiz buddy</small></span></aside><section class="fffw enter"><div class="qcard card fffhead fintro seatin"><span class="chip gold">The hot seat</span><div class="fi-ic" aria-hidden="true">🪑</div><h2 class="qtext">How the hot seat works</h2>
 <div class="fi-cols"><div><ol class="fi-steps"><li style="--i:0"><b>1</b><span>Read the question and the code</span></li><li style="--i:1"><b>2</b><span>Answer it the way the question asks: pick, tap, type or put in order</span></li><li style="--i:2"><b>3</b><span>Press <strong>Lock answer</strong>. Then tap <strong>Reveal solution</strong> to see the working</span></li></ol>
 <div class="fi-meta"><span>⏱ ${seatSecsNote()}</span><span>⚡ A miss costs energy; 3 right in a row gives some back</span><span>🛟 Stuck? Use a lifeline: 50:50, Ask the mentor or Flip</span></div></div>
 <figure class="demo" aria-label="How it looks: a short looping demo"><figcaption>Watch how it works</figcaption>${seatDemo()}</figure></div>
@@ -1623,10 +1646,11 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="fame"){if(S.screen==="play"){endRun("stop")}S={screen:"fame",name:S.name};render();scrollTo({top:0});loadFame(FQ.scope,FQ.uni);return}
  if(a==="team"){if(!TEAM)return;if(S.screen==="play")endRun("stop");S={screen:"team",name:S.name};render();loadDash();scrollTo({top:0});return}
  if(a==="dash-refresh"){loadDash();return}
- if(a==="fb-open"){fbOpen();return}
+ if(a==="buddy-toggle"){store.set("kbc-hide-buddy",!store.get("kbc-hide-buddy",false));syncBuddy();const y=scrollY;render();scrollTo({top:y});return}
+ if(a==="fb-open"){FB.trigger="";fbOpen();return}
  if(a==="fb-close"){$("#fbm").hidden=true;return}
  if(a==="fb-star"){FB.stars=+b.dataset.n;FB.text=($("#fbtext")||{}).value||FB.text;$("#fbm").innerHTML=fbHTML();SFX.pick();return}
- if(a==="fb-send"){if(!(FB.stars>0&&FB.text.trim().length>=5))return;logEv({kind:"feedback",stars:FB.stars,text:FB.text.trim().slice(0,600),screen:S.screen});KBCQ.api("POST","/api/feedback",{text:FB.text.trim().slice(0,600),ctx:{stars:FB.stars,screen:S.screen}}).catch(()=>{});FB={stars:0,text:""};$("#fbm").innerHTML=fbHTML(true);ROBO.happy();return}
+ if(a==="fb-send"){if(!(FB.stars>0&&FB.text.trim().length>=5))return;logEv({kind:"feedback",stars:FB.stars,text:FB.text.trim().slice(0,600),screen:S.screen});KBCQ.api("POST","/api/feedback",{text:FB.text.trim().slice(0,600),ctx:{stars:FB.stars,screen:S.screen,trigger:FB.trigger||"feedback button"}}).catch(()=>{});FB={stars:0,text:""};$("#fbm").innerHTML=fbHTML(true);ROBO.happy();return}
  if(a==="theme"){setTheme(document.documentElement.dataset.theme==="light"?"dark":"light");return}
  if(a==="pathjump"){pathJump(true);return}
  if(a==="pathsk"){if(b.classList.contains("lock"))return;const sk=b.dataset.sk,g=curGroup(),cur=curSkill(g);

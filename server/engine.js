@@ -61,13 +61,16 @@ export function typesFor(G, avail, S, l, mode) {
   return m.length ? m : base;
 }
 
-const blankSkill = (S) => ({ status: S.req.length ? 'locked' : 'open', level: 1, r: Math.min(2, S.rmax), cells: {},
+// Starter skills (starter: true in the graph) count as done from the start: "the starter skills are done".
+const blankSkill = (S) => ({ status: S.starter ? 'done' : S.req.length ? 'locked' : 'open', level: S.starter ? 4 : 1, r: Math.min(2, S.rmax), cells: {},
   streak: { key: null, count: 0 }, rightStreak: 0, tIdx: { 1: 0, 2: 0, 3: 0, 4: 0 }, vars: {}, q: 0, right: 0 });
 
 export function newState(G) {
   const skills = {};
   for (const S of G.skills) skills[S.id] = blankSkill(S);
-  return { v: 1, skills, q: 0, right: 0, drops: 0, retries: 0, used: {} };
+  const st = { v: 1, skills, q: 0, right: 0, drops: 0, retries: 0, used: {} };
+  unlock(G, st); // skills that need only starter skills open at once
+  return st;
 }
 
 const reqMet = (S, st) => S.req.every((alts) => alts.some((a) => st.skills[a] && st.skills[a].status === 'done'));
@@ -81,6 +84,7 @@ export function upgradeState(G, st) {
   for (const S of G.skills) {
     const sk = st.skills[S.id];
     if (!sk) { st.skills[S.id] = blankSkill(S); continue; }
+    if (S.starter && sk.status !== 'done') { sk.status = 'done'; sk.level = 4; continue; }
     if (sk.status === 'open' && !sk.q && !reqMet(S, st)) sk.status = 'locked';
     if (sk.r > S.rmax) sk.r = S.rmax;
   }

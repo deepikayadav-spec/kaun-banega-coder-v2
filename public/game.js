@@ -825,7 +825,8 @@ function comboTick(ok){if(!ok){COMBO=0;return}COMBO++;if(COMBO<2)return;const w=
 const FLAME='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3-1-3 0-7 1-9.5z" fill="#FF7A1A" stroke="#2B1A0E" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 12c.6 1.6 2.4 2.4 2.4 4.4a2.4 2.4 0 0 1-4.8 0c0-1.2.8-2 1.4-2.6.2 1 .6 1.4 1 1.4-.4-1.2-.2-2.2 0-3.2z" fill="#FFD23F"/></svg>';
 function syncFire(){const c=$("#wchip");if(!c)return;let f=$("#fire");if(!f){f=document.createElement("span");f.id="fire";c.parentNode.insertBefore(f,c)}const n=liveDay();f.className="fire "+(n?(n>=3?"hot":""):"cold");f.title=n?`${n}-day streak. Play tomorrow to keep it.`:"Play today to start a streak";f.setAttribute("aria-label",f.title);f.innerHTML=FLAME+n}
 function saveP(){P.t=Date.now();syncChip();clearTimeout(saveT);saveT=setTimeout(pushP,1200)}
-function pushP(keep){clearTimeout(saveT);return KBCQ.api("PUT","/api/progress",{progress:P},keep).then(()=>{if(!keep)loadFame(FQ.scope,FQ.uni,true)}).catch(()=>{})}
+/* epoch: the last "fresh start" this page knows of; after a newer one the server refuses the old wallet and the page reloads */
+function pushP(keep){clearTimeout(saveT);return KBCQ.api("PUT","/api/progress",{progress:P,epoch:BOOT.epoch||0},keep).then(()=>{if(!keep)loadFame(FQ.scope,FQ.uni,true)}).catch(e=>{if(e&&e.status===409&&!keep&&!pushP.reload){pushP.reload=1;location.reload()}})}
 
 
 /* ================= Online: event log, Hall of Fame (overall and per university), live players, progress on the server ================= */
@@ -1202,9 +1203,9 @@ function vPath(){const g0=curGroup(),gi=g0.idx,s0=curSkill(g0),open=S.open&&SK[S
   if(it.k==="pz"){const g=it.g,s=g.idx<gi?"won":g.idx===gi?"cur":"lock";return `<div class="mprize ${s}" style="${st}">${s==="won"?`<span class="crown">★</span>`:""}<div class="chest">${boardNote(g.prize)}<b>${fmtR(g.prize)}</b></div>${s==="won"?`<span class="mp-tag">Won</span>`:`<span class="mp-l">Clear ${esc(g.name)} to win</span>`}</div>`}
   const s=it.s,g=it.g,col=CKCOL[g.c];
   if(s.ph)return `<div class="mnode soon" style="${st};--nc:${col}"><span class="mb"><b>${it.no}</b><i class="lk">${LOCKI}</i></span><small>Level ${it.no}</small></div>`;
-  const n=barOf(s.id),es=engSk(s.id),done=n>=BPS,now=s===s0,stt=done?"done":now?"now":"soon";
+  const n=barOf(s.id),es=engSk(s.id),now=s===s0,done=n>=BPS||passed(s),stt=done?"done":now?"now":"soon";
   const dots=LVEND.map(e=>`<i class="${n>=e?"on":""}"></i>`).join("");
-  return `<button class="mnode ${stt} ${open===s?"sel":""}" style="${st};--nc:${col}" data-act="pathsk" data-sk="${s.id}" aria-label="Level ${it.no}: ${esc(s.name)}${es.status==="locked"?", locked":done?", cleared":""}">${now?`<span class="mav ${it.x>50?"l":"r"}">${mascot("pointup",160)}<em>You</em></span>`:""}<span class="mb">${done?TICK:`<b>${it.no}</b>`}${es.status==="locked"?`<i class="lk">${LOCKI}</i>`:""}</span><small title="${esc(s.name)}">${esc(s.short||s.name)}</small></button>`};
+  return `<button class="mnode ${stt} ${open===s?"sel":""}" style="${st};--nc:${col}" data-act="pathsk" data-sk="${s.id}" aria-label="Level ${it.no}: ${esc(s.name)}${done?", cleared":es.status==="locked"?", locked":""}">${now?`<span class="mav ${it.x>50?"l":"r"}">${mascot("pointup",160)}<em>You</em></span>`:""}<span class="mb">${done?TICK:`<b>${it.no}</b>`}${!done&&es.status==="locked"?`<i class="lk">${LOCKI}</i>`:""}</span><small title="${esc(s.name)}">${esc(s.short||s.name)}</small></button>`};
  const pct=Math.round(gDone(g0)/gTotal(g0)*100);
  const sheet=open&&open===s0?`<div class="msheet" role="dialog" aria-label="${esc(open.name)}"><div class="msheet-in concept"><div class="cpt"><span class="cpt-k">Up next</span><h3>${esc(open.name)}</h3></div><div class="mfoot"><button class="btn gold" data-act="fffgo">Play this topic →</button><button class="btn sm mclose" data-act="pathsk" data-sk="${open.id}">Close</button></div></div></div>`
   :S.openCk?ckSheet(S.openCk,s0):"";
@@ -1217,8 +1218,10 @@ function vPath(){const g0=curGroup(),gi=g0.idx,s0=curSkill(g0),open=S.open&&SK[S
 <div class="map" style="height:${H}px">${DW.near}<div class="deco" aria-hidden="true">${props}</div><svg class="mroad mshadow" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" class="r-shadow"/></svg><div class="mlayer"><svg class="mroad" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" class="r-base"/><path d="${d}" class="r-edge"/><path d="${d}" class="r-top"/><path d="${dDone}" class="r-done"/><path d="${dDone}" class="r-flow"/><path d="${d}" class="r-dash"/><path d="${dDone}" class="r-dash done"/></svg>${items.map(node).join("")}</div></div>
 </div>${sheet}</section>`}
 /* Tapping a stage planet lists that stage's topics (names only) */
+/* Everything on the path before the topic you are on counts as behind you: it shows as cleared, never locked */
+function passed(s){const cur=curSkill(curGroup());if(!cur||!s||s===cur)return false;const order=ROWS.flatMap(r=>r.skills);return order.indexOf(s)<order.indexOf(cur)}
 function ckSheet(c,s0){const G=GROUPS.filter(g=>g.c===c);let k=0;GROUPS.forEach(g=>{if(GROUPS.indexOf(g)<GROUPS.indexOf(G[0]))k+=gSkills(g)});
- const items=G.flatMap(g=>g.skills?g.skills.map(s=>{const done=barOf(s.id)>=BPS,now=s===s0;return `<li class="${done?"done":now?"now":"lock"}"><span class="ck-n">${done?"✓":++k}</span><span>${esc(s.name)}</span>${now?"<em>You are here</em>":""}</li>`}):[`<li class="lock"><span class="ck-n">🔒</span><span>${esc(g.name)}</span><em>Coming soon</em></li>`]).join("");
+ const items=G.flatMap(g=>g.skills?g.skills.map(s=>{const done=barOf(s.id)>=BPS||passed(s),now=s===s0;return `<li class="${done?"done":now?"now":"lock"}"><span class="ck-n">${done?"✓":++k}</span><span>${esc(s.name)}</span>${now?"<em>You are here</em>":""}</li>`}):[`<li class="lock"><span class="ck-n">🔒</span><span>${esc(g.name)}</span><em>Coming soon</em></li>`]).join("");
  return `<div class="msheet" role="dialog" aria-label="${stg(c)} topics"><div class="msheet-in concept"><div class="cpt ckl" style="--cc:${CKCOL[c]}"><span class="cpt-k">${stg(c)}</span><h3>${esc(CKNAME[c])}</h3><ol class="cklist">${items}</ol></div><div class="mfoot"><button class="btn sm mclose" data-act="pathck" data-c="${c}">Close</button></div></div></div>`}
 function pathJump(smooth){const n=$(".mnode.now")||$(".mprize.cur");if(!n)return;const r=n.getBoundingClientRect();scrollTo({top:Math.max(0,scrollY+r.top-innerHeight*.55),behavior:smooth?"smooth":"auto"})}
 function fameRows(){return {live:true,rows:(FAMEALL||[]).map(r=>({n:r.name,coins:r.coins,correct:r.correct,answered:r.answered,rung:r.best,me:r.me}))}}

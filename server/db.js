@@ -140,6 +140,10 @@ CREATE TABLE IF NOT EXISTS events (
 );
 CREATE INDEX IF NOT EXISTS events_roll ON events(roll_no, at);
 CREATE INDEX IF NOT EXISTS events_kind ON events(kind, at);
+CREATE TABLE IF NOT EXISTS app_settings (       -- small key/value switches, e.g. progress_epoch (the last "fresh start")
+  key         TEXT PRIMARY KEY,
+  value       TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS presence (           -- who has the game open: a page pings every 30 s
   roll_no     TEXT PRIMARY KEY,
   last_seen   BIGINT NOT NULL

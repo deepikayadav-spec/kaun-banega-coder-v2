@@ -205,3 +205,45 @@ test('feedback: once a student has sent it, the game knows not to ask again', as
   assert.equal((await call('s', 'POST', '/api/feedback', { text: 'Loved the maze puzzle', ctx: { stars: 5, trigger: 'after 5 min on the platform' } })).status, 200);
   assert.equal((await call('s', 'GET', '/api/boot')).body.me.feedbackGiven, true);
 });
+
+test('a CT Skill Graph HTML export uploads as a graph; starter skills are done; a fresh start empties every journey', async () => {
+  const live = JSON.parse(fs.readFileSync('server/content/skill-graph.json', 'utf8'));
+  // a small export in the CT Skill Graph shape: const D = { … } inside a script, needs as [{ any: [...] }]
+  const D = {
+    source: 'test', checkpoints: [{ id: 'C1', name: 'Basics: first steps', groups: ['G1', 'G2'] }],
+    groups: [{ id: 'G1', checkpoint: 'C1', name: 'First steps', skills: ['S10', 'S4', 'S1', 'S2'] }, { id: 'G2', checkpoint: 'C1', name: 'Next', skills: ['S5'] }],
+    skills: [
+      { id: 'S10', name: 'Print values', group: 'G1', checkpoint: 'C1', starter: true, needs: [] },
+      { id: 'S4', name: 'Store and update a value', group: 'G1', checkpoint: 'C1', starter: true, needs: [] },
+      { id: 'S1', name: 'Tell types apart', group: 'G1', checkpoint: 'C1', foundation: true, needs: [] },
+      { id: 'S2', name: 'Know what a string is', group: 'G1', checkpoint: 'C1', needs: [{ any: ['S1'], main: 'S1' }] },
+      { id: 'S5', name: 'Convert', group: 'G2', checkpoint: 'C1', needs: [{ any: ['S1'] }, { any: ['S4', 'S10'] }] }
+    ]
+  };
+  const html = `<!doctype html><html><body><div id="facts"></div><script>\nconst D = ${JSON.stringify(D)};\ndocument.getElementById("facts").textContent = "x";</script></body></html>`;
+  assert.equal((await call('a', 'POST', '/api/admin/graph/upload?dry=1', { html: '<html>no data</html>' })).status, 400);
+  const dry = await call('a', 'POST', '/api/admin/graph/upload?dry=1', { html });
+  assert.equal(dry.status, 200, JSON.stringify(dry.body));
+  assert.deepEqual(dry.body.converted, { skills: 5, groups: 2, checkpoints: 1, starters: ['S10', 'S4'] });
+
+  // the student has earned something under the old graph
+  await call('s', 'PUT', '/api/progress', { progress: { coins: 0, best: 0, correct: 3, answered: 4 }, epoch: 0 });
+  const up = await call('a', 'POST', '/api/admin/graph/upload?fresh=1&name=CT.html', { html });
+  assert.equal(up.status, 200, JSON.stringify(up.body));
+  assert.ok(up.body.fresh && up.body.fresh.students >= 1);
+  const b = (await call('s', 'GET', '/api/boot')).body;
+  assert.deepEqual(b.graph.skills.map((s) => s.id), ['S10', 'S4', 'S1', 'S2', 'S5']);
+  assert.equal(b.engine.skills.S10.status, 'done', 'starter skills are done');
+  assert.equal(b.engine.skills.S4.status, 'done');
+  assert.equal(b.engine.skills.S1.status, 'open', 'the first real topic is open');
+  assert.equal(b.engine.skills.S2.status, 'locked');
+  assert.equal(b.engine.active, 'S1', 'everyone starts from the beginning');
+  assert.equal(b.progress, null, 'wallet cleared');
+  assert.ok(b.epoch > 0);
+  // a page opened before the fresh start can't save the old wallet back
+  assert.equal((await call('s', 'PUT', '/api/progress', { progress: { coins: 0, correct: 3, answered: 4 }, epoch: 0 })).status, 409);
+  assert.equal((await call('s', 'PUT', '/api/progress', { progress: { coins: 0, correct: 0, answered: 0 }, epoch: b.epoch })).status, 200);
+  assert.equal((await call('a', 'POST', '/api/admin/progress/reset', { confirm: 'nope' })).status, 400);
+  assert.equal((await call('a', 'POST', '/api/admin/progress/reset', { confirm: 'RESET' })).status, 200);
+  await call('a', 'POST', '/api/admin/graph/activate', { version: live.version });
+});

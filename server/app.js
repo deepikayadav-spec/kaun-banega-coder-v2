@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import { ready, one, all, run, tx, json, dbKind, audit } from './db.js';
+import { extractCtData, ctToGraph } from './ctgraph.js';
 import { content, loadQuestion, questionById, uploadBank, uploadGraph, activateGraph, graphHistory, seedIfEmpty } from './bank.js';
 import { newState, upgradeState, activeSkill, address, applyAnswer, view as engineView, ladderFor, VARIANTS } from './engine.js';
 import { present, grade, fifty } from './grade.js';
@@ -37,6 +38,25 @@ app.get('/api/health', wrap(async (req, res) => {
 
 // The active graph version, polled by an open game when its tab comes back into view.
 app.get('/api/version', wrap(async (req, res) => { res.json({ graph: (await content()).version }); }));
+
+// ---------- fresh start: every student's journey begins again (attempt history is kept)
+// The time of the last fresh start is the "progress epoch". A game page opened before it can't save its old wallet back.
+async function progressEpoch() {
+  const r = await one("SELECT value FROM app_settings WHERE key = 'progress_epoch'");
+  return r ? Number(r.value) : 0;
+}
+async function freshStart(adminId) {
+  const now = Date.now();
+  const n = await tx(async () => {
+    const a = await one('SELECT COUNT(*)::int AS n FROM engine_state');
+    await run('DELETE FROM engine_state');
+    await run('DELETE FROM game_progress');
+    await run("INSERT INTO app_settings (key, value) VALUES ('progress_epoch', ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value", String(now));
+    return a.n;
+  });
+  await audit(adminId, 'fresh_start', null, { students: n, at: now });
+  return { students: n, epoch: now };
+}
 
 // ---------- student auth
 app.post('/api/auth/login', jsonBody, wrap(async (req, res) => {
@@ -97,7 +117,7 @@ app.get('/api/boot', requireStudent, wrap(async (req, res) => {
   const fb = await one('SELECT 1 AS x FROM feedback WHERE roll_no = ? LIMIT 1', req.student.roll_no);
   res.json({
     me: { roll: req.student.roll_no, name: req.student.name, university: req.student.university || universityOf(req.student.roll_no), feedbackGiven: !!fb },
-    graph: graphForClient(c), engine: view(c, st), progress: gp ? gp.data : null
+    graph: graphForClient(c), engine: view(c, st), progress: gp ? gp.data : null, epoch: await progressEpoch()
   });
 }));
 
@@ -210,6 +230,8 @@ app.put('/api/progress', requireStudent, express.json({ limit: '256kb' }), wrap(
   const d = req.body?.progress;
   if (!d || typeof d !== 'object') return res.status(400).json({ error: 'progress missing' });
   delete d.seen; // the server keeps question history; the old client map is not needed
+  // a page opened before the last fresh start must not bring the old wallet back
+  if (Number(req.body?.epoch || 0) < await progressEpoch()) return res.status(409).json({ error: 'Your journey was restarted. Reloading.', reset: true });
   // Coins and best rung can only come from rungs the engine says were reached.
   const c = await content(), { st } = await loadState(req.student.roll_no, c.G);
   const rung = rungOf(view(c, st));
@@ -406,11 +428,31 @@ admin.post('/bank/upload', requireSuper, bigJson, wrap(async (req, res) => {
   if (req.query.dry !== '1') await audit(req.admin.id, 'bank_upload', String(req.query.name || ''), r.counts);
   res.json(r);
 }));
+// The graph comes as skill-graph JSON, or as a CT Skill Graph HTML export ({ html }), converted in server/ctgraph.js.
+// ?fresh=1 also starts every student from the beginning once the new graph is live.
 admin.post('/graph/upload', requireSuper, bigJson, wrap(async (req, res) => {
   const dryRun = req.query.dry === '1';
-  const r = await uploadGraph(req.body, { adminId: req.admin.id, fileName: String(req.query.name || ''), dryRun });
-  if (r.ok && !dryRun) await audit(req.admin.id, 'graph_upload', r.version, r.diff);
+  let graph = req.body, version = null, converted = null;
+  if (typeof req.body?.html === 'string') {
+    try {
+      const live = await one('SELECT data FROM skill_graph WHERE active = 1 ORDER BY created_at DESC LIMIT 1');
+      graph = ctToGraph(extractCtData(req.body.html), live && live.data);
+    } catch (e) { return res.status(400).json({ ok: false, error: e.message }); }
+    version = graph.version + '-' + new Date().toISOString().slice(11, 16).replace(':', '');
+    converted = { skills: graph.skills.length, groups: graph.groups.length, checkpoints: graph.checkpoints.length,
+      starters: graph.skills.filter((s) => s.starter).map((s) => s.id) };
+  }
+  const r = await uploadGraph(graph, { adminId: req.admin.id, fileName: String(req.query.name || ''), dryRun, version });
+  r.converted = converted;
+  if (r.ok && !dryRun) {
+    await audit(req.admin.id, 'graph_upload', r.version, r.diff);
+    if (req.query.fresh === '1') r.fresh = await freshStart(req.admin.id);
+  }
   res.status(r.ok ? 200 : 400).json(r);
+}));
+admin.post('/progress/reset', requireSuper, jsonBody, wrap(async (req, res) => {
+  if (req.body?.confirm !== 'RESET') return res.status(400).json({ error: 'Type RESET to confirm.' });
+  res.json({ ok: true, ...(await freshStart(req.admin.id)) });
 }));
 admin.get('/graph/history', wrap(async (req, res) => { res.json({ rows: await graphHistory() }); }));
 admin.post('/graph/activate', requireSuper, jsonBody, wrap(async (req, res) => {

@@ -107,10 +107,27 @@ async function content(){const d=await api("GET","/api/admin/content"),G=d.graph
  <div id="ql"></div>
  <div class="card"><h2>Recent uploads</h2><table><tr><th>When</th><th>Kind</th><th>File</th><th>Result</th></tr>${d.uploads.map(u=>`<tr><td>${dt(u.at)}</td><td>${u.kind}</td><td>${esc(u.file_name)}</td><td class="muted">${esc(JSON.stringify(u.counts))}</td></tr>`).join("")}</table></div>`;
  document.querySelectorAll("tr[data-sk]").forEach(tr=>tr.onclick=()=>qlist(tr.dataset.sk));
- const send=async dry=>{const f=$("#bf").files[0];if(!f)return;$("#bres").innerHTML='<p class="muted">Working…</p>';
-  try{const body=JSON.parse(await f.text());const r=await api("POST",`/api/admin/bank/upload?name=${encodeURIComponent(f.name)}${dry?"&dry=1":""}`,body);
-   $("#bres").innerHTML=`<p class="${r.ok?"ok":"warn"}">${r.counts.valid} of ${r.counts.received} questions valid.${dry?"":` ${r.counts.inserted} added, ${r.counts.updated} updated.`}</p>${r.errors.length?`<pre>${esc(r.errors.slice(0,100).map(e=>`${e.id||"?"}: ${e.errors.join("; ")}`).join("\n"))}</pre>`:""}`;if(!dry)setTimeout(content,1500)}
-  catch(e){$("#bres").innerHTML=`<p class="bad">${esc(e.message)}</p>`}};
+ /* Vercel refuses request bodies over 4.5 MB, so a bank is sent in parts of about 2 MB (only its questions; any graph or
+    metadata in the file is left out). Each part is checked and upserted by id on its own; the results are added up here. */
+ const send=async dry=>{const f=$("#bf").files[0];if(!f)return;const out=$("#bres");
+  const bar=t=>out.innerHTML=`<p class="muted">${t}</p>`;bar("Reading the file…");
+  try{const body=JSON.parse(await f.text());
+   const list=Array.isArray(body)?body:Array.isArray(body&&body.questions)?body.questions:body&&body.id?[body]:null;
+   if(!list){out.innerHTML='<p class="bad">Expected {"questions": [ … ]} in the file.</p>';return}
+   const bv=Array.isArray(body)?null:body.bank_version||null,parts=[];let cur=[],size=0;
+   for(const q of list){const n=JSON.stringify(q).length;if(cur.length&&(size+n>2e6||cur.length>=2000)){parts.push(cur);cur=[];size=0}cur.push(q);size+=n}
+   if(cur.length)parts.push(cur);
+   const seen=new Set(),dup=[];list.forEach(q=>{if(q&&q.id){if(seen.has(q.id))dup.push({id:q.id,errors:["duplicate id in this file"]});seen.add(q.id)}});
+   const tot={received:0,valid:0,invalid:0,inserted:0,updated:0},errs=dup.slice();
+   for(let i=0;i<parts.length;i++){
+    bar(`${dry?"Checking":"Uploading"} part ${i+1} of ${parts.length} · ${tot.received.toLocaleString("en-IN")} of ${list.length.toLocaleString("en-IN")} questions done…`);
+    const name=f.name+(parts.length>1?` (part ${i+1}/${parts.length})`:"");
+    const r=await api("POST",`/api/admin/bank/upload?name=${encodeURIComponent(name)}${dry?"&dry=1":""}`,{bank_version:bv,questions:parts[i]});
+    for(const k in tot)tot[k]+=r.counts[k]||0;errs.push(...r.errors)}
+   tot.invalid=Math.max(tot.invalid,0);
+   out.innerHTML=`<p class="${errs.length?"warn":"ok"}">${tot.valid.toLocaleString("en-IN")} of ${tot.received.toLocaleString("en-IN")} questions valid${parts.length>1?` (sent in ${parts.length} parts)`:""}.${dry?"":` ${tot.inserted.toLocaleString("en-IN")} added, ${tot.updated.toLocaleString("en-IN")} updated.`}${dup.length?` ${dup.length} ids appear twice in the file.`:""}</p>${errs.length?`<pre>${esc(errs.slice(0,100).map(e=>`${e.id||"?"}: ${e.errors.join("; ")}`).join("\n"))}${errs.length>100?`\n… and ${errs.length-100} more`:""}</pre>`:""}`;
+   if(!dry)setTimeout(content,1500)}
+  catch(e){out.innerHTML=`<p class="bad">${esc(e.message)}</p>`}};
  if($("#bchk")){$("#bchk").onclick=()=>send(true);$("#bup").onclick=()=>send(false)}
  const ids=a=>a.length?esc(a.slice(0,30).join(", "))+(a.length>30?` and ${a.length-30} more`:""):'<span class="muted">none</span>';
  const diffHTML=(d,im)=>`<table><tr><td>Skills added</td><td>${ids(d.added)}</td></tr><tr><td>Skills removed</td><td>${ids(d.removed)}</td></tr><tr><td>Prerequisites changed</td><td>${ids(d.reqChanged)}</td></tr><tr><td>Moved to another group</td><td>${ids(d.moved)}</td></tr><tr><td>rmax changed</td><td>${ids(d.rmaxChanged)}</td></tr><tr><td>Renamed</td><td>${ids(d.renamed)}</td></tr><tr><td>Skill groups (prize rungs)</td><td>${d.groups.before} → ${d.groups.after} (${d.rungs.before} → ${d.rungs.after} rungs)</td></tr>${im?`<tr><td>Students with progress on changed or removed skills</td><td>${im.students}</td></tr><tr><td>Live questions left without a skill</td><td>${im.orphanQuestions?`<span class="warn">${im.orphanQuestions} (${esc(im.orphanSkills.join(", "))}): students won't be served these</span>`:"0"}</td></tr>`:""}</table>`;

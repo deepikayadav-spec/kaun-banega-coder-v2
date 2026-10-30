@@ -79,15 +79,17 @@ export async function uploadBank(bundle, { adminId = null, fileName = null, dryR
   if (!dryRun && good.length) {
     const now = Date.now(), bv = bundle.bank_version || null;
     await tx(async () => {
-      for (const q of good) {
-        const prev = await one('SELECT id FROM questions WHERE id = ?', q.id);
-        await run(`INSERT INTO questions (id, skill, level, type, difficulty, variant, form, status, version, bank_version, data, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      // many rows per statement: a large bank arrives in parts of a thousand or more questions
+      for (let i = 0; i < good.length; i += 200) {
+        const part = good.slice(i, i + 200), args = [];
+        for (const q of part) args.push(q.id, q.skill, q.level, q.type, q.difficulty, q.variant, q.form || null, q.status || 'live', q.version || 1, bv, json(q), now);
+        const rows = await all(`INSERT INTO questions (id, skill, level, type, difficulty, variant, form, status, version, bank_version, data, updated_at)
+          VALUES ${part.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').join(', ')}
           ON CONFLICT (id) DO UPDATE SET skill = excluded.skill, level = excluded.level, type = excluded.type, difficulty = excluded.difficulty,
             variant = excluded.variant, form = excluded.form, status = excluded.status, version = excluded.version,
-            bank_version = excluded.bank_version, data = excluded.data, updated_at = excluded.updated_at`,
-        q.id, q.skill, q.level, q.type, q.difficulty, q.variant, q.form || null, q.status || 'live', q.version || 1, bv, json(q), now);
-        if (prev) counts.updated++; else counts.inserted++;
+            bank_version = excluded.bank_version, data = excluded.data, updated_at = excluded.updated_at
+          RETURNING (xmax = 0) AS inserted`, ...args);
+        for (const r of rows) if (r.inserted) counts.inserted++; else counts.updated++;
       }
       await run('INSERT INTO bank_uploads (admin_id, file_name, kind, counts, errors, at) VALUES (?, ?, ?, ?, ?, ?)',
         adminId, fileName, 'bank', json(counts), json(errors.slice(0, 200)), now);

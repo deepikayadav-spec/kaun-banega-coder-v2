@@ -204,8 +204,22 @@ const POSE_ALIAS={happy:"dance",sad:"bonk"};
 const BYTE_POSES=["panic","pointq","pointa","pointup","idle","review","think","dance","trophy","finish","bonk","tired","stare","run","chai","zen","warm","type","read","vibe","drink","stretch","streak","missed"];
 /* ================= 3D mascots: every buddy is modelled in three.js and rendered once per pose into a cached image ================= */
 const M3D=(()=>{let R=null,ok=null;const cache={};
- function init(){if(ok!==null)return ok;try{if(!window.THREE)return ok=false;const T=THREE,cv=document.createElement("canvas");cv.width=320;cv.height=400;
-  R=new T.WebGLRenderer({canvas:cv,alpha:true,antialias:true,preserveDrawingBuffer:true});R.debug.checkShaderErrors=false;R.setPixelRatio(1);R.setSize(320,400,false);R.setClearColor(0,0);ok=true}catch(e){ok=false}return ok}
+ function init(){if(ok!==null)return ok;try{if(!window.THREE)return ok=false;const T=THREE,cv=document.createElement("canvas");cv.width=FW;cv.height=FH;
+  R=new T.WebGLRenderer({canvas:cv,alpha:true,antialias:true,preserveDrawingBuffer:true});R.debug.checkShaderErrors=false;R.setPixelRatio(1);R.setSize(FW,FH,false);R.setClearColor(0,0);
+  /* a photo-studio look: filmic tone mapping, true sRGB colour, and a soft studio (softboxes, a warm top, a dark floor) that the
+     glossy shell reflects. This is what makes the pearl-white body read as a solid, shaded 3D object instead of a flat cut-out. */
+  R.toneMapping=T.ACESFilmicToneMapping;R.toneMappingExposure=.9;R.outputEncoding=T.sRGBEncoding;ENV=studio(T);ok=true}catch(e){ok=false}return ok}
+ const FW=480,FH=600;let ENV=null;
+ function studio(T){const es=new T.Scene(),c=document.createElement("canvas");c.width=16;c.height=256;const g=c.getContext("2d"),gr=g.createLinearGradient(0,0,0,256);
+  gr.addColorStop(0,"#fff6e8");gr.addColorStop(.42,"#9aa3bd");gr.addColorStop(.6,"#2a3150");gr.addColorStop(1,"#070a16");g.fillStyle=gr;g.fillRect(0,0,16,256);
+  const tx=new T.CanvasTexture(c);tx.encoding=T.sRGBEncoding;es.add(new T.Mesh(new T.SphereGeometry(40,32,16),new T.MeshBasicMaterial({map:tx,side:T.BackSide})));
+  const box=(w,h,x,y,z,col,k)=>{const m=new T.MeshBasicMaterial({color:col,side:T.DoubleSide});m.color.multiplyScalar(k);const b=new T.Mesh(new T.PlaneGeometry(w,h),m);b.position.set(x,y,z);b.lookAt(0,1.5,0);es.add(b)};
+  box(16,10,-14,16,18,0xffffff,5);box(5,22,22,6,-2,0xfff1d6,3.2);box(5,22,-22,6,-6,0xcfe9ff,2.6);box(26,4,0,-6,24,0xffffff,1.2);
+  const pm=new T.PMREMGenerator(R),env=pm.fromScene(es,.035).texture;pm.dispose();return env}
+ /* the model's colours are written as sRGB hex; with sRGB output they are converted once, and canvas textures are marked sRGB */
+ function linear(sc,T){const seen=new Set();sc.traverse(o=>{const ms=o.material?[].concat(o.material):[];ms.forEach(m=>{if(seen.has(m))return;seen.add(m);
+  if(m.color)m.color.convertSRGBToLinear();if(m.emissive)m.emissive.convertSRGBToLinear();if(m.map)m.map.encoding=T.sRGBEncoding;
+  if(m.isMeshStandardMaterial){m.envMapIntensity=m.metalness>.3?1.2:.75;if(m.isMeshPhysicalMaterial&&m.clearcoat<.8){m.clearcoat=.85;m.clearcoatRoughness=.16}}})})}
  const KIND={panic:"stare",pointq:"open",pointa:"down",pointup:"up",dance:"happy",trophy:"open",finish:"happy",chai:"open",think:"up",review:"down",bonk:"x",tired:"sleepy",stare:"stare",zen:"closed",run:"focus",warm:"happy",type:"down",read:"down",vibe:"happy",drink:"happy",stretch:"happy",streak:"happy",missed:"happy"};
  function pal(C){if(C.hero)return {head:C.cowl?C.mask:C.mask,face:C.skin||null,body:C.suit[1],bodyHi:C.suit[0],belly:C.suit[0],limb:C.limb,glove:C.glove,leg:C.limbDk||C.suit[2],boot:C.boot,lens:C.lens,glow:!!C.lensGlow,belt:C.belt,cape:C.cape||null,accent:C.buckle||C.belt};
   return {head:C.head[0],face:null,body:C.gold[1],bodyHi:C.gold[0],belly:C.white[0],limb:C.cuff||C.white[0],glove:C.glove,leg:C.leg[0],boot:C.gold[1],lens:null,glow:false,belt:null,cape:null,accent:C.gold[2]}}
@@ -355,7 +369,7 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
  /* A pose takes 50–300 ms to model and render, so finished sprite sheets are kept in IndexedDB (read before the game starts,
     see index.html) under a key that changes whenever the costume or the modelling code changes. */
  const hash=t=>{let h=5381;for(let i=0;i<t.length;i++)h=(h*33^t.charCodeAt(i))>>>0;return h.toString(36)};
- let VER=null;const ver=()=>VER||(VER=hash(build.toString()+pal.toString()));
+ let VER=null;const ver=()=>VER||(VER=hash(build.toString()+pal.toString()+init.toString()+studio.toString()+linear.toString()+"r3"));
  const SAVED=window.KBC_M3D||{},pkey=(C,pose)=>"m3d|"+C.id+"|"+pose+"|"+ver()+"|"+hash(JSON.stringify(C));
  let pruned=false;
  function persist(k,v){try{const o=indexedDB.open("kbc-cache",1);o.onupgradeneeded=()=>o.result.createObjectStore("m3d");
@@ -363,11 +377,12 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
    if(!pruned){pruned=true;const c=st.openCursor();c.onsuccess=()=>{const x=c.result;if(!x)return;if(String(x.key).split("|")[3]!==ver())x.delete();x.continue()}}}catch(e){}}}catch(e){}}
  function render(C,pose){const key=C.id+"|"+pose;if(cache[key]!==undefined)return cache[key];
   const pk=pkey(C,pose);if(SAVED[pk])return cache[key]=SAVED[pk];if(!init())return null;
-  try{const T=THREE,sheet=document.createElement("canvas");sheet.width=320*N;sheet.height=400;const g2=sheet.getContext("2d");
-   for(let f=0;f<N;f++){const sc=new T.Scene();sc.add(new T.HemisphereLight(0xFFF4E0,0x2B1A0E,.85));
-    const k=new T.DirectionalLight(0xFFFFFF,1.15);k.position.set(3,5,6);sc.add(k);const r1=new T.DirectionalLight(0xFFFFFF,.75);r1.position.set(-5,2,-3);sc.add(r1);const r2=new T.DirectionalLight(0xFFE7B8,.55);r2.position.set(5,1,-4);sc.add(r2);
-    sc.add(build(C,pose,f/N));const cam=new T.PerspectiveCamera(28,320/400,.1,100);cam.position.set(0,2.05,10.2);cam.lookAt(0,1.85,0);
-    R.render(sc,cam);g2.drawImage(R.domElement,f*320,0);/* materials are not disposed: that would drop their compiled shader programs and every frame would compile them again */
+  try{const T=THREE,sheet=document.createElement("canvas");sheet.width=FW*N;sheet.height=FH;const g2=sheet.getContext("2d");
+   for(let f=0;f<N;f++){const sc=new T.Scene();sc.environment=ENV;sc.add(new T.HemisphereLight(0xF3F6FF,0x10152A,.4));
+    const k=new T.DirectionalLight(0xFFF4E4,1.55);k.position.set(3.5,6,6);sc.add(k);const fl=new T.DirectionalLight(0xDCE8FF,.32);fl.position.set(-5,1.5,5);sc.add(fl);
+    const r1=new T.DirectionalLight(0x9FE8FF,1.7);r1.position.set(-5,3.5,-5);sc.add(r1);const r2=new T.DirectionalLight(0xFFD58A,1.5);r2.position.set(5,2.5,-5);sc.add(r2);
+    const body=build(C,pose,f/N);sc.add(body);linear(sc,T);const cam=new T.PerspectiveCamera(28,FW/FH,.1,100);cam.position.set(0,2.05,10.2);cam.lookAt(0,1.85,0);
+    R.render(sc,cam);g2.drawImage(R.domElement,f*FW,0);/* materials are not disposed: that would drop their compiled shader programs and every frame would compile them again */
     sc.traverse(o=>{o.geometry&&o.geometry.dispose();if(o.material&&o.material.map)o.material.map.dispose()})}
    const url=sheet.toDataURL("image/png");persist(pk,url);return cache[key]=url}catch(e){return cache[key]=null}}
  /* draw the remaining poses of a costume one at a time while the browser is idle, so no screen waits for its mascot */
@@ -994,7 +1009,7 @@ function vHome(){const best=P.best||0,coins=P.coins||0;
 <div class="ctready" aria-label="Your GRIT Computational Thinking readiness: ${gritReady()} percent"><div class="ct-ring" style="--v:${Math.min(100,parseFloat(gritReady()))}"><b>${gritReady()}<small>%</small></b></div><div class="ct-txt"><span class="ct-k">Your GRIT</span><strong>Computational Thinking readiness</strong><span class="ct-s">Rises with every level you clear</span></div></div>
 <p class="hhey">hey ${esc(String(S.name||"").split(" ")[0]||"coder")} 👋 your seat is waiting</p>
 <button class="hplay" type="button" data-act="play"><span>Play Fastest Finger</span><i aria-hidden="true">→</i></button>
-<div class="hmeta3"><span class="hlive"><i class="ldot"></i><b class="livenum">${LIVE}</b> playing now</span><span class="hdot" aria-hidden="true"></span><button class="hlink" type="button" data-act="tour">Quick tour</button></div>
+<div class="hmeta3"><span class="hlive"><i class="ldot"></i><b class="livenum">${LIVE}</b> playing now</span><span class="hdot" aria-hidden="true"></span><button class="hlink" type="button" data-act="tour">Quick tour</button><span class="hdot" aria-hidden="true"></span><button class="hlink" type="button" data-act="intro">▶ Watch intro</button></div>
 
 <div class="h4-stats"><span>Wallet <b>${fmtR(coins)}</b></span><span>Best <b>${best?fmtR(amountOf(best)):"—"}</b></span><span>Every game starts at <b>10</b></span></div>
 </div>
@@ -1725,6 +1740,8 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="logout"){logout();return}
  if(a==="sol"){solOpen();return}
  if(a==="sol-close"){modalClose("#solm");return}
+ /* the intro (intro.js) plays again on a fresh load of /?intro */
+ if(a==="intro"){try{pushP(true)}catch(e){}location.href="/?intro";return}
  if(a==="tour"){if(S.screen==="play")endRun("stop");tourStart();return}
  if(a==="tour-next"){TI++;tourShow();return}
  if(a==="tour-back"){TI=Math.max(0,TI-1);tourShow(-1);return}

@@ -75,7 +75,7 @@
   var ON = spk + '<path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   var OFF = spk + '<path d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   var coin = function (cls) { return '<div class="kx-emb ' + (cls || "") + '" aria-hidden="true"><i class="kx-ring"></i><i class="kx-ring b"></i><span class="kx-coin">{ }</span></div>'; };
-  var pixel = function (pose, cls) { return '<div class="kx-pix ' + (cls || "") + '" data-pose="' + pose + '"><span class="kx-pixs"><span class="kx-strip" style="background-image:url(' + PIX + pose + '.webp)"></span></span><i class="kx-shadow"></i></div>'; };
+  var pixel = function (pose, cls) { return '<div class="kx-pix ' + (cls || "") + '" data-pose="' + pose + '"><span class="kx-pixs"><span class="kx-strip" style="background-image:url(' + PIX + pose + '.webp?v=2)"></span></span><i class="kx-shadow"></i></div>'; };
   var win = function (inner) { return '<div class="kw"><div class="kw-bar"><i></i><i></i><i></i><span>kaun-banega-coder</span></div><div class="kw-body">' + inner + '<i class="kx-click"></i><i class="kx-ptr"></i></div></div>'; };
   var code = function (lines) { return '<div class="kc">' + lines.map(function (l, i) { return "<div><b>" + (i + 1) + "</b>" + l + "</div>"; }).join("") + "</div>"; };
   var py = function (s) { return s.replace(/('[^']*')/g, "\u0001$1\u0002").replace(/(\d+)/g, '<span class="n">$1</span>').replace(/\u0001/g, '<span class="s">').replace(/\u0002/g, "</span>").replace(/\b(len|print)\b/g, '<span class="f">$1</span>'); };
@@ -157,7 +157,7 @@
           '<div class="kx-prog"><span class="kx-pl"></span><span class="kx-segs">' + new Array(11).join("<i></i>") + '</span><b class="kx-pn">01/10</b></div>' +
           '<div class="kx-chpix">' + ["pointq", "dance", "pointa", "trophy"].map(function (p) { return pixel(p, "kx-big"); }).join("") + "</div>" +
           '<div class="kx-win">' + win(homeScr + fffScr + seatScr(false) + seatScr(true) + pathScr + hofScr) + "</div></div>" +
-        '<div class="kx-dlg"><span class="kx-av"><span style="background-image:url(' + PIX + 'pointq.webp)"></span></span><div><small>Pixel</small><p><span class="kx-say"></span><i class="kx-more">⌄</i></p></div></div>' +
+        '<div class="kx-dlg"><span class="kx-av"><span style="background-image:url(' + PIX + 'pointq.webp?v=2)"></span></span><div><small>Pixel</small><p><span class="kx-say"></span><i class="kx-more">⌄</i></p></div></div>' +
       "</div>" +
       '<button type="button" class="kx-letsplay" data-ki="done">Let\'s play →</button>' +
       '<p class="ki-rot">Turn your phone sideways for a bigger picture</p>' +

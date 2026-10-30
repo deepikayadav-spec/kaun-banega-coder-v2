@@ -231,24 +231,50 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
   const M=(g,m,p=[0,0,0],s=[1,1,1],r=[0,0,0])=>{const x=new T.Mesh(g,m);x.position.set(...p);x.scale.set(...s);x.rotation.set(...r);return x};
   const sph=new T.SphereGeometry(1,40,28),cyl=(a,b,h)=>new T.CylinderGeometry(a,b,h,32),dark=mat("#14162A",{roughness:.15}),white=mat("#FFFFFF");
   const root=new T.Group(),body=new T.Group(),head=new T.Group();root.add(body);
+  /* Pixel is built like a product: a pearl-white gloss shell, satin trim plates, graphite joints and seams, chrome and gold
+     hardware. The seams, joints and glass are what make it read as a machine rather than a painted shape. */
+  const PX=id==="pixel"?{pearl:mat("#F4F6FA",{roughness:.2,clearcoat:1,clearcoatRoughness:.06}),satin:mat("#DDE2EB",{roughness:.48,clearcoat:.35}),
+   gph:mat("#1B1F2D",{roughness:.38,metalness:.35,clearcoat:.5}),chrome:mat("#D9DEE8",{metalness:.95,roughness:.16,clearcoat:.3}),gold:mat("#E8B54A",{metalness:.9,roughness:.26,clearcoat:.4})}:null;
+  const caps=(r,h,m)=>{const g=new T.Group();g.add(M(new T.CylinderGeometry(r,r,h,32),m));g.add(M(sph,m,[0,h/2,0],[r,r,r]));g.add(M(sph,m,[0,-h/2,0],[r,r,r]));return g};
+  const ring=(R,t,m,p,sc=[1,1,1])=>M(new T.TorusGeometry(R,t,10,64),m,p,sc,[Math.PI/2,0,0]);
   /* legs + boots */
   const run=pose==="run"||pose==="panic";
-  if(id==="pixel"){const ring=M(new T.TorusGeometry(.42,.07,12,40),mat("#F5C451",{emissive:new T.Color("#F5C451"),emissiveIntensity:.55,metalness:.5}),[0,.95,0],[1,1,1],[Math.PI/2,0,0]);body.add(ring);body.add(M(new T.ConeGeometry(.36,.55,28,1,true),new T.MeshBasicMaterial({color:0xFFE7A8,transparent:true,opacity:.14+.06*W2,side:T.DoubleSide}),[0,.62,0],[1,1,1],[Math.PI,0,0]));body.add(M(cyl(.32,.2,.25),mat("#D5DAE5"),[0,1.06,0]))}
+  if(id==="pixel"){
+   /* the thruster sits under the body shell (whose bottom is at y≈.86); the exhaust is only light: a cone of
+      half-transparent colour drawn into a transparent sprite comes out as a grey solid */
+   body.add(ring(.255,.04,PX.gph,[0,.86,0]));
+   body.add(M(new T.CylinderGeometry(.25,.17,.14,40),PX.chrome,[0,.78,0]));
+   body.add(M(new T.CylinderGeometry(.14,.14,.02,40),PX.gph,[0,.708,0]));
+   body.add(M(new T.CircleGeometry(.115,40),new T.MeshBasicMaterial({color:0xFFF0C8}),[0,.696,0],[1,1,1],[Math.PI/2,0,0]));
+   const glow=new T.PointLight(0xFFE2A0,.8,1.6);glow.position.set(0,.55,.25);body.add(glow)}
   else [-1,1].forEach(sd=>{const lg=new T.Group();lg.position.set(sd*.34,.95,0);lg.add(M(cyl(.17,.15,.62),mat(P.leg),[0,-.31,0]));lg.add(M(sph,mat(P.boot),[0,-.68,.08],[.3,.2,.4]));
    if(run)lg.rotation.x=sd*.75*W;if(pose==="dance")lg.rotation.z=sd*.12*W2;body.add(lg)});
   /* torso */
   const tor=new T.Group();tor.position.y=1.55;body.add(tor);
+  if(id==="pixel"){
+   tor.add(M(sph,PX.pearl,[0,0,0],[.76,.7,.6]));
+   tor.add(M(new T.TorusGeometry(1,.012,8,96),PX.gph,[0,-.06,0],[.757,.598,1],[Math.PI/2,0,0]));   /* panel seam */
+   tor.add(M(sph,PX.satin,[0,-.12,.33],[.46,.38,.3]));                                           /* chest plate */
+   tor.add(M(new T.TorusGeometry(1,.01,8,64),PX.gph,[0,-.12,.33],[.462,.382,.3]));
+   tor.add(ring(.27,.05,PX.gph,[0,.6,0]));tor.add(ring(.22,.03,PX.chrome,[0,.66,0]));              /* collar */
+   const coin=M(new T.CylinderGeometry(.17,.17,.05,48),PX.gold,[0,.22,.575],[1,1,1],[Math.PI/2-.35,0,0]);tor.add(coin)}
+  else{
   tor.add(M(sph,mat(P.body),[0,0,0],[.78,.72,.62]));
-  tor.add(M(sph,mat(P.belly,{clearcoat:.3}),[0,-.08,.36],[.46,.4,.28]));
+  tor.add(M(sph,mat(P.belly,{clearcoat:.3}),[0,-.08,.36],[.46,.4,.28]))}
   if(P.belt)tor.add(M(new T.TorusGeometry(.66,.07,12,40),mat(P.belt),[0,-.42,0],[1,1,.85],[Math.PI/2,0,0]));
-  const em=new T.Mesh(new T.CircleGeometry(.2,32),new T.MeshStandardMaterial({map:emblemTex(id==="pixel"?"#F5C451":P.bodyHi),roughness:.3}));em.position.set(0,.26,.6);tor.add(em);
+  const em=new T.Mesh(new T.CircleGeometry(.2,32),new T.MeshStandardMaterial({map:emblemTex(id==="pixel"?"#F5C451":P.bodyHi),roughness:.3}));em.position.set(0,.26,.6);if(id==="pixel"){em.position.set(0,.229,.603);em.rotation.x=-.35;em.scale.setScalar(.78)}tor.add(em);
   if(P.cape){const g=new T.PlaneGeometry(1.25,1.9,8,10),pos=g.attributes.position;for(let k=0;k<pos.count;k++){const x=pos.getX(k),y=pos.getY(k),down=(0.95-y)/1.9;pos.setX(k,x*(0.62+0.5*down));pos.setZ(k,-.18*Math.cos(x*2.2)-down*(.32+.12*W)+.06*Math.sin(x*4+t*12)*down)}g.computeVertexNormals();
    const cp=new T.Mesh(g,mat(P.cape,{side:T.DoubleSide,clearcoat:.2}));cp.position.set(0,-.62,-.52);tor.add(cp);[-1,1].forEach(sd=>tor.add(M(sph,mat(P.cape),[sd*.42,.5,-.38],[.12,.1,.1])))}
   /* arms: pivot at shoulder, hang down */
   const A={panic:[.2,.2,.9,-.9],pointq:[.18,.18,0,0],pointa:[.18,.18,0,0],pointup:[.18,.18,0,0],warm:[2.2,2.2,0,0],stretch:[2.95,2.95,0,0],type:[.32,.32,-1.15,-1.15],read:[.4,.4,-1.0,-1.0],vibe:[.18,.18,0,0],drink:[.18,.35,0,-2.3],streak:[.3,.3,0,0],missed:[.55,.55,-1.25,-1.25],idle:[.18,.18,0,0],review:[.25,.25,-.6,-.6],think:[.2,.5,0,-1.9],dance:[2.5,2.2,0,0],trophy:[2.95,2.95,0,0],finish:[2.6,2.6,0,0],bonk:[1.25,1.25,0,0],tired:[.06,.06,.2,.2],stare:[.18,.18,0,0],run:[.2,.2,.9,-.9],chai:[.15,.45,0,-1.35],zen:[.95,.95,.3,.3]}[pose]||[.18,.18,0,0];
   const hands={};
   [1,-1].forEach((sd,i)=>{const ar=new T.Group();ar.position.set(sd*.74,.32,0);tor.add(ar);
-   ar.add(M(sph,mat(P.body),[0,0,0],[.21,.21,.21]));ar.add(M(cyl(.12,.11,.55),mat(P.limb),[0,-.32,0]));const hd=M(sph,mat(P.glove),[0,-.66,0],[.17,.17,.17]);ar.add(hd);
+   let hd;
+   if(id==="pixel"){ar.add(M(sph,PX.gph,[0,0,0],[.19,.19,.19]));ar.add(M(sph,PX.chrome,[sd*.035,0,0],[.15,.15,.15]));
+    const up=caps(.1,.42,PX.pearl);up.position.y=-.33;ar.add(up);
+    ar.add(ring(.108,.022,PX.gph,[0,-.33,0]));ar.add(ring(.112,.026,PX.chrome,[0,-.53,0]));
+    hd=M(sph,PX.pearl,[0,-.66,0],[.17,.16,.15]);ar.add(hd);ar.add(M(sph,PX.satin,[sd*-.11,-.62,.06],[.06,.08,.06]))}
+   else{ar.add(M(sph,mat(P.body),[0,0,0],[.21,.21,.21]));ar.add(M(cyl(.12,.11,.55),mat(P.limb),[0,-.32,0]));hd=M(sph,mat(P.glove),[0,-.66,0],[.17,.17,.17]);ar.add(hd)}
    let az=A[i],ax=A[2+i];
    if(pose==="idle"&&sd>0){az=1.45+.08*W;ax=-.25} /* points to the next lesson */
    if(pose==="pointq"&&sd>0){az=1.62+.06*W;ax=-.55} /* points at the question card */
@@ -274,17 +300,27 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
   if(pose==="trophy"){const cup=new T.Group(),g=mat("#FFC52E",{metalness:.6,roughness:.25});cup.add(M(cyl(.22,.08,.3),g,[0,.12,0]));cup.add(M(cyl(.05,.05,.12),g,[0,-.08,0]));cup.add(M(cyl(.12,.12,.04),g,[0,-.16,0]));cup.scale.setScalar(1/.17);cup.position.set(0,-.2/.17,0);hands.L.add(cup)}
   if(pose==="chai"){const cup=new T.Group();cup.add(M(cyl(.13,.1,.22),mat("#FFF7E6"),[0,0,0]));cup.add(M(cyl(.11,.11,.02),mat("#A0522D"),[0,.1,0]));cup.add(M(new T.TorusGeometry(.07,.02,8,16),mat("#FFF7E6"),[.14,0,0]));hands.R.add(cup);cup.scale.setScalar(1/.17);cup.position.set(0,.2,0)}
   /* head */
-  head.position.y=2.62;body.add(head);body.add(M(cyl(.14,.16,.18),mat(P.leg),[0,2.08,0]));
-  if(id==="pixel"){const sh=new T.Shape(),w=.78,h=.58,r=.26;sh.moveTo(-w+r,-h);sh.lineTo(w-r,-h);sh.quadraticCurveTo(w,-h,w,-h+r);sh.lineTo(w,h-r);sh.quadraticCurveTo(w,h,w-r,h);sh.lineTo(-w+r,h);sh.quadraticCurveTo(-w,h,-w,h-r);sh.lineTo(-w,-h+r);sh.quadraticCurveTo(-w,-h,-w+r,-h);
-   const eg=new T.ExtrudeGeometry(sh,{depth:.8,bevelEnabled:true,bevelThickness:.14,bevelSize:.12,bevelSegments:6,curveSegments:16});eg.translate(0,0,-.47);head.add(new T.Mesh(eg,mat(P.head)));
+  head.position.y=2.62;body.add(head);if(id==="pixel"){body.add(M(cyl(.12,.14,.2),PX.chrome,[0,2.1,0]));body.add(ring(.13,.025,PX.gph,[0,2.04,0]))}else body.add(M(cyl(.14,.16,.18),mat(P.leg),[0,2.08,0]));
+  if(id==="pixel"){const sh=new T.Shape(),w=.7,h=.5,r=.28;sh.moveTo(-w+r,-h);sh.lineTo(w-r,-h);sh.quadraticCurveTo(w,-h,w,-h+r);sh.lineTo(w,h-r);sh.quadraticCurveTo(w,h,w-r,h);sh.lineTo(-w+r,h);sh.quadraticCurveTo(-w,h,-w,h-r);sh.lineTo(-w,-h+r);sh.quadraticCurveTo(-w,-h,-w+r,-h);
+   const eg=new T.ExtrudeGeometry(sh,{depth:.64,bevelEnabled:true,bevelThickness:.22,bevelSize:.2,bevelSegments:12,curveSegments:28});eg.translate(0,0,-.39);head.add(new T.Mesh(eg,PX.pearl));
+   head.add(M(new T.TorusGeometry(1,.012,8,96),PX.gph,[0,0,-.12],[.86,.66,1]));                /* seam where the face shell meets the back */
    const scr=new T.Shape(),sw=.62,shh=.44,sr=.18;scr.moveTo(-sw+sr,-shh);scr.lineTo(sw-sr,-shh);scr.quadraticCurveTo(sw,-shh,sw,-shh+sr);scr.lineTo(sw,shh-sr);scr.quadraticCurveTo(sw,shh,sw-sr,shh);scr.lineTo(-sw+sr,shh);scr.quadraticCurveTo(-sw,shh,-sw,shh-sr);scr.lineTo(-sw,-shh+sr);scr.quadraticCurveTo(-sw,-shh,-sw+sr,-shh);
-   const sm=new T.Mesh(new T.ShapeGeometry(scr,16),new T.MeshPhysicalMaterial({color:0x0E1220,roughness:.1,clearcoat:1}));sm.position.z=.48;head.add(sm);
-   [-1,1].forEach(sd=>{head.add(M(cyl(.025,.025,.38),mat("#C9CFDB",{metalness:.6,roughness:.25}),[sd*.45,.78,0],[1,1,1],[0,0,-sd*.3]));head.add(M(sph,mat("#FFC52E",{emissive:new T.Color("#FFC52E"),emissiveIntensity:.6+.3*W2}),[sd*.52,.97,0],[.08,.08,.08]));head.add(M(cyl(.16,.16,.12),mat("#D5DAE5"),[sd*.92,0,0],[1,1,1],[0,0,Math.PI/2]))})}
+   const bez=new T.ExtrudeGeometry(scr,{depth:.02,bevelEnabled:true,bevelThickness:.03,bevelSize:.05,bevelSegments:6,curveSegments:20});bez.translate(0,0,.43);
+   head.add(new T.Mesh(bez,PX.gph));                                                                 /* bezel */
+   const sm=new T.Mesh(new T.ShapeGeometry(scr,20),new T.MeshPhysicalMaterial({color:0x05070F,roughness:.5,metalness:0}));sm.position.z=.482;head.add(sm);
+   const gl=new T.ExtrudeGeometry(scr,{depth:.005,bevelEnabled:true,bevelThickness:.04,bevelSize:.0,bevelSegments:8,curveSegments:20});gl.translate(0,0,.5);
+   head.add(new T.Mesh(gl,new T.MeshPhysicalMaterial({color:0xFFFFFF,transparent:true,opacity:.05,roughness:.02,metalness:0,clearcoat:1,clearcoatRoughness:0,depthWrite:false})));  /* glass */
+   head.add(M(new T.PlaneGeometry(.16,.86),new T.MeshBasicMaterial({color:0xFFFFFF,transparent:true,opacity:.07,depthWrite:false}),[-.3,.04,.545],[1,1,1],[0,0,-.6]));   /* glare streak */
+   [-1,1].forEach(sd=>{
+    head.add(M(cyl(.19,.19,.08),PX.satin,[sd*.9,0,0],[1,1,1],[0,0,Math.PI/2]));head.add(M(new T.TorusGeometry(.17,.025,10,48),PX.chrome,[sd*.945,0,0],[1,1,1],[0,Math.PI/2,0]));
+    head.add(M(cyl(.1,.1,.03),PX.gph,[sd*.955,0,0],[1,1,1],[0,0,Math.PI/2]));head.add(M(sph,PX.gold,[sd*.97,0,0],[.035,.05,.05]));        /* ear pods */
+    head.add(M(cyl(.06,.07,.05),PX.gph,[sd*.42,.72,0]));head.add(M(cyl(.016,.016,.34),PX.chrome,[sd*.47,.88,0],[1,1,1],[0,0,-sd*.3]));
+    head.add(M(sph,mat("#FFC52E",{emissive:new T.Color("#FFB51E"),emissiveIntensity:.9+.3*W2,roughness:.2}),[sd*.52,1.04,0],[.07,.07,.07]))})}
   else head.add(M(sph,mat(P.head),[0,0,0],[.84,.76,.74]));
   if(P.face)head.add(M(sph,mat(P.face,{clearcoat:.2}),[0,-.12,.34],[.56,.42,.4]));
   const ez=id==="pixel"?.5:P.face?.76:.7,ey=.04;
   const eye=x=>{const g=new T.Group();g.position.set(x,ey,ez);head.add(g);
-   if(id==="pixel"){const em=mat("#FFFFFF",{emissive:new T.Color("#EAF2FF"),emissiveIntensity:1.2,roughness:.3}),px=(a,b,w=.075,h=.075)=>g.add(M(new T.BoxGeometry(w,h,.03),em,[a,b,0]));
+   if(id==="pixel"){const em=new T.MeshBasicMaterial({color:0xF2F8FF}),px=(a,b,w=.075,h=.075)=>g.add(M(new T.BoxGeometry(w,h,.02),em,[a,b,0]));
     if(kind==="happy"){px(-.1,-.03);px(-.05,.03);px(0,.07);px(.05,.03);px(.1,-.03);return}
     if(kind==="closed"||kind==="sleepy"){px(0,-.02,.26,.06);return}
     if(kind==="x"){[-.08,-.04,0,.04,.08].forEach(k=>{px(k,k,.06,.06);px(k,-k,.06,.06)});return}
@@ -303,7 +339,7 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
    if(kind==="sleepy")g.add(M(sph,mat(P.head),[0,.11,.04],[.23,.14,.1]))};
   eye(-.3);eye(.3);
   /* mouth */
-  if(id==="pixel"){const mm=mat("#FFFFFF",{emissive:new T.Color("#EAF2FF"),emissiveIntensity:1.1});const smile=["dance","trophy","finish","chai","happy","vibe","streak","missed","warm","stretch","drink"].includes(pose);if(smile){[-.12,-.06,0,.06,.12].forEach((k,j)=>head.add(M(new T.BoxGeometry(.06,.05,.03),mm,[k,-.3+(j===0||j===4?.04:0),.5])))}else if(pose==="bonk")head.add(M(new T.BoxGeometry(.2,.05,.03),mm,[0,-.32,.5]));else head.add(M(new T.BoxGeometry(.12,.05,.03),mm,[0,-.3,.5]))}
+  if(id==="pixel"){const mm=new T.MeshBasicMaterial({color:0xF2F8FF});const smile=["dance","trophy","finish","chai","happy","vibe","streak","missed","warm","stretch","drink"].includes(pose);if(smile){[-.12,-.06,0,.06,.12].forEach((k,j)=>head.add(M(new T.BoxGeometry(.06,.05,.03),mm,[k,-.3+(j===0||j===4?.04:0),.5])))}else if(pose==="bonk")head.add(M(new T.BoxGeometry(.2,.05,.03),mm,[0,-.32,.5]));else head.add(M(new T.BoxGeometry(.12,.05,.03),mm,[0,-.3,.5]))}
   else if(["dance","trophy","finish","chai"].includes(pose))head.add(M(new T.TorusGeometry(.09,.025,8,20,Math.PI),dark,[0,-.3,.73],[1,1,1],[0,0,Math.PI]));
   else if(pose==="bonk")head.add(M(new T.TorusGeometry(.08,.022,8,20,Math.PI),dark,[0,-.36,.73]));
   else head.add(M(sph,dark,[0,-.32,.73],[.05,.04,.03]));

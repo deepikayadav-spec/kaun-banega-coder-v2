@@ -2269,3 +2269,30 @@ html[data-theme="light"] .fbx11 .fbs.on{background:linear-gradient(180deg,#A78BF
 @keyframes kbcScrIn{from{opacity:0}}
 #app.scr-in{animation:kbcScrIn .26s cubic-bezier(.2,.8,.2,1)}
 @media (prefers-reduced-motion:reduce){#app.scr-in{animation:none}}
+
+/* ===== Home, minimal: the 3D coin, the title, one button, one quiet line ===== */
+.home4 .hhey{margin:4px 0 0;font:600 15px var(--f-mono);color:#94A3B8;letter-spacing:.01em;text-align:center}
+.home4 .hplay{display:inline-flex;align-items:center;gap:14px;margin:14px auto 0;padding:0 10px 0 28px;height:62px;border:0;border-radius:999px;cursor:pointer;
+  font:800 18px var(--f-display);letter-spacing:-.01em;color:#140D02;background:linear-gradient(180deg,#FFF1B8,#FFC83D 55%,#F59E0B);
+  box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 -4px 0 rgba(146,64,14,.45) inset,0 10px 0 #92400E,0 18px 40px -8px rgba(245,158,11,.65);
+  transform:translateY(-6px);transition:transform .14s cubic-bezier(.3,.7,.4,1),box-shadow .14s}
+.home4 .hplay i{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#140D02;color:#FDE68A;font-style:normal;font-size:20px;transition:transform .2s}
+.home4 .hplay:hover{transform:translateY(-8px)}.home4 .hplay:hover i{transform:translateX(3px) rotate(-8deg)}
+.home4 .hplay:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 -4px 0 rgba(146,64,14,.45) inset,0 2px 0 #92400E,0 8px 20px -8px rgba(245,158,11,.65)}
+.home4 .hplay:focus-visible{outline:3px solid #5EEAD4;outline-offset:6px}
+.home4 .hmeta3{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin-top:22px;font:600 13px var(--f-mono);color:#94A3B8}
+.home4 .hmeta3 b{color:#E2E8F0}
+.home4 .hdot{width:4px;height:4px;border-radius:50%;background:#475569}
+.home4 .hlink{appearance:none;border:0;background:none;padding:2px 0;font:inherit;color:#5EEAD4;cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
+.home4 .hlink:hover{color:#99F6E4}
+.home4 .h-hero{gap:6px!important}
+html[data-theme="light"] .home4 .hhey,html[data-theme="light"] .home4 .hmeta3{color:#475569}
+html[data-theme="light"] .home4 .hmeta3 b{color:#0F172A}
+html[data-theme="light"] .home4 .hlink{color:#0F766E}
+@media (prefers-reduced-motion:reduce){.home4 .hplay,.home4 .hplay i{transition:none}}
+@media (max-width:520px){.home4 .hplay{height:56px;font-size:16px;padding-left:22px}.home4 .hplay i{width:40px;height:40px}}
+/* home: no stars, no grid; just the glow and the 3D coin */
+body.onhome .cosmos,body.onhome .aurora::before{display:none!important}
+.home4 .h-hero{padding-top:28px!important}
+.home4 .hlogo{--s:150px!important;width:150px!important;height:150px!important;margin-bottom:4px}
+@media (max-height:760px){.home4 .hlogo{--s:120px!important;width:120px!important;height:120px!important}}

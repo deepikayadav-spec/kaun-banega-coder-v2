@@ -38,11 +38,14 @@ window.__kbcM3D=new Promise(function(res){var done=function(v){res(v||{})};setTi
   <header>
     <button class="brand" data-act="home" aria-label="Kaun Banega Coder home"><span class="emb" aria-hidden="true"><i class="er"></i><i class="er er2"></i><span class="ec">{ }</span></span><b>Kaun Banega <span>Coder</span></b></button>
     <span class="livechip" id="livechip" hidden title="Students playing right now"><i class="ldot" aria-hidden="true"></i><b>0</b> live</span>
-    <div class="tools">
+    <div class="hbar">
+      <button class="tbtn wchip" id="wchip" data-act="wallet" aria-label="Open your wallet"></button>
+      <button class="menubtn" id="menubtn" data-act="menu" aria-expanded="false" aria-controls="menu" aria-label="Menu"><i></i><i></i><i></i></button>
+    </div>
+    <div class="tools" id="menu">
       <button class="tbtn nav" data-act="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg><span class="lbl">Home</span></button>
       <button class="tbtn nav" data-act="path"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7"/></svg><span class="lbl">My path</span></button>
       <button class="tbtn nav" data-act="guide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01"/></svg><span class="lbl">How to play</span></button>
-      <button class="tbtn wchip" id="wchip" data-act="wallet" aria-label="Open your wallet"></button>
       <button class="tbtn nav" data-act="fame"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg><span class="lbl">Hall of Fame</span></button>
       <button class="tbtn nav" data-act="fb-open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="lbl">Feedback</span></button>
       <button class="tbtn ico" data-act="fs" id="fsbtn" aria-label="Full screen" title="Full screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="lbl">Full screen</span></button>

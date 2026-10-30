@@ -2296,3 +2296,46 @@ body.onhome .cosmos,body.onhome .aurora::before{display:none!important}
 .home4 .h-hero{padding-top:28px!important}
 .home4 .hlogo{--s:150px!important;width:150px!important;height:150px!important;margin-bottom:4px}
 @media (max-height:760px){.home4 .hlogo{--s:120px!important;width:120px!important;height:120px!important}}
+
+/* ===== Top bar: brand, live, wallet and one menu button (three lines). Every option lives in the menu. =====
+   Premium palette for the shell: deep navy, gold, ivory. Green stays only as the "live" signal. */
+:root{--p-navy:#070A14;--p-panel:rgba(9,12,22,.97);--p-gold:#E9C46A;--p-gold-hi:#FDE68A;--p-ivory:#F5EEDC;--p-mute:#9AA3B2;--p-line:rgba(233,196,106,.22)}
+html[data-theme="light"]{--p-panel:rgba(255,253,247,.98);--p-gold:#A16207;--p-gold-hi:#B45309;--p-ivory:#1C1917;--p-mute:#57534E;--p-line:rgba(161,98,7,.25)}
+header{position:sticky}
+.hbar{display:flex;align-items:center;gap:10px;margin-left:auto}
+.hbar .wchip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px 5px 5px;border-radius:999px;border:1px solid var(--p-line)!important;background:rgba(233,196,106,.08)!important;color:var(--p-ivory);cursor:pointer;font:700 13px var(--f-body)}
+.hbar .wchip:hover{background:rgba(233,196,106,.16)!important}
+.menubtn{position:relative;display:grid;place-content:center;gap:5px;width:44px;height:40px;border-radius:12px;border:1px solid var(--p-line);background:transparent;cursor:pointer;transition:background .15s,border-color .15s}
+.menubtn i{display:block;width:20px;height:2px;border-radius:2px;background:var(--p-ivory);transition:transform .22s cubic-bezier(.3,.7,.4,1),opacity .15s}
+.menubtn i:nth-child(2){width:14px;justify-self:end}
+.menubtn:hover{background:rgba(233,196,106,.08);border-color:var(--p-gold)}
+.menubtn:focus-visible{outline:2px solid var(--p-gold);outline-offset:2px}
+body.menu-open .menubtn{border-color:var(--p-gold);background:rgba(233,196,106,.1)}
+body.menu-open .menubtn i:nth-child(1){transform:translateY(7px) rotate(45deg)}
+body.menu-open .menubtn i:nth-child(2){opacity:0}
+body.menu-open .menubtn i:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+header .tools#menu{display:none!important;position:absolute;top:calc(100% + 8px);right:8px;z-index:60;width:min(280px,calc(100vw - 32px));
+  flex-direction:column!important;align-items:stretch!important;gap:2px!important;padding:8px;border-radius:16px;
+  background:var(--p-panel);border:1px solid var(--p-line);box-shadow:0 24px 60px -16px rgba(0,0,0,.75);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+body.menu-open header .tools#menu{display:flex!important;animation:menuIn .18s cubic-bezier(.2,.8,.2,1)}
+body:has(#tour) header .tools#menu{animation:none}
+@keyframes menuIn{from{opacity:0;transform:translateY(-6px) scale(.98)}}
+header .tools#menu .tbtn{display:flex!important;flex-direction:row!important;align-items:center;justify-content:flex-start!important;gap:12px;width:100%!important;height:auto!important;
+  margin:0!important;padding:11px 12px!important;border:0!important;border-radius:10px!important;font:600 14.5px var(--f-body)!important;color:var(--p-ivory)!important;background:transparent!important;text-align:left}
+header .tools#menu .tbtn svg{display:block!important;width:18px!important;height:18px!important;flex:none;color:var(--p-gold)}
+header .tools#menu .tbtn .lbl{position:static!important;width:auto!important;height:auto!important;clip:auto!important;overflow:visible!important;display:inline!important}
+header .tools#menu .tbtn:hover,header .tools#menu .tbtn:focus-visible{background:rgba(233,196,106,.1)!important;outline:none}
+header .tools#menu .tbtn[aria-current]{background:rgba(233,196,106,.12)!important;color:var(--p-gold-hi)!important}
+header .tools#menu #fsbtn{margin-top:6px!important;border-top:1px solid var(--p-line)!important;border-left:0!important;border-radius:0 0 10px 10px!important;padding-top:14px!important}
+header .tools#menu [data-act="logout"] svg{color:var(--p-mute)}
+@media (prefers-reduced-motion:reduce){body.menu-open header .tools#menu{animation:none}.menubtn i{transition:none}}
+
+/* shell accents in gold and ivory instead of teal and violet */
+.caret{background:var(--p-gold)!important;box-shadow:0 0 14px rgba(233,196,106,.7)!important}
+.bname{border-color:var(--p-line)!important;color:var(--p-gold-hi)!important;background:rgba(9,12,22,.85)!important}
+.bname small{color:var(--p-mute)!important}
+.home4 .hlink{color:var(--p-gold-hi)!important}
+.home4 .hlink:hover{color:var(--p-ivory)!important}
+.fbbtn{color:var(--p-gold-hi)!important;border-color:var(--p-line)!important;background:rgba(9,12,22,.85)!important}
+html[data-theme="light"] .fbbtn,html[data-theme="light"] .bname{background:#fff!important;color:var(--p-gold)!important;border-color:var(--p-line)!important}

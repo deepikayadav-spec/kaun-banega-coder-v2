@@ -6,7 +6,7 @@ const AC=new AbortController();window.__kbcR1=AC;const SIG={signal:AC.signal};
 const CFG={mastery:2,secs:60,dropAfterCheckpoint:false,variants:10,lockMs:1300};
 /* a student's very first hot-seat question gets extra time: they are still finding their way around the screen */
 const FIRST_SECS=70;
-const seatSecsNote=()=>!P.runs?`Your first hot-seat question gives you <b>${FIRST_SECS} seconds</b> (60 after that)`:`<b>60 seconds</b> for each hot-seat question`;
+const seatSecsNote=()=>!P.runs?`Your first hot-seat question gives you <b>${xtime(FIRST_SECS)} seconds</b> (${xtime(60)} after that)`:`<b>${xtime(60)} seconds</b> for each hot-seat question`;
 /* 15 rungs: one per skill group of the CT skill graph (14 groups), and the last for finishing every group. */
 /* one rung per skill group plus the finale, sized by the server from the live skill graph */
 const LADDER=(window.KBC_BOOT&&KBC_BOOT.graph&&KBC_BOOT.graph.ladder)||[10,20,50,100,200,500,1000,5000,10000,1e5,1e6,5e6,1e7,3e7,7e7];
@@ -910,6 +910,9 @@ function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.s
 (()=>{let t="dark";try{t=localStorage.getItem("kbc-theme")||"dark"}catch(e){}document.documentElement.dataset.theme=t})();
 let qInt=null;
 /* seconds per question: 60 on rungs 1–6, then 3–4 s less each rung down to 30 s on 7 crore */
+/* "Extra time" (menu): 50% more time on every timed question and puzzle, for students who need it (WCAG 2.2.1) */
+const xtime=s=>store.get("kbc-extra-time",false)?Math.round(s*1.5):s;
+function syncXtime(){const b=$("#extrabtn");if(!b)return;const on=!!store.get("kbc-extra-time",false);b.setAttribute("aria-pressed",on);const l=b.querySelector(".lbl");if(l)l.textContent=on?"Extra time: on":"Extra time: off"}
 function secsFor(r){return r<6?CFG.secs:Math.max(30,Math.round(CFG.secs-(r-5)*(CFG.secs-30)/(LADDER.length-6)))}
 function startPractice(){ctx();goFull();clearInterval(qInt);clearInterval(fInt);
  S={screen:"play",name:S.name,used:{},run:{t0:Date.now(),answered:0,correct:0,startRung:0,peak:0,fb:0,en:100,cs:0},practice:true};
@@ -928,7 +931,7 @@ function pollGraph(){graphPolled=Date.now();KBCQ.api("GET","/api/version").then(
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pollGraph()});
 function setQ(r){const practice=!!S.practice;if(r.engine){ENGINE=r.engine;graphCheck(ENGINE)}
  if(!r.question){Object.assign(S,blankQ(),{q:null,phase:"none",noQ:r});return}
- const q=KBCQ.adapt(r.question,r.address,GR),secs=practice?CFG.secs:S.run&&S.run.first&&!S.run.answered?FIRST_SECS:secsFor(rungOf());
+ const q=KBCQ.adapt(r.question,r.address,GR),secs=xtime(practice?CFG.secs:S.run&&S.run.first&&!S.run.answered?FIRST_SECS:secsFor(rungOf()));
  Object.assign(S,blankQ(),{q,phase:"ask",time:secs,secsMax:secs,qT0:Date.now()})}
 /* PREQ[mode]: a question already fetched for that mode. The server keeps one open question per student, so fetching for
    one mode makes any question kept for another mode stale: those are dropped. */
@@ -1383,7 +1386,7 @@ const RF_CFG={m:{title:"How is KBC so far?",sub:"Tap a star. Tags and words are 
  q:{title:"Rate this question",sub:"",set:RF_Q,send:""},
  g:{title:"How was this game?",sub:"Takes 10 seconds.",set:RF_GAME,send:"Send"}};
 const STAR_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>';
-function rfHTML(id){const F=RF[id],C=RF_CFG[id],L=F.stars?C.set[F.stars]:null,sub=id==="q"?`Needed for your first 10 questions · ${Math.min(10,(P.qfbN||0)+1)} of 10`:C.sub;
+function rfHTML(id){const F=RF[id],C=RF_CFG[id],L=F.stars?C.set[F.stars]:null,sub=id==="q"?`${Math.min(10,(P.qfbN||0)+1)} of 10`:C.sub;
  return `<div class="rf rf-${id}" id="rf-${id}"><div class="rf-h"><h3 id="rf-${id}-h">${C.title}</h3>${sub?`<p>${esc(sub)}</p>`:""}</div>
 <div class="rf-stars" role="radiogroup" aria-labelledby="rf-${id}-h">${[1,2,3,4,5].map(n=>`<button type="button" class="rf-s ${n<=F.stars?"on":""}" data-act="rf-star" data-f="${id}" data-n="${n}" role="radio" aria-checked="${n===F.stars}" aria-label="${n} star${n>1?"s":""}">${STAR_SVG}</button>`).join("")}<span class="rf-l">${RF_LABEL[F.stars]||"Tap a star"}</span></div>
 ${L?`<div class="rf-tags"><span class="rf-th">${esc(L.head)}</span><div class="rf-chips">${L.tags.map((t,i)=>`<button type="button" class="rf-c" data-act="rf-tag" data-f="${id}" data-i="${i}" aria-pressed="${F.tags.includes(t)}">${esc(t)}</button>`).join("")}</div></div>
@@ -1420,8 +1423,10 @@ syncBuddy();
 /* Phones scroll instead: zooming there changed the text size every time the address bar slid in or out while scrolling */
 const phoneLike=()=>innerWidth<760||matchMedia("(pointer:coarse)").matches;
 function fitScreen(){const m=$("#mainc")||$(".fffw");if(!m)return;if(phoneLike()){if(m.style.zoom)m.style.zoom="";return}if(!(S.screen==="play"||S.screen==="fff"||S.screen==="seat"))return;
+ /* after answering, the explanation is what students read: it keeps full-size text and scrolls instead of shrinking */
+ if(S.screen==="play"&&S.phase!=="ask"){m.style.zoom="";return}
  m.style.zoom="";const top=m.getBoundingClientRect().top,avail=innerHeight-top-10,need=m.scrollHeight;
- if(need>avail&&avail>200)m.style.zoom=String(Math.max(.6,Math.floor(avail/need*100)/100))}
+ if(need>avail&&avail>200)m.style.zoom=String(Math.max(.82,Math.floor(avail/need*100)/100))}
 let fitT=null;const fitSoon=()=>{cancelAnimationFrame(fitT);fitT=requestAnimationFrame(()=>requestAnimationFrame(fitScreen))};
 new MutationObserver(fitSoon).observe(document.getElementById("app"),{childList:true,subtree:true});
 let fitW=innerWidth;addEventListener("resize",()=>{if(phoneLike()&&innerWidth===fitW)return;fitW=innerWidth;fitSoon()},SIG);
@@ -1431,7 +1436,10 @@ document.addEventListener("keydown",e=>{const m=$("#fbm");if(m&&!m.hidden&&e.key
 function diwaliDecor(){cosmos();const t=$(".toran");if(t&&(!t.childElementCount||Math.abs((+t.dataset.w||0)-innerWidth)>40))buildToran();
  const k=$(".kandil");if(k&&!k.childElementCount)k.innerHTML=KANDIL;const d=$(".bigdiya");if(d&&!d.childElementCount)d.innerHTML=BIGDIYA;
  document.body.classList.toggle("onhome",S.screen==="home")}
-function render(){const prev=render.scr;render.scr=S.screen;const r=render0();
+/* every screen gets one main heading for screen readers (most screens show their title in other ways) */
+const SCREEN_H1={home:"Kaun Banega Coder: home",play:"Hot seat",fff:"Fastest Finger First",path:"My path",fame:"Hall of Fame",guide:"How to play",wallet:"Your wallet",buddy:"Your buddy",result:"Game over",team:"Team dashboard"};
+function screenH1(){const app=$("#app");if(!app||app.querySelector("h1"))return;const h=document.createElement("h1");h.className="sr";h.textContent=SCREEN_H1[S.screen]||"Kaun Banega Coder";app.prepend(h)}
+function render(){const prev=render.scr;render.scr=S.screen;const r=render0();screenH1();
  if(prev!==S.screen){const app=$("#app");if(app&&prev){app.classList.remove("scr-in");void app.offsetWidth;app.classList.add("scr-in")}
   if(S.screen==="path")requestAnimationFrame(pauseOffscreen)}
  return r}
@@ -1607,7 +1615,7 @@ function fffFinish(ok){const F=S.fff;if(F.done)return;clearInterval(fInt);F.secs
  if(ok){SFX.fffWin();spotFx("win");confetti(90)}else{SFX.wrong();spotFx("lose")}render();say(ok?"You've earned the hot seat.":"Not quite.");logEv({kind:"fff",mode:F.mode,ok,ms:Math.round(F.secs*1000),away:F.away||0})}
 function fffFocus(){requestAnimationFrame(()=>{const i=$("#sprin")||$('[data-act="fff-begin"]');i&&i.focus({preventScroll:true})})}
 function startFFF(idx){prefetchQ("hotseat");ctx();goFull();clearInterval(fInt);stopQ();if(idx==null)idx=Math.random()*999|0;const mode=FMODES[idx%FMODES.length];
- const F={idx,mode,intro:true,time:FMODE[mode].secs,max:FMODE[mode].secs,done:null,t0:Date.now(),timeout:false};
+ const F={idx,mode,intro:true,time:xtime(FMODE[mode].secs),max:xtime(FMODE[mode].secs),done:null,t0:Date.now(),timeout:false};
  S={screen:"fff",name:S.name,q:{fff:idx},phase:"ask",run:{answered:0},fff:F};render();scrollTo({top:0});fffFocus()}
 function fffBegin(){const F=S.fff;if(!F||!F.intro)return;F.intro=false;F.t0=Date.now()+1;
  if(F.mode==="sprint"){F.cur=sprintQ();F.solved=0;F.log=[]}
@@ -1639,7 +1647,7 @@ function vSeat(){const first=!P.runs;
 function vFFFIntro(F){const M=FMODE[F.mode];
  return `<div class="qcard card fffhead fintro"><span class="chip gold">Fastest Finger First</span><div class="fi-ic" aria-hidden="true">${M.icon}</div><h2 class="qtext">${M.name}</h2><p class="muted">Quick rules. The clock starts when you press Play.</p>
 <div class="fi-cols"><div><ol class="fi-steps">${M.how.map((h,i)=>`<li style="--i:${i}"><b>${i+1}</b><span>${esc(h)}</span></li>`).join("")}</ol>
-<div class="fi-meta"><span>⏱ <b>${M.secs} seconds</b> for this puzzle</span><span>🏆 Win it → <b>take the hot seat</b></span><span>🪑 ${seatSecsNote()}</span></div></div>
+<div class="fi-meta"><span>⏱ <b>${xtime(M.secs)} seconds</b> for this puzzle</span><span>🏆 Win it → <b>take the hot seat</b></span><span>🪑 ${seatSecsNote()}</span></div></div>
 <figure class="demo" aria-label="How it looks: a short looping demo"><figcaption>Watch how it works</figcaption>${fffDemo(F.mode)}</figure></div>
 <div class="fi-go"><button class="btn gold glow" data-act="fff-begin">Play →</button><button class="btn quiet sm" data-act="fff-next">Try a different puzzle</button></div><small class="muted">or press Enter</small></div>`}
 function vSprint(F){const pips=[0,1,2,3,4].map(k=>`<i class="${k<F.solved?"on":""}"></i>`).join("");
@@ -1836,6 +1844,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="dash-refresh"){loadDash();return}
  if(a==="menu"){setMenu(!document.body.classList.contains("menu-open"));return}
  if(b.closest("#menu"))setMenu(false);
+ if(a==="extratime"){store.set("kbc-extra-time",!store.get("kbc-extra-time",false));syncXtime();fsToast(store.get("kbc-extra-time",false)?"Extra time is on: 50% more time on every question.":"Extra time is off.");return}
  if(a==="buddy-toggle"){store.set("kbc-hide-buddy",!store.get("kbc-hide-buddy",false));syncBuddy();const y=scrollY;render();scrollTo({top:y});return}
  if(a==="fb-open"){FB.trigger="";fbOpen();return}
  if(a==="fb-close"){$("#fbm").hidden=true;return}
@@ -1904,6 +1913,6 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden)return;if(
 function syncSound(){const b=$("#soundbtn");if(b){b.setAttribute("aria-pressed",soundOn);const l=b.querySelector(".lbl");if(l)l.textContent=soundOn?"Sound on":"Sound off"}}
 syncSound();addEventListener("pointerdown",()=>{if(soundOn)ctx()},SIG);
 KBCQ.onRerender(()=>{if(S.screen==="play"){const y=scrollY;render();scrollTo({top:y})}});
-render();initOnline();
+render();initOnline();syncXtime();
 setTimeout(()=>M3D.warm(COSTUMES[CHAR]||COSTUMES.byte,BYTE_POSES),1500);
 })();

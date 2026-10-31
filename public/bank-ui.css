@@ -89,3 +89,6 @@ html[data-theme="light"] .bq-ta,html[data-theme="light"] .bq-code{background:#0F
 .bq-now b{display:inline-flex;align-items:center;gap:6px;padding:2px 10px 2px 4px;border-radius:999px;background:color-mix(in srgb,var(--gc) 22%,transparent);color:var(--tx)}
 .bq-warn{display:block;margin-top:6px;padding:6px 10px;border-radius:10px;background:rgba(251,113,133,.12);border:1px solid rgba(251,113,133,.5);color:#FDA4AF;font-weight:700}
 html[data-theme="light"] .bq-how{background:#F0FDFA}html[data-theme="light"] .bq-how u{color:#B45309}html[data-theme="light"] .bq-warn{color:#9F1239;background:#FFF1F2}
+
+/* tap targets: every widget button at least 44px tall */
+.bqw .mchip,.bqw button{min-height:44px}

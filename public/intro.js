@@ -19,6 +19,10 @@
   var seen = false;
   try { seen = !!localStorage.getItem(KEY); } catch (e) {}
   if (seen && !force) { window.KBC_INTRO = Promise.resolve(); return; }
+  // a moving film with music must not start by itself for someone who has asked for less motion; "Watch intro" still plays it
+  var calm = false;
+  try { calm = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+  if (calm && !force) { window.KBC_INTRO = Promise.resolve(); return; }
 
   var finish;
   window.KBC_INTRO = new Promise(function (res) { finish = res; });

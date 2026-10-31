@@ -980,7 +980,24 @@ function apply(ok,res){const q=S.q,sk=q.sk,before=res&&res.rungBefore!=null?res.
 
 /* ================= Timer ================= */
 function stopQ(){clearInterval(qInt);qInt=null}
-function startQ(){stopQ();if(S.screen!=="play"||S.phase!=="ask")return;clearTimeout(startQ.tk);const q0=S.q;startQ.tk=setTimeout(()=>{if(S.screen==="play"&&S.phase==="ask"&&S.q===q0&&!S.thinkLong){S.thinkLong=true;const b=document.querySelector(".mcol .mascot");if(b){const t=document.createElement("div");t.innerHTML=mascot("think",176);b.replaceWith(t.firstChild)}}},90000);
+/* Idle nudge: if a student does nothing on a question for 18 s, Pixel flies over to the answers, taps them and says
+   something encouraging, then flies home. At most every 25 s, never while they are interacting, never with reduced motion
+   (then only the bubble changes). */
+const IDLE_SAY=["Still with me? Tap the answer you think is right.","Take it line by line. Then pick one!","No pressure. Your best guess is a great start.","Stuck? A lifeline might help."];
+let idleT=0,idleN=0,lastAct=Date.now();
+["pointerdown","keydown","pointermove"].forEach(ev=>addEventListener(ev,()=>{lastAct=Date.now()},{passive:true,signal:AC.signal}));
+function idleArm(){clearTimeout(idleT);if(S.screen!=="play"||S.phase!=="ask")return;idleT=setTimeout(idleNudge,4000)}
+function idleNudge(){if(S.screen!=="play"||S.phase!=="ask")return;
+ if(Date.now()-lastAct<18000||document.hidden){idleT=setTimeout(idleNudge,3000);return}
+ const px=$(".mcol .mascot"),say=$(".mcol .say"),target=$(".opts")||$(".bqw")||$(".qcard");
+ const line=IDLE_SAY[idleN++%IDLE_SAY.length];if(say){say.textContent=line;say.classList.add("nudge")}
+ if(px&&target&&!reduceMotion){const a=px.getBoundingClientRect(),t=target.getBoundingClientRect();
+  const dx=t.left-30-(a.left+a.width/2),dy=t.top+t.height*.32-(a.top+a.height*.55);
+  px.classList.add("roam");pxPose(px,"pointa");requestAnimationFrame(()=>{px.style.transform=`translate(${dx}px,${dy}px) scale(.62)`});
+  setTimeout(()=>{if(!px.isConnected)return;px.classList.add("tap");const r=document.createElement("i");r.className="pxring";r.style.left=(t.left+70)+"px";r.style.top=(t.top+t.height*.25)+"px";document.body.appendChild(r);setTimeout(()=>r.remove(),800)},1150);
+  setTimeout(()=>{if(!px.isConnected)return;px.classList.remove("tap");px.style.transform="";pxPose(px,"pointq");setTimeout(()=>px.classList.remove("roam"),1150)},3200)}
+ lastAct=Date.now();idleT=setTimeout(idleNudge,25000)}
+function startQ(){stopQ();idleArm();if(S.screen!=="play"||S.phase!=="ask")return;clearTimeout(startQ.tk);const q0=S.q;startQ.tk=setTimeout(()=>{if(S.screen==="play"&&S.phase==="ask"&&S.q===q0&&!S.thinkLong){S.thinkLong=true;const b=document.querySelector(".mcol .mascot");if(b){const t=document.createElement("div");t.innerHTML=mascot("think",176);b.replaceWith(t.firstChild)}}},90000);
  /* the deadline is set once per question; re-renders (50:50, hint) keep counting from it */
  if(!S.deadline)S.deadline=Date.now()+S.time*1000;
  qInt=setInterval(()=>{const left=Math.max(0,Math.ceil((S.deadline-Date.now())/1000));if(left===S.time)return;S.time=left;const c=$("#clock");if(c){c.querySelector("span").textContent=S.time;c.style.setProperty("--p",S.time/(S.secsMax||CFG.secs));c.classList.toggle("low",S.time<=10)}

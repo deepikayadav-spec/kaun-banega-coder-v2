@@ -2647,3 +2647,20 @@ html:not([data-theme="light"]) body.boardopen .play>.side{background:rgba(9,12,2
 /* KBC tagline under the title */
 .htag{margin:-2px 0 6px;text-align:center;font:700 clamp(13px,1.3vw,16px) var(--f-mono);letter-spacing:.32em;text-transform:uppercase;color:#FDE68A;opacity:.9}
 html[data-theme="light"] .htag{color:#B45309}
+
+/* ===================== Hot seat: question centred; Pixel roams when the student is idle (31 Oct) ===================== */
+/* Pixel's column is as wide as the money board, so the question and answers sit in the middle of the screen */
+@media (min-width:1241px){
+ body.qscreen .play{grid-template-columns:minmax(260px,23%) minmax(0,1fr) minmax(260px,23%)!important}
+ body.qscreen .play:has(.board.min){grid-template-columns:minmax(200px,18%) minmax(0,1fr) minmax(200px,18%)!important}
+ body.nobuddy.qscreen .play{grid-template-columns:minmax(260px,23%) minmax(0,1fr) minmax(260px,23%)!important}
+ body.nobuddy.qscreen .play:has(.board.min){grid-template-columns:minmax(0,1fr) minmax(0,980px) minmax(0,1fr)!important}
+}
+/* the roaming Pixel: flies to the answers, taps, and goes home */
+.mcol .mascot.roam{position:relative;z-index:70;transition:transform 1.1s cubic-bezier(.45,0,.2,1);will-change:transform}
+.mcol .mascot.roam.tap .m3s{animation:pxTap .5s ease-in-out 2}
+@keyframes pxTap{50%{transform:translateY(10px) rotate(-6deg) scale(.96)}}
+.pxring{position:fixed;z-index:69;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:2.5px solid #FDE68A;pointer-events:none;animation:pxRing .7s ease-out forwards}
+@keyframes pxRing{0%{opacity:1;transform:scale(.4)}100%{opacity:0;transform:scale(4)}}
+.mcol .say.nudge{border-color:#FDE68A!important;box-shadow:0 0 0 3px rgba(253,230,138,.25),0 0 24px rgba(253,230,138,.35)!important}
+.play .mcol:has(.mascot.roam){z-index:80}

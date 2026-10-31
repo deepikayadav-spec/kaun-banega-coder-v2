@@ -2588,3 +2588,46 @@ html[data-theme="light"] .stake.one .stk-bank b{color:#0F172A!important;-webkit-
 .ordgrid .tile code,.ordgrid .built .ln2{white-space:normal!important;overflow-wrap:anywhere;overflow:visible!important}
 .ordgrid .tile{overflow:visible!important}
 .ordgrid .tile{white-space:normal!important;height:auto!important;line-height:1.35;overflow-wrap:anywhere}
+
+/* ===== Polish (31 Oct, round 3) ===== */
+/* light theme: things that were drawn for the dark theme only */
+html[data-theme="light"] .wishc{background:rgba(255,255,255,.95)!important;border-color:rgba(161,98,7,.35)!important;box-shadow:0 10px 26px -12px rgba(15,23,42,.25)!important}
+html[data-theme="light"] .wishc b{color:#B45309!important;text-shadow:none!important}
+html[data-theme="light"] .wishc span{color:#334155!important}
+html[data-theme="light"] .livechip{background:#FFFBEB!important;border-color:rgba(161,98,7,.35)!important;color:#78350F!important}
+html[data-theme="light"] .livechip b{color:#92400E!important}
+html[data-theme="light"] .ldot{background:#B45309!important}
+html[data-theme="light"] .bmax{color:#78350F!important}
+html[data-theme="light"] .ordh{color:#475569}
+html[data-theme="light"] .stake.one .stk-t small{color:#475569!important}
+/* stake: note + playing for (+ money board) */
+.stake.one{gap:14px}
+/* results: one screen on a laptop — smaller headline, slim stats, compact rating row, the working on demand */
+.res{margin-top:10px!important;gap:18px!important;align-items:stretch!important}
+.res-card{padding:18px 22px!important;gap:14px!important}
+.res-top{gap:12px!important}
+.res .coach .mascot{width:60px!important}
+.res .ramt{font-size:clamp(40px,4.2vw,56px)!important}
+.res-head{gap:2px!important}
+.res-line div{padding:10px 14px!important}
+.res-line dd{font-size:clamp(20px,1.6vw,24px)!important}
+.res-line dt{font-size:12.5px!important}
+.res-goal{gap:2px!important}
+.res-goal-h b{font-size:16px!important}
+.res .rf-g{flex-direction:row!important;flex-wrap:wrap;align-items:center;gap:8px 14px!important;padding:10px 14px!important;margin:0!important}
+.res .rf-g .rf-h{display:flex;align-items:baseline;gap:8px}.res .rf-g .rf-h h3{font-size:15px}.res .rf-g .rf-h p{margin:0}
+.res .rf-g .rf-s{width:40px!important;height:40px!important}
+.res .rf-g .rf-tags,.res .rf-g .rf-more{flex-basis:100%}
+.res .rf-g .rf-btns{margin-left:auto}.res .rf-g .rf-btns .btn{min-height:40px;padding:0 16px}
+.res .ractions{margin-top:auto}
+details.res-learn{padding:10px 14px!important}
+details.res-learn summary{cursor:pointer;display:flex;align-items:center;gap:8px;font:700 14px var(--f-body);color:#FDA4AF;list-style:none}
+details.res-learn summary::-webkit-details-marker{display:none}
+details.res-learn summary::after{content:"▾";margin-left:auto;opacity:.7}
+details.res-learn[open] summary::after{content:"▴"}
+html[data-theme="light"] details.res-learn summary{color:#BE123C}
+.res-side .board{padding:12px 14px!important}
+.res-side .board h2{margin-bottom:6px!important;font-size:18px!important}
+.res-side .board .rung{padding-block:4px!important;min-height:0!important}
+.res-side .board .rung .bnote{width:38px!important}
+@media (min-width:1001px) and (max-height:1000px){.res-side .board .rung{font-size:14px!important}}

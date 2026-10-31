@@ -1048,7 +1048,7 @@ function vHome(){const best=P.best||0,coins=P.coins||0;
 <span class="emb hlogo" aria-hidden="true"><i class="er"></i><i class="er er2"></i><span class="ec">{ }</span></span>
 <h1 class="ttl"><span>Kaun Banega</span><b class="typed" aria-label="Coder"><em class="tw" aria-hidden="true">Coder</em><i class="caret" aria-hidden="true"></i></b></h1>
 <div class="ctready" aria-label="Your GRIT Computational Thinking readiness: ${gritReady()} percent"><div class="ct-ring" style="--v:${Math.min(100,parseFloat(gritReady()))}"><b>${gritReady()}<small>%</small></b></div><div class="ct-txt"><span class="ct-k">Your GRIT</span><strong>Computational Thinking readiness</strong><span class="ct-s">Rises with every level you clear</span></div></div>
-<p class="hhey">hey ${esc(String(S.name||"").split(" ")[0]||"coder")} 👋 your seat is waiting</p>
+<p class="hhey">Hey ${esc(String(S.name||"").split(" ")[0]||"coder")} 👋 Your seat is waiting</p>
 <button class="hplay" type="button" data-act="play"><span>Play Fastest Finger</span><i aria-hidden="true">→</i></button>
 <div class="hmeta3"><span class="hlive"><i class="ldot"></i><b class="livenum">${LIVE}</b> playing now</span><span class="hdot" aria-hidden="true"></span><button class="hlink" type="button" data-act="tour">Quick tour</button><span class="hdot" aria-hidden="true"></span><button class="hlink" type="button" data-act="intro">▶ Watch intro</button></div>
 
@@ -1118,7 +1118,7 @@ function vPlay(){if(!S.q)return vNoQ();const q=S.q,r=rungOf(),st=rowSteps(Math.m
  const mood=S.phase==="reveal"?(S.ok?(S.info&&S.info.ck?"trophy":"dance"):S.timeout?"tired":"bonk"):S.phase==="locked"?"think":(!S.practice&&S.run.en<=20?"tired":S.practice&&S.run.answered===0?"type":S.thinkLong?"think":(S.pick!=null||S.fill||(S.ord&&S.ord.length)?"pointa":"pointq"));
  return `<div class="play ${S.phase==="reveal"?"rev":""}">${dockHTML(mood,"col",qfbHere(true)?rfHTML("q"):"")}<div class="left"><div class="hud"><div class="lls">${energyHTML()}</div>
 <div class="clock ${S.time<=10?"low":""}" id="clock" style="--p:${S.time/(S.secsMax||CFG.secs)}" role="timer" aria-label="Seconds left"><span>${S.time}</span></div>
-<div class="stake one">${S.practice?"":`<span class="stk-note" id="stknote">${noteThumb(stake)}</span>`}<span class="stk-t"><small>${S.practice?"Practice round":"Playing for"}</small><b>${S.practice?"No stakes":fmtR(stake)}</b></span>${S.practice?"":`<span class="stk-bank"><small>Banked</small><b>${fmtR(amountOf(r))}</b></span>`}${!S.practice&&boardMin()?`<button class="bmax" data-act="board-min" aria-label="Show the money board">Money board <b aria-hidden="true">＋</b></button>`:""}</div></div>
+<div class="stake one">${S.practice?"":`<span class="stk-note" id="stknote">${noteThumb(stake)}</span>`}<span class="stk-t"><small>${S.practice?"Practice round":"Playing for"}</small><b>${S.practice?"No stakes":fmtR(stake)}</b></span>${!S.practice&&boardMin()?`<button class="bmax" data-act="board-min" aria-label="Show the money board">Money board <b aria-hidden="true">＋</b></button>`:""}</div></div>
 ${stripHTML(r)}<button class="mbtoggle" data-act="board" aria-label="Show the money board">Money board</button>
 <section class="mainc" id="mainc">
 <div class="qcard card"><div class="qtop"><span class="chip gold">${S.practice?"Practice":`Question ${S.run.answered+(S.phase==="reveal"?0:1)}`}</span>${pips?`<span class="rowprog">To the next prize <span class="pips" aria-label="${st.done} of ${st.total}">${pips}</span></span>`:""}</div>
@@ -1134,7 +1134,7 @@ ${feedbackHTML()}
 function vResult(){const R=S.res,rc=R.reached||0,pay=R.payout||0;
  const msg=R.reason==="win"?`${fmtR(pay)} collected! You're a Crorepati Coder.`:R.reason==="stop"?`Smart move. You walked away with ${fmtR(pay)}.`:R.reason==="energy"?`Out of energy! Your path progress is saved${pay?` and ${fmtR(pay)} went to your wallet`:""}. Recharge with a new game.`:pay?`Game over, but you keep it all. ${fmtR(pay)} goes to your wallet.`:"Tough one. Nothing banked this time. Read why, then go again.";
  const mood=R.reason==="win"?"trophy":R.reason==="stop"?"chai":pay?"dance":R.reason==="timeout"?"tired":"bonk";
- const learn=R.last&&R.ok===false&&R.last.why?`<div class="res-learn"><h3>${ICON.book}Before you go again</h3><ol class="ex-steps">${whySteps(R.last.why).map(t=>`<li>${stepHTML(t,R.last)}</li>`).join("")}</ol>${EXPLAIN[R.last.sk]?`<div class="ex-note idea"><b>Key idea</b><p>${esc(EXPLAIN[R.last.sk].idea)}</p></div>`:""}</div>`:"";
+ const learn=R.last&&R.ok===false&&R.last.why?`<details class="res-learn"><summary>${ICON.book}Why the last answer was wrong</summary><ol class="ex-steps">${whySteps(R.last.why).map(t=>`<li>${stepHTML(t,R.last)}</li>`).join("")}</ol>${EXPLAIN[R.last.sk]?`<div class="ex-note idea"><b>Key idea</b><p>${esc(EXPLAIN[R.last.sk].idea)}</p></div>`:""}</details>`:"";
  return `<section class="res enter"><div class="res-card card">
 <div class="res-top"><div class="res-head">
 <div class="coach">${mascot(mood,84)}<p class="say">${esc(msg)}</p></div>
@@ -1144,7 +1144,6 @@ function vResult(){const R=S.res,rc=R.reached||0,pay=R.payout||0;
 <div class="res-goal"><div class="res-goal-h"><b>Next game starts fresh at 10</b><span class="muted">Best ever: ${fmtR(amountOf(P.best))}</span></div><span class="muted">Win Fastest Finger First to take the hot seat again.</span></div>
 ${R.fbDone==="sent"?`<div class="rf rf-done"><b>Thanks!</b> Your rating reached the KBC team.</div>`:R.fbDone?"":rfHTML("g")}
 ${learn}
-${quipHTML("result"+R.reason)}
 <div class="ractions"><button class="btn gold" data-act="play">Play again →</button><button class="btn quiet" data-act="fame">Hall of Fame</button><button class="btn quiet" data-act="home">Home</button></div>
 </div>
 <div class="side res-side">${boardHTML(rc,false,true)}</div></section>`}
@@ -1449,7 +1448,7 @@ function noteZoomMaybe(){if(S.screen!=="play"||S.practice||!S.run||S.phase!=="as
   a.onfinish=()=>{o.remove();t.classList.remove("wait");t.classList.add("land");setTimeout(()=>t.classList.remove("land"),600)}},1500)}
 function resultCountUp(){if(S.screen!=="result"||!S.res||S.res.counted)return;S.res.counted=true;const el=$(".res .ramt"),to=S.res.payout||0;if(!el||!to||reduceMotion)return;
  const t0=performance.now(),d=1200,st=n=>{const k=Math.min(1,(n-t0)/d),e=1-Math.pow(1-k,3);el.textContent=fmtR(Math.round(to*e));if(k<1)requestAnimationFrame(st)};requestAnimationFrame(st)}
-function render(){const prev=render.scr;render.scr=S.screen;const r=render0();screenH1();setTimeout(()=>{noteZoomMaybe();resultCountUp()},60);
+function render(){const prev=render.scr;render.scr=S.screen;const r=render0();screenH1();setTimeout(()=>{noteZoomMaybe();resultCountUp();if(prev!==S.screen)pxRest()},60);
  if(prev!==S.screen){const app=$("#app");if(app&&prev){app.classList.remove("scr-in");void app.offsetWidth;app.classList.add("scr-in")}
   if(S.screen==="path")requestAnimationFrame(pauseOffscreen)}
  return r}
@@ -1755,7 +1754,9 @@ const pxKick=()=>{if(reduceMotion)return;PXF.vhy=-200;if(!PXF.raf)PXF.raf=reques
 addEventListener("pointermove",e=>{if(reduceMotion||e.pointerType==="touch")return;const el=pxEl();if(!el)return;const r=el.getBoundingClientRect();if(!r.width)return;
  const dx=(e.clientX-(r.left+r.width/2))/innerWidth,dy=(e.clientY-(r.top+r.height*.35))/innerHeight;
  PXF.try=Math.max(-30,Math.min(30,dx*80));PXF.trx=Math.max(-20,Math.min(20,-dy*55));if(!PXF.raf)PXF.raf=requestAnimationFrame(pxTick)},SIG);
-document.addEventListener("pointerleave",()=>{PXF.trx=PXF.try=0},SIG);
+/* with no pointer to follow, Pixel looks at the question (it stands to the left of it), or straight ahead elsewhere */
+const pxRest=()=>{const q=S.screen==="play"||S.screen==="fff"||S.screen==="seat";PXF.try=q?24:0;PXF.trx=q?-6:0;if(!PXF.raf&&pxEl())PXF.raf=requestAnimationFrame(pxTick)};
+let pxIdle=0;document.addEventListener("pointerleave",pxRest,SIG);addEventListener("pointermove",()=>{clearTimeout(pxIdle);pxIdle=setTimeout(pxRest,4000)},SIG);
 function pxPose(el,pose){if(!el||!el.classList.contains("m3d"))return;const U=M3D.render(COSTUMES[CHAR]||COSTUMES.pixel,pose);const st=el.querySelector(".m3strip");if(!U||!st)return;
  const gh=st.cloneNode();gh.classList.add("m3ghost");st.parentNode.appendChild(gh);setTimeout(()=>gh.remove(),500);
  BYTE_POSES.forEach(p=>el.classList.remove(p));el.classList.add(pose);st.style.backgroundImage=`url(${U})`;

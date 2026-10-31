@@ -9,7 +9,8 @@ import * as stats from './analytics.js';
 import { content, loadQuestion, questionById, uploadBank, uploadGraph, activateGraph, graphHistory, seedIfEmpty } from './bank.js';
 import { newState, upgradeState, activeSkill, address, applyAnswer, view as engineView, ladderFor, VARIANTS } from './engine.js';
 import { present, grade, fifty } from './grade.js';
-import { universityOf, normRoll } from './universities.js';
+import { universityOf, normRoll, setPrefixes } from './universities.js';
+import { testRules, saveTestRules, realStudentsSql } from './settings.js';
 import {
   createSession, endSession, requireStudent, requireAdmin, requireSuper, namesMatch, firstName, isFirstNameOnly, tooManyFails, addFail, clearFails,
   checkPassword, hashPassword, tempPassword
@@ -23,8 +24,14 @@ app.set('trust proxy', true);
 
 // First request on a fresh instance: tables, then the built-in content if the database is empty.
 let booted = null;
-const boot = () => (booted ||= ready().then(seedIfEmpty).catch((e) => { booted = null; throw e; }));
+// University prefixes (NIAT ID -> university) live in the database and are edited in Admin > Settings.
+let prefixesAt = 0;
+const loadPrefixes = async () => { setPrefixes(await all('SELECT prefix, name FROM universities')); prefixesAt = Date.now(); };
+
+const boot = () => (booted ||= ready().then(seedIfEmpty).then(loadPrefixes).catch((e) => { booted = null; throw e; }));
 app.use('/api', (req, res, next) => { boot().then(() => next(), next); });
+// other instances pick up a university edit within a minute (refreshed in the background)
+app.use('/api', (req, res, next) => { if (Date.now() - prefixesAt > 60e3) { prefixesAt = Date.now(); loadPrefixes().catch(() => {}); } next(); });
 app.use('/api', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
@@ -74,9 +81,12 @@ app.post('/api/auth/login', jsonBody, wrap(async (req, res) => {
   if (!roll || !name) return res.status(400).json({ error: 'Enter your NIAT ID and your name.' });
   if (tooManyFails(roll)) return res.status(429).json({ error: 'Too many tries. Wait 15 minutes and try again.' });
   let st = await one('SELECT roll_no, name, university, active FROM students_master WHERE roll_no = ?', roll);
-  if (!st && config.allowTestLogin && roll.startsWith('TEST')) {
+  const TR = config.allowTestLogin && !st ? await testRules() : null;
+  if (TR && TR.rollPrefixes.some((p) => roll.startsWith(p.toUpperCase()))) {
+    // test logins (when enabled) are tagged with the first test university from Admin > Settings, so analytics leaves them out
     const now = Date.now();
-    await run("INSERT INTO students_master (roll_no, name, university, source, created_at, updated_at) VALUES (?, ?, 'Test', 'test', ?, ?) ON CONFLICT (roll_no) DO NOTHING", roll, name, now, now);
+    await run("INSERT INTO students_master (roll_no, name, university, source, created_at, updated_at) VALUES (?, ?, ?, 'test', ?, ?) ON CONFLICT (roll_no) DO NOTHING",
+      roll, name, TR.universities[0] || 'Test', now, now);
     st = await one('SELECT roll_no, name, university, active FROM students_master WHERE roll_no = ?', roll);
   }
   if (!st) return res.status(404).json({ error: 'This NIAT ID is not on the list. Check it, or ask your mentor to add you.' });
@@ -287,26 +297,28 @@ app.post('/api/live', requireStudent, wrap(async (req, res) => {
 
 // Hall of Fame. scope=all ranks every university; scope=uni ranks one (the student's own unless ?uni= names another).
 // Coins and best rung are capped by the engine when saved (PUT /api/progress), so the ranking rests on server-checked numbers.
-const FAME_SQL = `SELECT m.roll_no, m.name, m.university, g.coins, g.best, g.data, g.updated_at FROM game_progress g
-  JOIN students_master m ON m.roll_no = g.roll_no WHERE m.active = 1 AND COALESCE((g.data->>'answered')::int, 0) > 0`;
+// Test data (Admin > Settings) is left out of the Hall of Fame.
+const fameSql = (R) => `SELECT m.roll_no, m.name, m.university, g.coins, g.best, g.data, g.updated_at FROM game_progress g
+  JOIN students_master m ON m.roll_no = g.roll_no WHERE m.active = 1 AND COALESCE((g.data->>'answered')::int, 0) > 0 AND ${R.sql}`;
 const FAME_ORDER = ' ORDER BY g.coins DESC, g.best DESC, g.updated_at ASC';
 const fameRow = (r, me) => ({ name: String(r.name || r.roll_no).slice(0, 40), university: r.university || '', coins: Number(r.coins) || 0, best: Number(r.best) || 0,
   correct: Number(r.data?.correct) || 0, answered: Number(r.data?.answered) || 0, me: r.roll_no === me });
 app.get('/api/fame', requireStudent, wrap(async (req, res) => {
   const me = req.student.roll_no, own = req.student.university || universityOf(me);
   const scope = req.query.scope === 'uni' ? 'uni' : 'all', uni = scope === 'uni' ? String(req.query.uni || own || '') : '';
-  const rows = uni ? await all(FAME_SQL + ' AND m.university = ?' + FAME_ORDER + ' LIMIT 50', uni) : await all(FAME_SQL + FAME_ORDER + ' LIMIT 50');
+  const R = realStudentsSql(await testRules()), FAME_SQL = fameSql(R), A = R.args;
+  const rows = uni ? await all(FAME_SQL + ' AND m.university = ?' + FAME_ORDER + ' LIMIT 50', ...A, uni) : await all(FAME_SQL + FAME_ORDER + ' LIMIT 50', ...A);
   const out = rows.map((r, i) => ({ ...fameRow(r, me), rank: i + 1 }));
   let mine = null;
   if (!out.some((r) => r.me)) {
-    const r = await one(FAME_SQL + ' AND m.roll_no = ?', me);
+    const r = await one(FAME_SQL + ' AND m.roll_no = ?', ...A, me);
     if (r && (!uni || r.university === uni)) {
       const ahead = await one(`SELECT COUNT(*)::int AS n FROM (${FAME_SQL}${uni ? ' AND m.university = ?' : ''}) t WHERE t.coins > ? OR (t.coins = ? AND t.best > ?)`,
-        ...(uni ? [uni] : []), r.coins, r.coins, r.best);
+        ...A, ...(uni ? [uni] : []), r.coins, r.coins, r.best);
       mine = { ...fameRow(r, me), rank: ahead.n + 1 };
     }
   }
-  const universities = (await all("SELECT DISTINCT university FROM students_master WHERE active = 1 AND university IS NOT NULL AND university <> '' ORDER BY university")).map((r) => r.university);
+  const universities = (await all(`SELECT DISTINCT m.university FROM students_master m WHERE m.active = 1 AND m.university IS NOT NULL AND m.university <> '' AND ${R.sql} ORDER BY m.university`, ...A)).map((r) => r.university);
   res.json({ scope, university: uni || own, universities, rows: out, me: mine, live: await liveCount() });
 }));
 app.post('/api/feedback', requireStudent, jsonBody, wrap(async (req, res) => {
@@ -510,17 +522,19 @@ admin.post('/questions/:id/status', requireSuper, jsonBody, wrap(async (req, res
 
 // ---------- analytics (per university)
 admin.get('/analytics', wrap(async (req, res) => {
-  const uni = scope(req), c = await content();
-  const f = uni ? 'WHERE university = ?' : '', a = uni ? [uni] : [];
+  const uni = scope(req), c = await content(), R = realStudentsSql(await testRules());
+  // real students only (test data from Admin > Settings is left out)
+  const real = `roll_no IN (SELECT m.roll_no FROM students_master m WHERE ${R.sql})`;
+  const f = 'WHERE ' + real + (uni ? ' AND university = ?' : ''), a = [...R.args, ...(uni ? [uni] : [])];
   const totals = await one(`SELECT COUNT(*)::int AS attempts, COALESCE(SUM(correct),0)::int AS correct, COUNT(DISTINCT roll_no)::int AS players FROM attempts ${f}`, ...a);
-  const students = await one(`SELECT COUNT(*)::int AS n, COUNT(last_login_at)::int AS logged_in FROM students_master WHERE active = 1 ${uni ? 'AND university = ?' : ''}`, ...a);
+  const students = await one(`SELECT COUNT(*)::int AS n, COUNT(last_login_at)::int AS logged_in FROM students_master m WHERE m.active = 1 AND ${R.sql} ${uni ? 'AND m.university = ?' : ''}`, ...a);
   const byType = await all(`SELECT level, type, COUNT(*)::int AS n, SUM(correct)::int AS right FROM attempts ${f} GROUP BY level, type ORDER BY level, type`, ...a);
   const byDay = await all(`SELECT TO_CHAR(TO_TIMESTAMP(at / 1000) AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM-DD') AS day, COUNT(*)::int AS n, COUNT(DISTINCT roll_no)::int AS players
-    FROM attempts ${f} ${uni ? 'AND' : 'WHERE'} at > ? GROUP BY day ORDER BY day`, ...a, Date.now() - 30 * 864e5);
+    FROM attempts ${f} AND at > ? GROUP BY day ORDER BY day`, ...a, Date.now() - 30 * 864e5);
   const byUni = req.admin.university ? [] : await all(`SELECT university, COUNT(*)::int AS n, SUM(correct)::int AS right, COUNT(DISTINCT roll_no)::int AS players
-    FROM attempts GROUP BY university ORDER BY n DESC`);
+    FROM attempts WHERE ${real} GROUP BY university ORDER BY n DESC`, ...R.args);
   // skill completion from engine states of this university's students
-  const states = await all(`SELECT e.state FROM engine_state e JOIN students_master m ON m.roll_no = e.roll_no ${uni ? 'WHERE m.university = ?' : ''}`, ...a);
+  const states = await all(`SELECT e.state FROM engine_state e JOIN students_master m ON m.roll_no = e.roll_no WHERE ${R.sql} ${uni ? 'AND m.university = ?' : ''}`, ...a);
   const skills = c.G.skills.map((S) => {
     let open = 0, done = 0, levels = [0, 0, 0, 0];
     for (const { state } of states) {
@@ -535,25 +549,75 @@ admin.get('/analytics', wrap(async (req, res) => {
 }));
 
 // ---------- student analytics (Analytics tab)
+// Filters from the Analytics filter bar: university (held to the admin's own for a scoped admin), batch, and a period
+// (?days=N, or ?from=YYYY-MM-DD&to=YYYY-MM-DD). Test data (Admin > Settings) is always left out.
+async function filters(req) {
+  const since = await one('SELECT MIN(at) AS at FROM student_logins');
+  return { uni: scope(req), batch: req.query.batch ? String(req.query.batch).slice(0, 80) : null, days: req.query.days,
+    from: req.query.from ? String(req.query.from) : null, to: req.query.to ? String(req.query.to) : null, rules: await testRules(),
+    loginsSince: since && since.at ? stats.istDay(Number(since.at)) : null };
+}
+admin.get('/stats/filters', wrap(async (req, res) => {
+  const F = await filters(req), o = await stats.filterOptions(F);
+  res.json({ ...o, lockedUniversity: req.admin.university || null, rules: F.rules });
+}));
 admin.get('/stats/overview', wrap(async (req, res) => {
   const c = await content();
-  res.json(await stats.overview({ uni: scope(req), days: req.query.days, G: c.G }));
+  res.json(await stats.overview(await filters(req), c.G));
+}));
+admin.get('/stats/compare', wrap(async (req, res) => {
+  const c = await content();
+  res.json(await stats.compareUniversities(await filters(req), c.G));
+}));
+admin.get('/stats/compare.csv', wrap(async (req, res) => {
+  const c = await content(), d = await stats.compareUniversities(await filters(req), c.G);
+  res.type('text/csv').attachment(`kbc-university-comparison-${d.from}-to-${d.to}.csv`).send(csv([...d.rows, d.total], Object.keys(d.total)));
 }));
 admin.get('/stats/students', wrap(async (req, res) => {
   const c = await content();
-  res.json(await stats.studentRows({ uni: scope(req), days: req.query.days, q: String(req.query.q || '').trim().slice(0, 60), sort: String(req.query.sort || 'recent'), G: c.G }));
+  res.json(await stats.studentRows(await filters(req), c.G, { q: String(req.query.q || '').trim().slice(0, 60), sort: String(req.query.sort || 'recent') }));
 }));
 admin.get('/stats/students.csv', wrap(async (req, res) => {
-  const c = await content(), d = await stats.studentRows({ uni: scope(req), days: req.query.days, sort: String(req.query.sort || 'recent'), G: c.G });
+  const c = await content(), d = await stats.studentRows(await filters(req), c.G, { sort: String(req.query.sort || 'recent') });
   const rows = d.rows.map((r) => ({ ...r, minutes: Math.round(r.ms / 60000), total_minutes: Math.round(r.totalMs / 60000), now_at: r.nowAt ? `${r.nowAt.id} ${r.nowAt.name} L${r.nowAt.level}` : '',
     last_active_ist: r.lastActive ? new Date(r.lastActive + 5.5 * 36e5).toISOString().slice(0, 16).replace('T', ' ') : '' }));
-  res.type('text/csv').attachment(`kbc-student-analytics-${d.days}d.csv`).send(csv(rows, ['roll_no', 'name', 'university', 'last_active_ist', 'daysActive', 'minutes', 'logins', 'answers', 'accuracy', 'hot', 'skillsDone', 'now_at', 'prizes', 'coins', 'games', 'total_minutes']));
+  res.type('text/csv').attachment(`kbc-student-analytics-${d.from}-to-${d.to}.csv`).send(csv(rows, ['roll_no', 'name', 'university', 'last_active_ist', 'batch', 'daysActive', 'minutes', 'logins', 'answers', 'accuracy', 'hot', 'skillsDone', 'now_at', 'prizes', 'coins', 'games', 'total_minutes']));
 }));
 admin.get('/stats/student/:roll', wrap(async (req, res) => {
   const roll = normRoll(req.params.roll), c = await content();
   const m = await one('SELECT roll_no, university FROM students_master WHERE roll_no = ?', roll);
   if (!m || (req.admin.university && m.university !== req.admin.university)) return res.status(404).json({ error: 'Not found' });
-  res.json(await stats.studentDetail(roll, { days: req.query.days, G: c.G }));
+  res.json(await stats.studentDetail(roll, await filters(req), c.G));
+}));
+
+// ---------- settings (super admin edits; every admin can read): universities (NIAT ID prefixes) and test-data rules
+admin.get('/settings', wrap(async (req, res) => {
+  const unis = await all(`SELECT u.prefix, u.name, (SELECT COUNT(*)::int FROM students_master m WHERE m.university = u.name) AS students
+    FROM universities u ORDER BY u.name, u.prefix`);
+  const unlisted = await all(`SELECT m.university AS name, COUNT(*)::int AS students FROM students_master m
+    WHERE COALESCE(m.university, '') <> '' AND m.university NOT IN (SELECT name FROM universities) GROUP BY m.university ORDER BY m.university`);
+  res.json({ universities: unis, unlisted, testRules: await testRules() });
+}));
+admin.put('/settings/test-rules', requireSuper, jsonBody, wrap(async (req, res) => {
+  const rules = await saveTestRules(req.body || {});
+  await audit(req.admin.id, 'test_rules', null, rules);
+  res.json({ ok: true, testRules: rules });
+}));
+admin.put('/settings/universities/:prefix', requireSuper, jsonBody, wrap(async (req, res) => {
+  const prefix = normRoll(req.params.prefix), name = String(req.body?.name || '').trim().slice(0, 120);
+  if (!/^[A-Z0-9]{2,20}$/.test(prefix)) return res.status(400).json({ error: 'The prefix is the start of the NIAT ID: 2 to 20 letters or digits.' });
+  if (!name) return res.status(400).json({ error: 'Enter the university name.' });
+  await run('INSERT INTO universities (prefix, name) VALUES (?, ?) ON CONFLICT (prefix) DO UPDATE SET name = excluded.name', prefix, name);
+  await loadPrefixes();
+  await audit(req.admin.id, 'university_save', prefix, { name });
+  res.json({ ok: true });
+}));
+admin.delete('/settings/universities/:prefix', requireSuper, wrap(async (req, res) => {
+  const prefix = normRoll(req.params.prefix);
+  await run('DELETE FROM universities WHERE prefix = ?', prefix);
+  await loadPrefixes();
+  await audit(req.admin.id, 'university_delete', prefix, null);
+  res.json({ ok: true });
 }));
 
 // ---------- CSV exports

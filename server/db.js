@@ -5,7 +5,7 @@
 import path from 'node:path';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { config } from './config.js';
-import { UNIVERSITY_PREFIXES } from './universities.js';
+import { seedUniversities } from './universities.js';
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS universities (
@@ -184,8 +184,11 @@ CREATE TABLE IF NOT EXISTS audit_log (
 );
 `;
 
-const SEED_UNIVERSITIES = UNIVERSITY_PREFIXES.map(([p, u]) =>
-  `INSERT INTO universities (prefix, name) VALUES ('${p}', '${u.replace(/'/g, "''")}') ON CONFLICT (prefix) DO UPDATE SET name = excluded.name;`).join('\n');
+// Seeds an empty universities table only: after that, universities are managed in Admin → Settings.
+const sq = (x) => "'" + String(x).replace(/'/g, "''") + "'";
+const SEED_UNIVERSITIES = `INSERT INTO universities (prefix, name) SELECT v.prefix, v.name FROM (VALUES ${
+  seedUniversities().map((u) => `(${sq(u.prefix)}, ${sq(u.name)})`).join(', ')}) AS v(prefix, name)
+  WHERE NOT EXISTS (SELECT 1 FROM universities) ON CONFLICT (prefix) DO NOTHING;`;
 
 // ---------- backend
 let backend = null;

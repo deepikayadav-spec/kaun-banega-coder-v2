@@ -1,0 +1,113 @@
+{
+ "note": "Seed only: loaded into the universities table when it is empty. Manage universities in Admin > Settings.",
+ "universities": [
+  {
+   "prefix": "N26AP01A",
+   "name": "GMR Institute Of Technology - Vizianagaram"
+  },
+  {
+   "prefix": "N26B01A",
+   "name": "S-VYASA University - Bengaluru"
+  },
+  {
+   "prefix": "N26B02A",
+   "name": "Yenepoya University - Bangalore"
+  },
+  {
+   "prefix": "N26C01A",
+   "name": "Crescent University - Chennai"
+  },
+  {
+   "prefix": "N26C02A",
+   "name": "AMET University - Chennai"
+  },
+  {
+   "prefix": "N26C04A",
+   "name": "St.peter's Institute of Higher Education and Research -chennai"
+  },
+  {
+   "prefix": "N26H01A",
+   "name": "Chaitanya – Deemed to be University - Hyderabad"
+  },
+  {
+   "prefix": "N26H02A",
+   "name": "Malla Reddy University - Hyderabad"
+  },
+  {
+   "prefix": "N26H03A",
+   "name": "Aurora Deemed University"
+  },
+  {
+   "prefix": "N26H04A",
+   "name": "St Mary's Rehabilitation University - Bhuvangiri"
+  },
+  {
+   "prefix": "N26HY01A",
+   "name": "Sushant University - Gurugram"
+  },
+  {
+   "prefix": "N26HY02A",
+   "name": "Lingaya's Vidyapeeth - Faridabad"
+  },
+  {
+   "prefix": "N26HY03A",
+   "name": "Geeta University - Panipat"
+  },
+  {
+   "prefix": "N26J01A",
+   "name": "Vivekananda Global University - Jaipur"
+  },
+  {
+   "prefix": "N26K01A",
+   "name": "Sanjay Ghodawat University - Kolhapur"
+  },
+  {
+   "prefix": "N26M01A",
+   "name": "Yenepoya University - Mangalore"
+  },
+  {
+   "prefix": "N26MH01A",
+   "name": "Sandip University - Nashik"
+  },
+  {
+   "prefix": "N26MP01A",
+   "name": "Scope Global Skill University - Bhopal"
+  },
+  {
+   "prefix": "N26N01A",
+   "name": "Noida International University- Noida"
+  },
+  {
+   "prefix": "N26O01A",
+   "name": "Sri Sri University - Cuttack"
+  },
+  {
+   "prefix": "N26P01A",
+   "name": "Ajeenkya DY Patil University - Pune"
+  },
+  {
+   "prefix": "N26P02A",
+   "name": "ALARD - Pune"
+  },
+  {
+   "prefix": "N26R01A",
+   "name": "Annamacharya University - Rajampet"
+  },
+  {
+   "prefix": "N26T01A",
+   "name": "Takshashila University - Pondicherry"
+  },
+  {
+   "prefix": "N26U03A",
+   "name": "Swami Vivekananda Subharti University"
+  },
+  {
+   "prefix": "N26V01A",
+   "name": "NRI Institute of Technology - Vijayawada"
+  },
+  {
+   "prefix": "N26V02A",
+   "name": "NSRIT - Vizag"
+  }
+ ]
+}

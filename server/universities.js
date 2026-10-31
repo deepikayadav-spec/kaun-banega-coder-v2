@@ -1,38 +1,22 @@
-// University from the NIAT ID: every campus has its own ID prefix (same table as Saturday Sprint).
-// Used when a master-list row has no University column.
-export const UNIVERSITY_PREFIXES = [
-  ['N26AP01A', 'GMR Institute Of Technology - Vizianagaram'],
-  ['N26B01A', 'S-VYASA University - Bengaluru'],
-  ['N26B02A', 'Yenepoya University - Bangalore'],
-  ['N26C01A', 'Crescent University - Chennai'],
-  ['N26C02A', 'AMET University - Chennai'],
-  ['N26C04A', "St.peter's Institute of Higher Education and Research -chennai"],
-  ['N26H01A', 'Chaitanya – Deemed to be University - Hyderabad'],
-  ['N26H02A', 'Malla Reddy University - Hyderabad'],
-  ['N26H03A', 'Aurora Deemed University'],
-  ['N26H04A', "St Mary's Rehabilitation University - Bhuvangiri"],
-  ['N26HY01A', 'Sushant University - Gurugram'],
-  ['N26HY02A', "Lingaya's Vidyapeeth - Faridabad"],
-  ['N26HY03A', 'Geeta University - Panipat'],
-  ['N26J01A', 'Vivekananda Global University - Jaipur'],
-  ['N26K01A', 'Sanjay Ghodawat University - Kolhapur'],
-  ['N26M01A', 'Yenepoya University - Mangalore'],
-  ['N26MH01A', 'Sandip University - Nashik'],
-  ['N26MP01A', 'Scope Global Skill University - Bhopal'],
-  ['N26N01A', 'Noida International University- Noida'],
-  ['N26O01A', 'Sri Sri University - Cuttack'],
-  ['N26P01A', 'Ajeenkya DY Patil University - Pune'],
-  ['N26P02A', 'ALARD - Pune'],
-  ['N26R01A', 'Annamacharya University - Rajampet'],
-  ['N26T01A', 'Takshashila University - Pondicherry'],
-  ['N26U03A', 'Swami Vivekananda Subharti University'],
-  ['N26V01A', 'NRI Institute of Technology - Vijayawada'],
-  ['N26V02A', 'NSRIT - Vizag']
-];
+// Universities come from the database (table `universities`: NIAT ID prefix → university name), managed in
+// Admin → Settings. server/content/universities.json only seeds an empty table on a new install.
+// universityOf() fills a student's university from their NIAT ID when a master-list row has none.
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const SEED = path.join(path.dirname(fileURLToPath(import.meta.url)), 'content', 'universities.json');
+export const seedUniversities = () => JSON.parse(fs.readFileSync(SEED, 'utf8')).universities;
+
+// [prefix, name], longest prefix first so the most specific one wins; refreshed from the database (see app.js)
+let prefixes = seedUniversities().map((u) => [u.prefix, u.name]);
+export function setPrefixes(rows) {
+  prefixes = rows.map((r) => [String(r.prefix).toUpperCase(), r.name]).sort((a, b) => b[0].length - a[0].length);
+}
 
 export const universityOf = (roll) => {
   const r = String(roll || '').toUpperCase();
-  const hit = UNIVERSITY_PREFIXES.find(([p]) => r.startsWith(p));
+  const hit = prefixes.find(([p]) => r.startsWith(p));
   return hit ? hit[1] : '';
 };
 

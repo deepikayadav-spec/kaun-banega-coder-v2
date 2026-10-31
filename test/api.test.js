@@ -271,7 +271,7 @@ test('student analytics: overview, student rows and detail; logins and live ping
   const m = Object.fromEntries(o.body.groups.flatMap((g) => g.metrics).map((x) => [x.label, x.value]));
   assert.ok(m['Questions answered'] > 0, 'answers counted');
   assert.ok(m['Logins'] >= 1, 'logins recorded');
-  assert.ok(m['DAU (today)'] >= 1);
+  assert.ok(m['DAU (last day)'] >= 1);
   assert.equal(o.body.daily.length, 30);
   const s = await call('a', 'GET', '/api/admin/stats/students?days=30&sort=answers');
   assert.equal(s.status, 200);
@@ -286,4 +286,48 @@ test('student analytics: overview, student rows and detail; logins and live ping
   const mr = await call('m', 'GET', '/api/admin/stats/students?days=30');
   assert.ok(mr.body.rows.every((r) => r.university === 'Malla Reddy University - Hyderabad'));
   assert.equal((await call('m', 'GET', '/api/admin/stats/student/N26P02A0001')).status, 404);
+});
+
+test('analytics: university comparison, filters, test-data rules and university settings', async () => {
+  const now = Date.now();
+  await run("INSERT INTO students_master (roll_no, name, university, batch, created_at, updated_at) VALUES ('QA0001', 'Quality Check', 'Sandbox U', 'QA', ?, ?), ('N26P02A0200', 'Batch Kid', 'ALARD - Pune', 'B2', ?, ?)", now, now, now, now);
+  // filters list real universities; nothing from the hardcoded code
+  let f = await call('a', 'GET', '/api/admin/stats/filters');
+  assert.equal(f.status, 200);
+  assert.ok(f.body.universities.some((u) => u.name === 'ALARD - Pune'));
+  assert.ok(f.body.universities.some((u) => u.name === 'Sandbox U'), 'not test data yet');
+  // mark Sandbox U as test data: it drops out of filters, comparison and overview
+  const put = await call('a', 'PUT', '/api/admin/settings/test-rules', { rollPrefixes: ['TEST', 'QA'], universities: ['Test', 'Sandbox U'], batches: [] });
+  assert.equal(put.status, 200);
+  assert.equal((await call('m', 'PUT', '/api/admin/settings/test-rules', { rollPrefixes: [] })).status, 403, 'super admin only');
+  f = await call('a', 'GET', '/api/admin/stats/filters');
+  assert.ok(!f.body.universities.some((u) => u.name === 'Sandbox U'));
+  const c = await call('a', 'GET', '/api/admin/stats/compare?days=30');
+  assert.equal(c.status, 200, JSON.stringify(c.body));
+  assert.ok(c.body.rows.length >= 1 && c.body.total.university === 'All universities');
+  assert.ok(!c.body.rows.some((r) => r.university === 'Sandbox U'));
+  const alard = c.body.rows.find((r) => r.university === 'ALARD - Pune');
+  assert.ok(alard.answers > 0 && alard.students >= 2);
+  // batch filter and a custom date range
+  const fb = await call('a', 'GET', '/api/admin/stats/filters?university=' + encodeURIComponent('ALARD - Pune'));
+  assert.ok(fb.body.batches.some((b) => b.name === 'B2'));
+  const sb = await call('a', 'GET', '/api/admin/stats/students?batch=B2');
+  assert.deepEqual(sb.body.rows.map((r) => r.roll_no), ['N26P02A0200']);
+  const today = new Date(Date.now() + 5.5 * 36e5).toISOString().slice(0, 10);
+  const od = await call('a', 'GET', `/api/admin/stats/overview?from=${today}&to=${today}`);
+  assert.equal(od.body.days, 1);
+  assert.equal(od.body.from, today);
+  // a scoped admin's comparison holds only their university
+  const mc = await call('m', 'GET', '/api/admin/stats/compare');
+  assert.ok(mc.body.rows.every((r) => r.university === 'Malla Reddy University - Hyderabad'));
+  // universities (NIAT ID prefixes) are data: add one and a new student's university is filled from it
+  assert.equal((await call('a', 'PUT', '/api/admin/settings/universities/ZZ9', { name: 'Zed University' })).status, 200);
+  const st = await call('a', 'GET', '/api/admin/settings');
+  assert.ok(st.body.universities.some((u) => u.prefix === 'ZZ9' && u.name === 'Zed University'));
+  assert.deepEqual(st.body.testRules.universities, ['Test', 'Sandbox U']);
+  assert.equal((await call('a', 'POST', '/api/admin/students', { roll: 'ZZ9000001', name: 'Zed One' })).status, 200);
+  const z = await call('a', 'GET', '/api/admin/students?q=ZZ9000001');
+  assert.equal(z.body.rows[0].university, 'Zed University');
+  assert.equal((await call('a', 'DELETE', '/api/admin/settings/universities/ZZ9')).status, 200);
+  await call('a', 'PUT', '/api/admin/settings/test-rules', { rollPrefixes: ['TEST'], universities: ['Test'], batches: ['TEST'] });
 });

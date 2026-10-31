@@ -48,6 +48,24 @@ input[type=checkbox]{width:18px;height:18px}
 .bar.q2 i{background:var(--ok)}
 .an-st td{vertical-align:top}.an-st tr.sel{background:var(--acc-2)}.an-det>td{background:var(--bg);padding:14px}.an-d h3{margin:12px 0 6px;font-size:14px}
 #an-q{min-width:220px}
+.an-bar{padding:14px 18px}
+.an-filters{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end}
+.an-filters label,.set-grid label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
+.an-filters select{min-width:200px;max-width:340px}
+.an-per .lbl{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.an-lock{margin-top:8px}
+.an-views{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-top:14px;overflow-x:auto}
+.an-views button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px;min-height:44px;font-weight:600;font-size:14px;font-family:inherit;color:var(--muted);cursor:pointer;white-space:nowrap}
+.an-views button.on{color:var(--acc);border-bottom-color:var(--acc)}
+.an-note{margin:10px 0 0;font-size:12.5px}.an-note a{color:var(--acc)}
+.an-scope{margin:0 0 4px}
+.an-cmp td,.an-cmp th{white-space:nowrap}.an-cmp td.best{color:var(--ok);font-weight:700}
+.an-cmp td:first-child,.an-cmp th:first-child{position:sticky;left:0;background:var(--card);min-width:210px;white-space:normal;z-index:1}
+.an-cmp tfoot td{border-top:2px solid var(--line);font-weight:600}
+.an-cmp .bar{margin-top:6px;height:5px}
+button.th{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer}
+@media (max-width:640px){.who{margin-left:0;flex-wrap:wrap}.who select,.an-filters select,.an-filters label{max-width:100%;min-width:0}}
+.set-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.set-grid input{font-weight:400}
 </style></head>
 <body>
 <div id="root"></div>
@@ -62,13 +80,13 @@ let A=null,TAB="overview",UNI="",UNIS=[];
 const isSuper=()=>A&&A.role==="super_admin";
 function draw(){if(!A){$("#root").innerHTML=`<div class="card login"><h2>KBC admin</h2><form id="lf"><label>Email<input id="em" type="email" autocomplete="username" required></label><label>Password<input id="pw" type="password" autocomplete="current-password" required></label><button class="b">Log in</button><p class="err" id="le"></p></form></div>`;
   $("#lf").onsubmit=async e=>{e.preventDefault();try{const r=await api("POST","/api/admin/login",{email:$("#em").value,password:$("#pw").value});await me();if(r.mustChange){TAB="account"}draw()}catch(x){$("#le").textContent=x.message}};return}
- const tabs=[["overview","Overview"],["analytics","Analytics"],["students","Students"],["content","Question bank"],["feedback","Feedback"],...(isSuper()?[["admins","Admins"]]:[]),["account","Account"]];
+ const tabs=[["overview","Overview"],["analytics","Analytics"],["students","Students"],["content","Question bank"],["feedback","Feedback"],["settings","Settings"],...(isSuper()?[["admins","Admins"]]:[]),["account","Account"]];
  $("#root").innerHTML=`<header><h1>Kaun Banega <span>Coder</span> · admin</h1><nav>${tabs.map(([k,n])=>`<button data-tab="${k}" class="${TAB===k?"on":""}">${n}</button>`).join("")}</nav>
  <div class="who">${A.university?`<span class="pill">${esc(A.university)}</span>`:`<select id="uni" aria-label="University shown"><option value="">All universities</option>${UNIS.map(u=>`<option ${u===UNI?"selected":""}>${esc(u)}</option>`).join("")}</select>`}<span>${esc(A.email)} · ${A.role==="super_admin"?"super admin":"admin"}</span><button class="b q" id="lo">Log out</button></div></header><main id="m"><p class="muted">Loading…</p></main>`;
  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{TAB=b.dataset.tab;draw()});
  $("#lo").onclick=()=>api("POST","/api/admin/logout").finally(()=>{A=null;draw()});
  const u=$("#uni");if(u)u.onchange=()=>{UNI=u.value;draw()};
- ({overview,analytics,students,content,feedback,admins,account})[TAB]().catch(e=>{$("#m").innerHTML=`<p class="bad">${esc(e.message)}</p>`})}
+ ({overview,analytics,students,content,feedback,settings,admins,account})[TAB]().catch(e=>{$("#m").innerHTML=`<p class="bad">${esc(e.message)}</p>`})}
 const uq=()=>UNI?"university="+encodeURIComponent(UNI):"";
 async function me(){A=(await api("GET","/api/admin/me")).admin;const u=await api("GET","/api/admin/universities");UNIS=u.rows.map(r=>r.university).filter(Boolean)}
 
@@ -82,49 +100,117 @@ async function overview(){const d=await api("GET","/api/admin/analytics?"+uq()),
  <div class="card"><h2>Skill progress</h2><p class="muted">How many students have each skill open (by current level) or done.</p><div class="tw"><table><tr><th>Skill</th><th>Group</th><th>Open: L1</th><th>L2</th><th>L3</th><th>L4</th><th>Done</th></tr>${d.skills.filter(s=>s.open||s.done).map(s=>`<tr><td>${s.id} ${esc(s.name)}</td><td>${s.group}</td>${s.levels.map(n=>`<td>${n}</td>`).join("")}<td class="ok">${s.done}</td></tr>`).join("")||'<tr><td colspan=7 class="muted">No progress yet.</td></tr>'}</table></div></div>`}
 
 
-/* ================= Analytics tab: business metrics, then one row per student (like Saturday Sprint) ================= */
-let AP={days:30,sort:"recent",q:"",open:null};
-const fmtMs=ms=>{if(ms==null)return "—";ms=+ms;if(ms<1000)return Math.round(ms)+" ms";const s=Math.round(ms/1000);if(s<60)return s+" s";const m=Math.round(s/60);if(m<60)return m+" min";const h=Math.floor(m/60);return h+" h "+(m%60)+" min"};
+/* ================= Analytics tab =================
+   One filter bar (University, Batch, Period tabs or a custom From/To) drives three views: Overview, Compare universities, Students.
+   Every choice comes from the database; test data (Admin > Settings) is always left out on the server. */
+let AP={view:"overview",days:30,from:"",to:"",batch:"",sort:"recent",q:"",open:null,cmpSort:"students",cmpDir:-1},AF=null;
+const fmtMs=ms=>{if(ms==null)return "—";ms=+ms;if(!ms)return "0";if(ms<1000)return Math.round(ms)+" ms";const s=Math.round(ms/1000);if(s<60)return s+" s";const m=Math.round(s/60);if(m<60)return m+" min";const h=Math.floor(m/60);return h+" h "+(m%60)+" min"};
 const fmtV=m=>m.value==null?'<span class="muted">—</span>':m.unit==="pct"?m.value+"%":m.unit==="ms"?fmtMs(m.value):m.unit==="stars"?m.value+" ★":typeof m.value==="number"?m.value.toLocaleString("en-IN"):esc(m.value);
 const ofTxt=m=>m.of!=null&&m.value!=null&&typeof m.value==="number"?`<small class="of">${pct(m.value,m.of)} of ${m.of.toLocaleString("en-IN")}</small>`:m.basis!=null?`<small class="of">based on ${m.basis}</small>`:"";
+// the query string for the current filters; withUni=false for the comparison (it always shows every university you can see)
+function aq(withUni=true){const p=new URLSearchParams();
+ if(AP.days==="custom"){if(AP.from)p.set("from",AP.from);if(AP.to)p.set("to",AP.to)}else p.set("days",AP.days);
+ if(AP.batch)p.set("batch",AP.batch);if(withUni&&UNI)p.set("university",UNI);return p.toString()}
 async function analytics(){
  $("#m").innerHTML='<p class="muted">Loading analytics…</p>';
- const qs=`days=${AP.days}&${uq()}`,d=await api("GET","/api/admin/stats/overview?"+qs);
- const per=[[1,"Today"],[7,"7 days"],[30,"30 days"],[90,"90 days"],[3650,"All time"]];
+ AF=await api("GET","/api/admin/stats/filters?"+uq());
+ if(AP.batch&&!AF.batches.some(b=>b.name===AP.batch))AP.batch="";
+ if(AF.lockedUniversity&&AP.view==="compare")AP.view="overview";
+ const per=[[1,"Today"],[7,"7 days"],[30,"30 days"],[90,"90 days"],[3650,"All time"],["custom","Custom"]];
+ const views=[["overview","Overview"],...(AF.lockedUniversity?[]:[["compare","Compare universities"]]),["students","Students"]];
+ const today=new Date(Date.now()+5.5*36e5).toISOString().slice(0,10);
+ $("#m").innerHTML=`<div class="card an-bar">
+  <div class="an-filters">
+   <label>University${AF.lockedUniversity?`<span class="pill an-lock">${esc(AF.lockedUniversity)}</span>`:`<select id="af-uni"><option value="">All universities</option>${AF.universities.map(u=>`<option value="${esc(u.name)}" ${u.name===UNI?"selected":""}>${esc(u.name)} (${u.n.toLocaleString("en-IN")})</option>`).join("")}</select>`}</label>
+   <label>Batch<select id="af-batch" ${AF.batches.length?"":"disabled"}><option value="">${AF.batches.length?"All batches":"No batches on the list"}</option>${AF.batches.map(b=>`<option value="${esc(b.name)}" ${b.name===AP.batch?"selected":""}>${esc(b.name)} (${b.n.toLocaleString("en-IN")})</option>`).join("")}</select></label>
+   <div class="an-per"><span class="lbl">Period</span><div class="seg" role="tablist" aria-label="Period">${per.map(([n,l])=>`<button class="b q ${AP.days===n?"on":""}" role="tab" aria-selected="${AP.days===n}" data-days="${n}">${l}</button>`).join("")}</div></div>
+   ${AP.days==="custom"?`<label>From<input type="date" id="af-from" max="${today}" value="${esc(AP.from)}"></label><label>To<input type="date" id="af-to" max="${today}" value="${esc(AP.to||today)}"></label>`:""}
+  </div>
+  <div class="an-views" role="tablist" aria-label="Analytics view">${views.map(([k,l])=>`<button role="tab" aria-selected="${AP.view===k}" class="${AP.view===k?"on":""}" data-view="${k}">${l}</button>`).join("")}</div>
+  <p class="muted an-note">Test data is left out (${esc([...AF.rules.rollPrefixes.map(p=>"IDs starting "+p),...AF.rules.universities,...AF.rules.batches.map(b=>"batch "+b)].join(", ")||"no rules set")}). Change it in <a href="#" id="af-set">Settings</a>.</p>
+ </div><div id="an-body"><p class="muted">Loading…</p></div>`;
+ const reload=()=>{AP.open=null;analytics()};
+ const u=$("#af-uni");if(u)u.onchange=()=>{UNI=u.value;const h=$("#uni");if(h)h.value=UNI;reload()};
+ $("#af-batch").onchange=e=>{AP.batch=e.target.value;reload()};
+ document.querySelectorAll("[data-days]").forEach(b=>b.onclick=()=>{const v=b.dataset.days;AP.days=v==="custom"?"custom":+v;if(v==="custom"&&!AP.from){AP.to=today;AP.from=new Date(Date.now()+5.5*36e5-29*864e5).toISOString().slice(0,10)}reload()});
+ const fr=$("#af-from"),to=$("#af-to");if(fr){fr.onchange=()=>{AP.from=fr.value;reload()};to.onchange=()=>{AP.to=to.value;reload()}}
+ document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{AP.view=b.dataset.view;reload()});
+ $("#af-set").onclick=e=>{e.preventDefault();TAB="settings";draw()};
+ await ({overview:anOverview,compare:anCompare,students:anStudents})[AP.view]()}
+
+async function anOverview(){const d=await api("GET","/api/admin/stats/overview?"+aq());
  const maxA=Math.max(1,...d.daily.map(x=>x.active)),maxQ=Math.max(1,...d.daily.map(x=>x.answers));
- $("#m").innerHTML=`<div class="card an-head"><div><h2 style="margin:0">Student analytics</h2><p class="muted" style="margin:4px 0 0">${esc(d.university||"All universities")} · ${d.from} to ${d.today} (IST) · TEST accounts excluded</p></div>
-  <div class="seg" role="group" aria-label="Period">${per.map(([n,l])=>`<button class="b q ${AP.days===n?"on":""}" data-days="${n}">${l}</button>`).join("")}</div></div>
+ $("#an-body").innerHTML=`<p class="muted an-scope">${esc(d.filters.university||"All universities")}${d.filters.batch?" · batch "+esc(d.filters.batch):""} · ${d.from} to ${d.to} (IST, ${d.days} day${d.days>1?"s":""})</p>
  ${d.groups.map(g=>`<section class="an-group"><h3>${g.name}</h3><div class="kpis">${g.metrics.map(m=>`<div class="kpi" title="${esc(m.def)}"><small>${esc(m.label)}</small><b>${fmtV(m)}</b>${ofTxt(m)}<span class="def">${esc(m.def)}</span></div>`).join("")}</div></section>`).join("")}
  <div class="card"><h2>Daily activity</h2><p class="muted">Students active each day, and questions answered.</p>
-  <div class="tw"><table class="an-daily"><tr><th>Day</th><th>Active students</th><th></th><th>Questions</th><th></th><th>Time on portal</th></tr>${d.daily.slice().reverse().map(x=>`<tr><td>${x.day}</td><td>${x.active}</td><td style="width:22%"><div class="bar"><i style="width:${x.active/maxA*100}%"></i></div></td><td>${x.answers}</td><td style="width:22%"><div class="bar q2"><i style="width:${x.answers/maxQ*100}%"></i></div></td><td>${fmtMs(x.ms)}</td></tr>`).join("")}</table></div></div>
+  <div class="tw"><table class="an-daily"><tr><th>Day</th><th>Active students</th><th></th><th>Questions</th><th></th><th>Time on portal</th></tr>${d.daily.slice().reverse().slice(0,120).map(x=>`<tr><td>${x.day}</td><td>${x.active}</td><td style="width:22%"><div class="bar"><i style="width:${x.active/maxA*100}%"></i></div></td><td>${x.answers}</td><td style="width:22%"><div class="bar q2"><i style="width:${x.answers/maxQ*100}%"></i></div></td><td>${fmtMs(x.ms)}</td></tr>`).join("")}</table></div>${d.daily.length>120?'<p class="muted">Showing the latest 120 days.</p>':""}</div>
  <div class="grid2">
   <div class="card"><h2>Where students are now</h2><p class="muted">Each student's current topic and level.</p><div class="tw"><table><tr><th>Topic</th><th>Students</th><th>L1</th><th>L2</th><th>L3</th><th>L4</th></tr>${d.nowAt.map(s=>`<tr><td>${s.id} ${esc(s.name)}</td><td><b>${s.students}</b></td>${s.levels.map(n=>`<td>${n||'<span class="muted">0</span>'}</td>`).join("")}</tr>`).join("")||'<tr><td colspan=6 class="muted">No students have started yet.</td></tr>'}</table></div></div>
   <div class="card"><h2>Prizes won</h2><p class="muted">Students by number of skill groups cleared (prizes).</p><div class="tw"><table><tr><th>Prizes</th><th>Students</th></tr>${d.prizes.map(p=>`<tr><td>${p.prizes}</td><td>${p.students}</td></tr>`).join("")||'<tr><td colspan=2 class="muted">No games yet.</td></tr>'}</table></div></div>
   <div class="card"><h2>Hardest topics</h2><p class="muted">Lowest accuracy first (topics with 10+ answers in the period).</p><div class="tw"><table><tr><th>Topic</th><th>Answers</th><th>Students</th><th>Accuracy</th></tr>${d.skills.slice(0,12).map(s=>`<tr><td>${s.id} ${esc(s.name)}</td><td>${s.n}</td><td>${s.students}</td><td>${s.acc}%</td></tr>`).join("")||'<tr><td colspan=4 class="muted">Not enough answers yet.</td></tr>'}</table></div></div>
   <div class="card"><h2>Question types</h2><p class="muted">Accuracy and median answer time (types with 10+ answers).</p><div class="tw"><table><tr><th>Level · type</th><th>Answers</th><th>Accuracy</th><th>Median time</th></tr>${d.types.map(t=>`<tr><td>${esc(t.key)}</td><td>${t.n}</td><td>${t.acc}%</td><td>${fmtMs(t.medianMs)}</td></tr>`).join("")||'<tr><td colspan=4 class="muted">Not enough answers yet.</td></tr>'}</table></div></div>
- </div>
- <div class="card" id="an-st"><p class="muted">Loading students…</p></div>`;
- document.querySelectorAll("[data-days]").forEach(b=>b.onclick=()=>{AP.days=+b.dataset.days;AP.open=null;analytics()});
- await anStudents()}
-async function anStudents(){const box=$("#an-st");if(!box)return;
- const d=await api("GET",`/api/admin/stats/students?days=${AP.days}&sort=${AP.sort}&q=${encodeURIComponent(AP.q)}&${uq()}`);
- const S=[["recent","Most recent"],["least","Least recent"],["time","Most time"],["answers","Most questions"],["accuracy","Best accuracy"],["skills","Most skills"],["name","Name"]];
- box.innerHTML=`<div class="an-head"><div><h2 style="margin:0">Students</h2><p class="muted" style="margin:4px 0 0">${d.total.toLocaleString("en-IN")} students · time, logins and questions are for the period; skills, prizes and games are totals</p></div>
-  <div class="row"><input id="an-q" aria-label="Search students" placeholder="Search NIAT ID or name" value="${esc(AP.q)}"><select id="an-sort" aria-label="Sort students">${S.map(([k,l])=>`<option value="${k}" ${AP.sort===k?"selected":""}>${l}</option>`).join("")}</select><a class="b q" style="text-decoration:none" href="/api/admin/stats/students.csv?days=${AP.days}&sort=${AP.sort}&${uq()}">Download CSV</a></div></div>
- <div class="tw"><table class="an-st"><tr><th>Student</th><th>University</th><th>Last active</th><th>Days active</th><th>Time</th><th>Logins</th><th>Questions</th><th>Accuracy</th><th>Skills cleared</th><th>Now at</th><th>Prizes</th><th>Games</th></tr>
- ${d.rows.slice(0,500).map(r=>`<tr class="click ${AP.open===r.roll_no?"sel":""}" data-roll="${esc(r.roll_no)}"><td><b>${esc(r.name||"—")}</b><br><small class="muted">${esc(r.roll_no)}</small></td><td class="muted">${esc(r.university)}</td><td>${dt(r.lastActive)}</td><td>${r.daysActive}</td><td>${r.ms?fmtMs(r.ms):'<span class="muted">—</span>'}</td><td>${r.logins}</td><td>${r.answers}</td><td>${r.accuracy==null?'<span class="muted">—</span>':r.accuracy+"%"}</td><td>${r.skillsDone}</td><td>${r.nowAt?`${r.nowAt.id} · L${r.nowAt.level}`:'<span class="muted">—</span>'}</td><td>${r.prizes}</td><td>${r.games}</td></tr>${AP.open===r.roll_no?`<tr class="an-det"><td colspan="12" id="an-det">Loading…</td></tr>`:""}`).join("")}
- </table></div>${d.rows.length>500?`<p class="muted">Showing the first 500. Search, or download the CSV for all ${d.rows.length}.</p>`:""}`;
+ </div>`}
+
+// University-wise comparison: one row per university, the best value in each column marked, sortable by any column.
+const CMP=[["students","Students","n","Active students on the list"],["activatedPct","Activated","pct","Logged in or played at least once, ever"],["activePct","Active in period","pct","Share of the list active in the period"],
+ ["avgDau","Avg. DAU","n","Average daily active students"],["wau","WAU","n","Active in the last 7 days of the period"],["logins","Logins","n","Logins in the period"],["timePerActive","Time / active student","ms","Visible time on the portal per active student"],
+ ["answers","Questions","n","Questions answered"],["perPlayer","Q / player","n","Questions per student who answered"],["accuracy","Accuracy","pct","Right answers"],["medianMs","Median answer time","ms","Lower is faster"],
+ ["fffRate","FFF win rate","pct","Fastest Finger puzzles won"],["levelUps","Level-ups","n","Levels cleared"],["skillsDone","Skills cleared","n","Skills finished in the period"],
+ ["withSkillPct","With a skill","pct","Share of the list with a skill cleared, ever"],["prizeWinnersPct","Won a prize","pct","Share of the list with a prize, ever"],["d1","D1 retention","pct","Came back the day after their first day"],["d7","D7 retention","pct","Active again 7 days after their first day"],["avgStars","Rating","stars","Average star rating"]];
+const lowerBetter=new Set(["medianMs"]);
+const cmpV=(v,u)=>v==null?'<span class="muted">—</span>':u==="pct"?v+"%":u==="ms"?fmtMs(v):u==="stars"?v+" ★":(+v).toLocaleString("en-IN");
+async function anCompare(){const d=await api("GET","/api/admin/stats/compare?"+aq(false));
+ const k=AP.cmpSort,rows=d.rows.slice().sort((a,b)=>k==="university"?AP.cmpDir*-1*a.university.localeCompare(b.university):((a[k]??-Infinity)-(b[k]??-Infinity))*AP.cmpDir);
+ const best={};if(rows.length>1)for(const [c] of CMP){const v=rows.map(r=>r[c]).filter(x=>x!=null);if(v.length>1)best[c]=lowerBetter.has(c)?Math.min(...v):Math.max(...v)}
+ const arrow=c=>AP.cmpSort===c?(AP.cmpDir<0?" ▾":" ▴"):"";
+ const maxS=Math.max(1,...rows.map(r=>r.activePct||0));
+ $("#an-body").innerHTML=`<div class="card"><div class="an-head"><div><h2 style="margin:0">University-wise comparison</h2><p class="muted" style="margin:4px 0 0">${rows.length} universit${rows.length===1?"y":"ies"}${d.filters.batch?" · batch "+esc(d.filters.batch):""} · ${d.from} to ${d.to} (IST) · best value in each column is highlighted · click a column to sort</p></div>
+  <a class="b q" style="text-decoration:none" href="/api/admin/stats/compare.csv?${aq(false)}">Download CSV</a></div>
+ ${rows.length?`<div class="tw"><table class="an-cmp"><thead><tr><th><button class="th" data-cs="university">University${arrow("university")}</button></th>${CMP.map(([c,l,,t])=>`<th title="${esc(t)}"><button class="th" data-cs="${c}">${l}${arrow(c)}</button></th>`).join("")}</tr></thead>
+ <tbody>${rows.map(r=>`<tr><td><b>${esc(r.university)}</b><div class="bar" title="Active in period"><i style="width:${(r.activePct||0)/maxS*100}%"></i></div></td>${CMP.map(([c,,u])=>`<td class="${best[c]!=null&&r[c]===best[c]?"best":""}">${cmpV(r[c],u)}</td>`).join("")}</tr>`).join("")}</tbody>
+ <tfoot><tr><td><b>${esc(d.total.university)}</b></td>${CMP.map(([c,,u])=>`<td>${cmpV(d.total[c],u)}</td>`).join("")}</tr></tfoot></table></div>`:'<p class="muted">No students match these filters.</p>'}</div>
+ <div class="card"><h2>Pick a university to see its full analytics</h2><div class="row">${rows.map(r=>`<button class="b q" data-pick="${esc(r.university)}">${esc(r.university)}</button>`).join("")}</div></div>`;
+ document.querySelectorAll("[data-cs]").forEach(b=>b.onclick=()=>{const c=b.dataset.cs;if(AP.cmpSort===c)AP.cmpDir*=-1;else{AP.cmpSort=c;AP.cmpDir=c==="university"?1:lowerBetter.has(c)?1:-1}anCompare()});
+ document.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{UNI=b.dataset.pick;const h=$("#uni");if(h)h.value=UNI;AP.view="overview";analytics()})}
+
+async function anStudents(){const box=$("#an-body");if(!box)return;
+ const d=await api("GET",`/api/admin/stats/students?${aq()}&sort=${AP.sort}&q=${encodeURIComponent(AP.q)}`);
+ const S=[["recent","Most recent"],["least","Least recent"],["time","Most time"],["answers","Most questions"],["accuracy","Best accuracy"],["skills","Most skills"],["name","Name"],["university","University"]];
+ box.innerHTML=`<div class="card"><div class="an-head"><div><h2 style="margin:0">Students</h2><p class="muted" style="margin:4px 0 0">${d.total.toLocaleString("en-IN")} students · ${d.from} to ${d.to} · time, logins and questions are for the period; skills, prizes and games are totals</p></div>
+  <div class="row"><input id="an-q" aria-label="Search students" placeholder="Search NIAT ID or name" value="${esc(AP.q)}"><select id="an-sort" aria-label="Sort students">${S.map(([k,l])=>`<option value="${k}" ${AP.sort===k?"selected":""}>${l}</option>`).join("")}</select><a class="b q" style="text-decoration:none" href="/api/admin/stats/students.csv?${aq()}&sort=${AP.sort}">Download CSV</a></div></div>
+ <div class="tw"><table class="an-st"><tr><th>Student</th><th>University · batch</th><th>Last active</th><th>Days active</th><th>Time</th><th>Logins</th><th>Questions</th><th>Accuracy</th><th>Skills cleared</th><th>Now at</th><th>Prizes</th><th>Games</th></tr>
+ ${d.rows.slice(0,500).map(r=>`<tr class="click ${AP.open===r.roll_no?"sel":""}" data-roll="${esc(r.roll_no)}"><td><b>${esc(r.name||"—")}</b><br><small class="muted">${esc(r.roll_no)}</small></td><td class="muted">${esc(r.university)}${r.batch?`<br><small>${esc(r.batch)}</small>`:""}</td><td>${dt(r.lastActive)}</td><td>${r.daysActive}</td><td>${r.ms?fmtMs(r.ms):'<span class="muted">—</span>'}</td><td>${r.logins}</td><td>${r.answers}</td><td>${r.accuracy==null?'<span class="muted">—</span>':r.accuracy+"%"}</td><td>${r.skillsDone}</td><td>${r.nowAt?`${r.nowAt.id} · L${r.nowAt.level}`:'<span class="muted">—</span>'}</td><td>${r.prizes}</td><td>${r.games}</td></tr>${AP.open===r.roll_no?`<tr class="an-det"><td colspan="12" id="an-det">Loading…</td></tr>`:""}`).join("")}
+ </table></div>${d.rows.length>500?`<p class="muted">Showing the first 500. Search, or download the CSV for all ${d.rows.length}.</p>`:""}</div>`;
  let t=0;$("#an-q").oninput=e=>{clearTimeout(t);t=setTimeout(()=>{AP.q=e.target.value.trim();anStudents().then(()=>{const i=$("#an-q");i.focus();i.setSelectionRange(i.value.length,i.value.length)})},350)};
  $("#an-sort").onchange=e=>{AP.sort=e.target.value;anStudents()};
  box.querySelectorAll("tr[data-roll]").forEach(tr=>tr.onclick=()=>{AP.open=AP.open===tr.dataset.roll?null:tr.dataset.roll;anStudents()});
  if(AP.open)anDetail(AP.open)}
 async function anDetail(roll){const cell=$("#an-det");if(!cell)return;
- const d=await api("GET",`/api/admin/stats/student/${encodeURIComponent(roll)}?days=${AP.days}`),mx=Math.max(1,...d.daily.map(x=>x.answers));
+ const d=await api("GET",`/api/admin/stats/student/${encodeURIComponent(roll)}?${aq()}`),mx=Math.max(1,...d.daily.map(x=>x.answers));
  cell.innerHTML=`<div class="grid2 an-d"><div><h3>Day by day</h3><table><tr><th>Day</th><th>Time</th><th>Questions</th><th></th><th>Right</th></tr>${d.daily.slice().reverse().map(x=>`<tr><td>${x.day}</td><td>${fmtMs(x.ms)}</td><td>${x.answers}</td><td style="width:30%"><div class="bar"><i style="width:${x.answers/mx*100}%"></i></div></td><td>${pct(x.right,x.answers)}</td></tr>`).join("")||'<tr><td colspan=5 class="muted">No activity in the period.</td></tr>'}</table>
   <h3>Topics</h3><table><tr><th>Topic</th><th>Answers</th><th>Accuracy</th></tr>${d.skills.map(s=>`<tr><td>${s.id} ${esc(s.name)}</td><td>${s.n}</td><td>${s.acc}%</td></tr>`).join("")||'<tr><td colspan=3 class="muted">No answers yet.</td></tr>'}</table></div>
  <div><h3>Progress steps</h3><table><tr><th>When</th><th>Step</th><th>Topic</th></tr>${d.steps.map(s=>`<tr><td>${dt(s.at)}</td><td>${{level_up:"Level up",skill_done:"Topic cleared ✓",unlock:"Topic unlocked"}[s.kind]||s.kind}</td><td>${s.skill} ${esc(s.name)}</td></tr>`).join("")||'<tr><td colspan=3 class="muted">None yet.</td></tr>'}</table>
   <h3>Last answers</h3><table><tr><th>When</th><th>Topic</th><th>Question</th><th>Result</th><th>Time</th></tr>${d.recent.map(a=>`<tr><td>${dt(a.at)}</td><td>${a.skill}</td><td class="muted">L${a.level} ${esc(a.type)} R${a.r} V${a.variant}${a.mode==="practice"?" · practice":""}</td><td>${a.timeout?'<span class="warn">Time out</span>':a.correct?'<span class="ok">Right</span>':'<span class="bad">Wrong</span>'}</td><td>${fmtMs(a.ms)}</td></tr>`).join("")||'<tr><td colspan=5 class="muted">No answers yet.</td></tr>'}</table>
   <p class="muted">Logins (latest 50): ${d.logins.length?d.logins.slice(0,10).map(dt).join(" · ")+(d.logins.length>10?" …":""):"none recorded"}</p></div></div>`}
+
+/* ================= Settings: universities (NIAT ID prefixes) and test-data rules. Everyone can see; super admins edit. ================= */
+async function settings(){const d=await api("GET","/api/admin/settings"),S=isSuper(),R=d.testRules,ro=S?"":"disabled";
+ const list=a=>a.join(", ");
+ $("#m").innerHTML=`<div class="card"><h2>Test data</h2><p class="muted">Students matching any of these are test data: they are left out of analytics, the comparison and the Hall of Fame. Separate entries with commas. Matching ignores upper/lower case.</p>
+  <div class="set-grid"><label>NIAT IDs starting with<input id="tr-p" value="${esc(list(R.rollPrefixes))}" ${ro} placeholder="e.g. TEST"></label>
+  <label>Universities<input id="tr-u" value="${esc(list(R.universities))}" ${ro} placeholder="University names"></label>
+  <label>Batches<input id="tr-b" value="${esc(list(R.batches))}" ${ro} placeholder="Batch names"></label></div>
+  ${S?`<div class="row" style="margin-top:10px"><button class="b" id="tr-save">Save test-data rules</button><span id="tr-res" class="muted"></span></div>`:""}</div>
+ <div class="card"><h2>Universities</h2><p class="muted">A student's university is filled from the start of their NIAT ID when the uploaded list leaves it empty. Add a prefix here when a new university joins; nothing about universities is written into the app.</p>
+  ${S?`<div class="row" style="margin-bottom:12px"><input id="un-p" aria-label="NIAT ID prefix" placeholder="NIAT ID prefix, e.g. N26XY01" style="max-width:220px"><input id="un-n" aria-label="University name" placeholder="University name" style="flex:1;min-width:220px"><button class="b" id="un-add">Add or update</button></div><p id="un-res" class="muted"></p>`:""}
+  <div class="tw"><table><tr><th>NIAT ID prefix</th><th>University</th><th>Students</th>${S?"<th></th>":""}</tr>${d.universities.map(u=>`<tr><td><code>${esc(u.prefix)}</code></td><td>${esc(u.name)}</td><td>${u.students}</td>${S?`<td style="white-space:nowrap"><button class="b q" data-ued="${esc(u.prefix)}" data-un="${esc(u.name)}">Edit</button> <button class="b q" data-udel="${esc(u.prefix)}">Remove</button></td>`:""}</tr>`).join("")||'<tr><td colspan=4 class="muted">No universities yet.</td></tr>'}</table></div>
+  ${d.unlisted.length?`<h3 style="font-size:14px;margin:16px 0 6px">On the student list without a prefix here</h3><p class="muted">These names come from uploaded student lists. They work as they are; add a prefix only if new students should get the name from their NIAT ID.</p><div class="tw"><table><tr><th>University</th><th>Students</th></tr>${d.unlisted.map(u=>`<tr><td>${esc(u.name)}</td><td>${u.students}</td></tr>`).join("")}</table></div>`:""}</div>`;
+ if(!S)return;
+ const split=v=>v.split(",").map(x=>x.trim()).filter(Boolean);
+ $("#tr-save").onclick=async()=>{try{await api("PUT","/api/admin/settings/test-rules",{rollPrefixes:split($("#tr-p").value),universities:split($("#tr-u").value),batches:split($("#tr-b").value)});$("#tr-res").textContent="Saved. Analytics uses the new rules now."}catch(e){$("#tr-res").textContent=e.message}};
+ $("#un-add").onclick=async()=>{const p=$("#un-p").value.trim(),n=$("#un-n").value.trim();try{await api("PUT","/api/admin/settings/universities/"+encodeURIComponent(p),{name:n});await me();settings()}catch(e){$("#un-res").textContent=e.message}};
+ document.querySelectorAll("[data-ued]").forEach(b=>b.onclick=()=>{$("#un-p").value=b.dataset.ued;$("#un-n").value=b.dataset.un;$("#un-n").focus()});
+ document.querySelectorAll("[data-udel]").forEach(b=>b.onclick=async()=>{if(!confirm(`Remove the prefix ${b.dataset.udel}? Students keep their university; only new students with this prefix won't get it filled in.`))return;await api("DELETE","/api/admin/settings/universities/"+encodeURIComponent(b.dataset.udel));settings()})}
 
 async function students(){const q=new URLSearchParams(location.hash.slice(1));
  $("#m").innerHTML=`<div class="card"><div class="row"><input id="sq" aria-label="Search students by NIAT ID or name" placeholder="Search NIAT ID or name" style="flex:1;min-width:200px"><button class="b q" id="sgo">Search</button></div></div>

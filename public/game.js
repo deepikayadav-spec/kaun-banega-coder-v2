@@ -915,7 +915,7 @@ function startPractice(){ctx();goFull();clearInterval(qInt);clearInterval(fInt);
  S={screen:"play",name:S.name,used:{},run:{t0:Date.now(),answered:0,correct:0,startRung:0,peak:0,fb:0,en:100,cs:0},practice:true};
  logEv({kind:"practice_start"});newQ();render();scrollTo({top:0})}
 /* The next question comes from the progression engine on the server: it decides skill, level, type, difficulty and variant. */
-const blankQ=()=>({enLoss:0,enGain:0,thinkLong:false,pick:null,gone:[],hint:false,hintText:"",fill:"",ord:[],msel:[],bq:{},deadline:0,away:0,timeout:false,info:null,ok:null,res:null,pendingRes:null,revealing:false,noQ:null});
+const blankQ=()=>({enLoss:0,enGain:0,thinkLong:false,pick:null,gone:[],hint:false,hintText:"",fill:"",ord:[],msel:[],bq:{},deadline:0,away:0,timeout:false,info:null,ok:null,res:null,pendingRes:null,revealing:false,noQ:null,qfbAsk:false,qfbSent:false,retryWin:false});
 /* The admin can upload a new skill graph at any time. Every engine view names the live graph; when it differs from the
    one this page was built from, the page reloads at the next safe screen (never mid-question) to show the new path. */
 function graphCheck(e){if(e&&e.graphVersion&&GR.version&&e.graphVersion!==GR.version)S.graphChanged=1}
@@ -987,6 +987,9 @@ async function reveal(){if(S.phase==="reveal"||S.revealing)return;S.revealing=tr
   S.phase="ask";S.pendingRes=null;fsToast("Could not reach the server. Check your internet and lock your answer again.");render();return}
  if(S.q!==q||S.screen!=="play")return;
  const ok=!!res.correct;S.ok=ok;S.res=res;S.phase="reveal";S.revealAt=Date.now();KBCQ.reveal(q,res,S);
+ S.qfbAsk=(P.qfbN||0)<10;S.qfbSent=false;RF.q=rfBlank();
+ /* "Try a similar question": the follow-up is the same skill and type; getting it right is the moment worth counting */
+ if(S.retryOf){if(ok&&q.sk===S.retryOf){S.retryWin=true;logEv({kind:"retry_correct",sk:q.sk})}S.retryOf=null}
  const info=apply(ok,res);S.info=info;if(!S.practice)energyTick(ok);S.run.peak=Math.max(S.run.peak||0,info.before,info.after);S.run.answered++;if(ok)S.run.correct++;
  logEv({kind:"answer",sk:q.sk,ty:q.ty,v:q.v,qid:q.id,ok,timeout:!!S.timeout,practice:!!S.practice,rung:info.after});S.run.fb=0;
  render();
@@ -1013,7 +1016,7 @@ function countUpChip(a,b,d){const el=$("#wchip b"),ch=$("#wchip");if(!el)return;
 function boardHTML(r,compact){const rows=[];for(let i=LADDER.length-1;i>=0;i--){
   const soon=i>=OPEN,cls=["rung",CK[i]?"ck":"",i<r?"done":"",i===r&&!soon?"next":"",soon?"soon":""].join(" ");
   rows.push(`<div class="${cls}"><span class="no">${i+1}</span><span class="amtc">${boardNote(LADDER[i])}${fmtR(LADDER[i])}</span>${CK[i]?`<span class="tg">${stg(CK[i])}${TAG[i]?" · "+TAG[i]:""}</span>`:TAG[i]?`<span class="tg">${TAG[i]}</span>`:soon?"":"<span></span>"}</div>`)}
- const min=boardMin();return `<aside class="board card ${min?"min":""}" aria-label="Money board"><h2>Money board<button class="bmin" data-act="board-min" aria-pressed="${min}" aria-label="${min?"Show the whole money board":"Minimise the money board"}" title="${min?"Show all rungs":"Minimise"}">${min?"＋":"−"}</button></h2>${rows.join("")}</aside>`}
+ const min=boardMin();return `<aside class="board card ${min?"min":""}" aria-label="Money board"><h2>Money board<button class="bmin" data-act="board-min" aria-pressed="${min}" aria-label="${min?"Show the whole money board":"Minimise the money board"}" title="${min?"Show the whole money board":"Minimise"}">${min?"＋":"−"}</button></h2>${rows.join("")}</aside>`}
 /* the money board can be folded down to the rung being played; the choice is remembered on this device */
 const boardMin=()=>!!store.get("kbc-board-min",false);
 function stripHTML(r){return `<div class="strip" aria-hidden="true">${LADDER.map((v,i)=>`<i class="${i<r?"done":i===r?"next":""} ${i>=OPEN?"soon":""}"></i>`).join("")}</div>`}
@@ -1077,13 +1080,24 @@ function actHTML0(){const q=S.q;
  if(S.phase==="locked")return `<span class="ask pulse">Answer locked… let's see</span>`;
  if(S.practice)return `<span class="banner ${S.ok?"win":"lose"}">${S.ok?"Correct!":S.timeout?"Time's up":"Not quite"}</span><button class="btn gold" data-act="next">Next question →</button><button class="btn quiet" data-act="practice-end">End practice</button>`;
  if(!S.ok&&S.run.en<=0)return `<span class="banner lose">Out of energy</span><button class="btn gold" data-act="end">See my game →</button>`;
- if(!S.ok)return `<span class="banner lose">${S.timeout?"Time's up":"Not this time"}</span><button class="btn gold" data-act="second">Try a new variant →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
- if(S.ok)return rungOf()>=OPEN&&!S.practice?`<span class="banner win">Correct answer!</span><button class="btn gold" data-act="collect">Collect ${fmtR(LADDER[OPEN-1])} →</button>`:`<span class="banner win">Correct answer!</span><button class="btn gold" data-act="next">Next question →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
+ if(!S.ok)return `<span class="banner lose">${S.timeout?"Time's up":"Not this time"}</span><button class="btn gold" data-act="second">Try a similar question →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
+ if(S.ok)return rungOf()>=OPEN&&!S.practice?`<span class="banner win">Correct answer!</span><button class="btn gold" data-act="collect">Collect ${fmtR(LADDER[OPEN-1])} →</button>`:`<span class="banner win">${S.retryWin?"You fixed it! ✓":"Correct answer!"}</span><button class="btn gold" data-act="next">Next question →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
  return `<span class="banner lose">${S.timeout?"Time's up":"Wrong answer"}</span><button class="btn gold" data-act="end">See my game →</button>`}
 function feedbackHTML(){const I=S.info;if(S.phase!=="reveal"||!I)return "";let h="";
- if(S.ok&&I.rungUp)h+=`<div class="rungup">${noteBig(amountOf(I.after),"won")||mascot("happy",72)}<b>You won ${fmtR(amountOf(I.after))}!</b><span>${I.ck?`${stg(I.ck)} locked in. A wrong answer can't take you below this.`:`Rung ${I.after} won. ${I.after<OPEN?`Next: ${fmtR(LADDER[I.after])}.`:""}`}</span></div>`;
- if(!S.ok&&I.drop)h+=`<div class="drop">${mascot("sad",44)}<span>${I.drop.lostRung?`Dropped from ${fmtR(I.drop.from)} to <b>${fmtR(I.drop.to)}</b> (${stg(I.drop.ck)}).`:`Back to your ${stg(I.drop.ck)} checkpoint: progress on this rung resets.`}</span></div>`;
+ if(S.ok&&I.rungUp)h+=`<div class="rungup">${noteBig(amountOf(I.after),"won")||mascot("happy",72)}<b>You won ${fmtR(amountOf(I.after))}!</b><span>${I.ck?`${stg(I.ck)} locked in. A wrong answer can't take you below this.`:`Prize ${I.after} of 15 won. ${I.after<OPEN?`Next: ${fmtR(LADDER[I.after])}.`:""}`}</span></div>`;
+ if(!S.ok&&I.drop)h+=`<div class="drop">${mascot("sad",44)}<span>${I.drop.lostRung?`Dropped from ${fmtR(I.drop.from)} to <b>${fmtR(I.drop.to)}</b> (${stg(I.drop.ck)}).`:`Back to your ${stg(I.drop.ck)} checkpoint: progress on this prize resets.`}</span></div>`;
  return h}
+/* Wrong answer: name the mix-up behind the option picked, give a 30-second fix, then offer a similar question.
+   The option's own explanation (server "why") names the misconception; "ok" says why the right answer is right. */
+const firstSentences=(t,n)=>{const p=whySteps(t);return p.slice(0,n).join(" ")};
+function fixHTML(){if(S.phase!=="reveal"||S.ok||!S.res||!S.q)return "";const q=S.q,r=S.res,X=EXPLAIN[q.sk]||{},sk=SK[q.sk];
+ const mix=S.timeout?"":(r.why&&r.why!==r.ok?r.why:(X.trap||""));
+ const fix=firstSentences(r.ok||X.idea||"",2)||X.idea||"";
+ if(!mix&&!fix)return "";
+ return `<div class="fixcard card" role="region" aria-label="Quick fix">
+${S.timeout?`<div class="fx-sec"><span class="fx-k miss">Time ran out</span><p>No problem. Here is the idea in 30 seconds.</p></div>`:mix?`<div class="fx-sec"><span class="fx-k miss">Why you picked it</span><p>${esc(mix)}</p></div>`:""}
+${fix?`<div class="fx-sec"><span class="fx-k fix">The 30-second fix <i class="fx-t" aria-hidden="true">⏱ 30s</i></span><p>${esc(fix)}</p></div>`:""}
+<div class="fx-foot">${sk?`<span class="fx-topic">Topic: ${esc(sk.short||sk.name)}</span>`:""}<button class="btn quiet sm" data-act="sol">Show step by step</button></div></div>`}
 /* "Reveal solution": the full working opens in a sheet over the hot seat, so the question screen never needs scrolling */
 function solOpen(){if(!S.q||S.phase!=="reveal")return;let m=$("#solm");if(!m){m=document.createElement("div");m.id="solm";m.className="modalx";document.body.appendChild(m)}
  m.innerHTML=`<div class="mbox solbox" role="dialog" aria-modal="true" aria-label="Solution"><button class="mx" data-act="sol-close" aria-label="Close">✕</button>${explainHTML(S.q,S.ok)}<div class="mbtns"><button class="btn gold" data-act="sol-close">Got it</button></div></div>`;
@@ -1105,13 +1119,13 @@ function vPlay(){if(!S.q)return vNoQ();const q=S.q,r=rungOf(),st=rowSteps(Math.m
 <div class="stake"><small>${S.practice?"Practice round":"Playing for"}</small><b>${S.practice?"No stakes":fmtR(stake)}</b>${S.practice?"":noteThumb(stake)}<small>Banked ${fmtR(amountOf(r))}</small></div></div>
 ${stripHTML(r)}<button class="mbtoggle" data-act="board" aria-label="Show the money board">Money board</button>
 <section class="mainc" id="mainc">
-<div class="qcard card"><div class="qtop"><span class="chip gold">${S.practice?"Practice":`Question ${S.run.answered+(S.phase==="reveal"?0:1)} · for ${fmtR(S.phase==="reveal"&&S.info?LADDER[Math.min(S.info.before,LADDER.length-1)]:stake)}`}</span>${pips?`<span class="rowprog">To next rung <span class="pips" aria-label="${st.done} of ${st.total}">${pips}</span></span>`:""}</div>
+<div class="qcard card"><div class="qtop"><span class="chip gold">${S.practice?"Practice":`Question ${S.run.answered+(S.phase==="reveal"?0:1)} · for ${fmtR(S.phase==="reveal"&&S.info?LADDER[Math.min(S.info.before,LADDER.length-1)]:stake)}`}</span>${pips?`<span class="rowprog">To the next prize <span class="pips" aria-label="${st.done} of ${st.total}">${pips}</span></span>`:""}</div>
 <h2 class="qtext">${esc(q.prompt)}</h2>${KBCQ.above(q,S)}
 ${q.code?codeHTML(q.code):""}
 ${q.ai!=null?`<div class="ai"><i>AI</i><span>The AI says this prints <b>${esc(q.ai)}</b></span></div>`:""}
 ${S.hint?`<div class="panel card"><h3>${ICON.hint}${esc(COSTUMES[CHAR].name)}'s hint</h3><p>${esc(S.hintText||"Thinking…")}</p></div>`:""}
 </div>
-${answerHTML()}
+${answerHTML()}${fixHTML()}${S.phase==="reveal"&&S.qfbAsk&&!S.qfbSent?rfHTML("q"):""}
 <div class="dockrow">${dockHTML(mood)}<div class="actions">${actHTML()}</div></div>
 ${feedbackHTML()}
 </section></div><div class="side">${boardHTML(r)}</div></div>`}
@@ -1122,10 +1136,11 @@ function vResult(){const R=S.res,rc=R.reached||0,pay=R.payout||0;
  return `<section class="res enter"><div class="res-card card">
 <div class="res-top"><div class="res-head">
 <div class="coach">${mascot(mood,84)}<p class="say">${esc(msg)}</p></div>
-<div class="muted">${esc(S.name||"Player")} takes home</div><div class="ramt">${fmtR(pay)}</div><div class="muted">Highest rung this game: ${rc?fmtR(amountOf(rc)):"none yet"}</div>
+<div class="muted">${esc(S.name||"Player")} takes home</div><div class="ramt">${fmtR(pay)}</div><div class="muted">Highest prize this game: ${rc?fmtR(amountOf(rc)):"none yet"}</div>
 </div>${NOTE[pay]?`<div class="res-bill">${noteBig(pay)}</div>`:""}</div>
-<dl class="res-line"><div><dt>Correct this game</dt><dd>${R.correct}/${R.answered}</dd></div><div><dt>Time played</dt><dd>${Math.floor(R.secs/60)}:${String(R.secs%60).padStart(2,"0")}</dd></div><div><dt>Highest rung</dt><dd>${rc}/15</dd></div><div><dt>Wallet</dt><dd>${fmtR(R.wallet)}</dd></div></dl>
+<dl class="res-line"><div><dt>Correct this game</dt><dd>${R.correct}/${R.answered}</dd></div><div><dt>Time played</dt><dd>${Math.floor(R.secs/60)}:${String(R.secs%60).padStart(2,"0")}</dd></div><div><dt>Highest prize</dt><dd>${rc}/15</dd></div><div><dt>Wallet</dt><dd>${fmtR(R.wallet)}</dd></div></dl>
 <div class="res-goal"><div class="res-goal-h"><b>Next game starts fresh at 10</b><span class="muted">Best ever: ${fmtR(amountOf(P.best))}</span></div><span class="muted">Win Fastest Finger First to take the hot seat again.</span></div>
+${R.fbDone==="sent"?`<div class="rf rf-done"><b>Thanks!</b> Your rating reached the KBC team.</div>`:R.fbDone?"":rfHTML("g")}
 ${learn}
 ${quipHTML("result"+R.reason)}
 <div class="ractions"><button class="btn gold" data-act="play">Play again →</button><button class="btn quiet" data-act="fame">Hall of Fame</button><button class="btn quiet" data-act="home">Home</button></div>
@@ -1325,15 +1340,15 @@ function vTeam(){if(!DASH.events)return `<section class="dash"><h2>Team dashboar
 <div class="kpi"><span>Answers logged</span><b>${A.length}</b><small>Accuracy <b>${acc}%</b></small></div>
 <div class="kpi"><span>Reached C1 (50+)</span><b>${rungs.filter(r=>r>=3).length}</b><small>C2 (500): <b>${rungs.filter(r=>r>=6).length}</b></small></div></div>
 <div class="two"><div class="card dsec chart"><h3>Daily active students · last 14 days</h3>${chart}</div>
-<div class="card dsec"><h3>Where players are on the board</h3><div class="tw"><table><thead><tr><th>Rung</th><th>Amount</th><th>Players</th></tr></thead><tbody>${dist.map((n,r)=>`<tr><td>${r}</td><td>${fmtR(amountOf(r))}</td><td>${n}</td></tr>`).join("")}</tbody></table></div></div></div>
+<div class="card dsec"><h3>Where players are on the board</h3><div class="tw"><table><thead><tr><th>Prize</th><th>Amount</th><th>Players</th></tr></thead><tbody>${dist.map((n,r)=>`<tr><td>${r}</td><td>${fmtR(amountOf(r))}</td><td>${n}</td></tr>`).join("")}</tbody></table></div></div></div>
 ${pathDash(E)}<div class="card dsec"><h3>Skills · C1–C2 graph</h3><div class="tw"><table><thead><tr><th>Skill</th><th>Name</th><th>Needs</th><th>Answers</th><th>Accuracy</th><th>Median time</th><th>Mastered by</th></tr></thead><tbody>${bySk.map(x=>`<tr><td class="code">${x.id}</td><td>${esc(x.s.name)}</td><td class="muted">${x.s.pre.join(", ")||"–"}</td><td>${x.n}</td><td>${accCell(x.acc)}</td><td>${x.n?x.med.toFixed(1)+" s":"–"}</td><td>${x.m}</td></tr>`).join("")}</tbody></table></div></div>
 <div class="two"><div class="card dsec"><h3>Question types</h3>${byTy.length?`<div class="tw"><table><thead><tr><th>Type</th><th>Format</th><th>Answers</th><th>Accuracy</th><th>Median</th></tr></thead><tbody>${byTy.map(x=>`<tr><td class="code">${x.t}</td><td>${esc(TYPES[x.t])}</td><td>${x.n}</td><td>${accCell(x.acc)}</td><td>${x.med.toFixed(1)} s</td></tr>`).join("")}</tbody></table></div>`:`<p class="note">No answers yet.</p>`}</div>
-<div class="card dsec"><h3>Skill graph (rows = rungs)</h3><div class="gmap">${ROWS.slice().reverse().map(r=>`<div class="grow"><b>${r.id} · ${r.c}</b><div class="gskills">${r.skills.map(s=>`<div class="gs"><b>${s.id} · ${s.types.join(" ")}</b>${esc(s.name)}<small>${s.pre.length?"after "+s.pre.join(", "):"start here"}</small></div>`).join("")}</div></div>`).join("")}</div></div></div>
+<div class="card dsec"><h3>Skill graph (one row per prize)</h3><div class="gmap">${ROWS.slice().reverse().map(r=>`<div class="grow"><b>${r.id} · ${r.c}</b><div class="gskills">${r.skills.map(s=>`<div class="gs"><b>${s.id} · ${s.types.join(" ")}</b>${esc(s.name)}<small>${s.pre.length?"after "+s.pre.join(", "):"start here"}</small></div>`).join("")}</div></div>`).join("")}</div></div></div>
 ${(()=>{const by={};A.forEach(e=>{const u=by[e.uid]=by[e.uid]||{n:e.n||"–",rows:{},t:0};if(e.n)u.n=e.n;u.t=Math.max(u.t,e.t);const row=SK[e.sk]?SK[e.sk].row:null;if(row==null)return;const c=u.rows[row]=u.rows[row]||{a:0,c:0};c.a++;if(e.ok)c.c++});
  const list=Object.values(by).sort((a,b)=>b.t-a.t).slice(0,60);
  const cell=c=>!c?'<td class="muted">–</td>':`<td><b>${c.c}/${c.a}</b> <span class="muted">${Math.round(c.c/c.a*100)}%</span></td>`;
  return `<div class="card dsec"><h3>Student skill progress <span class="muted" style="font-weight:500">· right / answered per row · admins only</span></h3>${list.length?`<div class="tw"><table><thead><tr><th>Student</th>${ROWS.map(r=>`<th>${r.id} · ${esc(r.name)}</th>`).join("")}</tr></thead><tbody>${list.map(u=>`<tr><td>${esc(u.n)}</td>${ROWS.map((r,i)=>cell(u.rows[i])).join("")}</tr>`).join("")}</tbody></table></div>`:'<p class="muted">No answers yet.</p>'}</div>`})()}
-<div class="card dsec"><h3>Latest answers</h3>${A.length?`<div class="tw"><table><thead><tr><th>When</th><th>Player</th><th>Question</th><th>Result</th><th>Time</th><th>Rung</th></tr></thead><tbody>${A.slice().sort((a,b)=>b.t-a.t).slice(0,15).map(e=>`<tr><td>${new Date(e.t).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</td><td>${esc(e.n||"–")}</td><td class="code">${esc(e.qid||"")}</td><td>${e.ok?`<span class="chip ok">Right</span>`:e.timeout?"Timed out":"Wrong"}</td><td>${((e.ms||0)/1000).toFixed(1)} s</td><td>${e.rung}</td></tr>`).join("")}</tbody></table></div>`:`<p class="note">Answers appear here as soon as someone plays.</p>`}</div>
+<div class="card dsec"><h3>Latest answers</h3>${A.length?`<div class="tw"><table><thead><tr><th>When</th><th>Player</th><th>Question</th><th>Result</th><th>Time</th><th>Prize</th></tr></thead><tbody>${A.slice().sort((a,b)=>b.t-a.t).slice(0,15).map(e=>`<tr><td>${new Date(e.t).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</td><td>${esc(e.n||"–")}</td><td class="code">${esc(e.qid||"")}</td><td>${e.ok?`<span class="chip ok">Right</span>`:e.timeout?"Timed out":"Wrong"}</td><td>${((e.ms||0)/1000).toFixed(1)} s</td><td>${e.rung}</td></tr>`).join("")}</tbody></table></div>`:`<p class="note">Answers appear here as soon as someone plays.</p>`}</div>
 <p class="note">Every answer is logged with its five tags (C, P, G, S, T) plus the variant, answer time and time spent reading feedback. Students never see skill or type names.</p>
 </section>`}
 
@@ -1347,16 +1362,46 @@ function buildToran(){const t=$(".toran");if(!t)return;const n=Math.max(13,Math.
   for(let i=0;i<n;i++){const d=Math.abs(i-(n-1)/2)/((n-1)/2),len=Math.round(3+4*(1-d))+(i%2?0:1);let b="";for(let k=0;k<len;k++)b+=`<i style="background:${k%2?"#FFC300":"#FF8A00"}"></i>`;h+=`<span class="tstr" style="left:calc(${(i/(n-1)*100).toFixed(3)}% - 8px);animation-delay:${(i%5)*.3}s">${b}<em></em></span>`}
   t.innerHTML=h;t.dataset.w=innerWidth}
 /* ===== Feedback: 5-star rating + written comment, both required ===== */
-let FB={stars:0,bonus:0,text:""};
-/* Optional "11-star" question: the rating stays out of 5; a student who loved it can add up to 6 extra stars */
-const FB_BONUS=["Optional","Better than I expected","I told a friend","I came back on my own","Best part of my week","I'd pick it over a reel","Felt like the real hot seat!"];
+/* One star form, used in three places: the timed reminder (m), after each of a student's first 10 questions (q) and on
+   the results screen (g). The label, the quick tags and the follow-up question change with the stars picked. */
+const RF_LABEL=["","not it","kinda mid","it was okay","pretty good","loved it"];
+const RF_GAME={
+ 1:{head:"What broke it? Tap any.",prompt:"What made this game forgettable?",hint:"Be honest. The first thing that comes to mind is fine.",tags:["game froze or crashed","marked my right answer wrong","lost my progress","questions made no sense","way too hard to enjoy","felt like a test, not a game"]},
+ 2:{head:"What went wrong? Tap any.",prompt:"What made this game forgettable?",hint:"Be honest. The first thing that comes to mind is fine.",tags:["same questions on repeat","got boring after 5 min","too slow between questions","timer too stressful","explanations did not click","no reason to keep going"]},
+ 3:{head:"What held it back? Tap any.",prompt:"What one change would make you play again tomorrow?",hint:"One thing is enough.",tags:["needs more variety","too easy early on","difficulty jumped too fast","lifelines felt useless","want to play with friends","want harder final questions"]},
+ 4:{head:"What is missing for a 5? Tap any.",prompt:"What would make this game unforgettable?",hint:"It was good. What would make you tell a friend about it?",tags:["more topics","a leaderboard","share my score","a daily challenge","play vs a friend","better explanations"]},
+ 5:{head:"What hit? Tap any.",prompt:"What would make this game unforgettable?",hint:"Think bigger than a fix. Dream a little.",tags:["explanations hit","lifelines were clutch","the pressure was fun","learned something new","would play with friends","sending this to my batch"]}};
+const RF_Q={
+ 1:{head:"What was wrong with it? Tap any.",prompt:"What should we fix in this question?",hint:"Optional.",tags:["made no sense","marked me wrong unfairly","bug or glitch","way too hard"]},
+ 2:{head:"What went wrong? Tap any.",prompt:"What should we fix in this question?",hint:"Optional.",tags:["confusing wording","too hard for this level","explanation didn't help","timer too short"]},
+ 3:{head:"What held it back? Tap any.",prompt:"What would make it better?",hint:"Optional.",tags:["a bit dull","too easy","explanation unclear","wanted a hint"]},
+ 4:{head:"What worked? Tap any.",prompt:"Anything to add?",hint:"Optional.",tags:["clear question","good challenge","explanation helped","want more like this"]},
+ 5:{head:"What hit? Tap any.",prompt:"Anything to add?",hint:"Optional.",tags:["loved this one","learned something new","perfect difficulty","fun to solve"]}};
+const rfBlank=()=>({stars:0,tags:[],text:""});
+const RF={m:rfBlank(),q:rfBlank(),g:rfBlank()};
+const RF_CFG={m:{title:"How is KBC so far?",sub:"Tap a star to continue. Tags and words are optional.",set:RF_GAME,send:"Send feedback"},
+ q:{title:"Rate this question",sub:"",set:RF_Q,send:""},
+ g:{title:"How was this game?",sub:"Takes 10 seconds.",set:RF_GAME,send:"Send"}};
+const STAR_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>';
+function rfHTML(id){const F=RF[id],C=RF_CFG[id],L=F.stars?C.set[F.stars]:null,sub=id==="q"?`Needed for your first 10 questions · ${Math.min(10,(P.qfbN||0)+1)} of 10`:C.sub;
+ return `<div class="rf rf-${id}" id="rf-${id}"><div class="rf-h"><h3 id="rf-${id}-h">${C.title}</h3>${sub?`<p>${esc(sub)}</p>`:""}</div>
+<div class="rf-stars" role="radiogroup" aria-labelledby="rf-${id}-h">${[1,2,3,4,5].map(n=>`<button type="button" class="rf-s ${n<=F.stars?"on":""}" data-act="rf-star" data-f="${id}" data-n="${n}" role="radio" aria-checked="${n===F.stars}" aria-label="${n} star${n>1?"s":""}">${STAR_SVG}</button>`).join("")}<span class="rf-l">${RF_LABEL[F.stars]||"Tap a star"}</span></div>
+${L?`<div class="rf-tags"><span class="rf-th">${esc(L.head)}</span><div class="rf-chips">${L.tags.map((t,i)=>`<button type="button" class="rf-c" data-act="rf-tag" data-f="${id}" data-i="${i}" aria-pressed="${F.tags.includes(t)}">${esc(t)}</button>`).join("")}</div></div>
+<div class="rf-more"><label for="rf-${id}-text">${esc(L.prompt)}</label><span class="rf-hint">${esc(L.hint)}</span><textarea id="rf-${id}-text" data-f="${id}" rows="${id==="q"?1:2}" maxlength="600" placeholder="Optional">${esc(F.text)}</textarea></div>`:""}
+${C.send?`<div class="rf-btns"><button type="button" class="btn gold" data-act="rf-send" data-f="${id}" ${F.stars?"":"disabled"}>${C.send}</button>${id==="g"?`<button type="button" class="btn quiet" data-act="rf-skip" data-f="g">Skip</button>`:""}</div>`:""}</div>`}
+function rfRedraw(id){const el=$("#rf-"+id);if(!el)return;el.outerHTML=rfHTML(id)}
+document.addEventListener("input",e=>{const f=e.target.dataset&&e.target.dataset.f;if(f&&RF[f]&&e.target.id==="rf-"+f+"-text")RF[f].text=e.target.value},SIG);
+function rfPost(id,ctx){const F=RF[id],text=(F.text||"").trim().slice(0,600);logEv({kind:"feedback",form:id,stars:F.stars,tags:F.tags,text});
+ KBCQ.api("POST","/api/feedback",{text,ctx:Object.assign({stars:F.stars,tags:F.tags,screen:S.screen},ctx)}).catch(()=>{});RF[id]=rfBlank()}
+/* The question rating is required for a student's first 10 questions; it is sent when they move on */
+const QFB_LEAVE=["next","second","stop","end","collect","practice-end"];
+function qfbGate(a){if(!(S.screen==="play"&&S.phase==="reveal"&&S.qfbAsk&&!S.qfbSent&&QFB_LEAVE.includes(a)))return true;
+ if(!RF.q.stars){const el=$("#rf-q");if(el){el.classList.remove("nudge");void el.offsetWidth;el.classList.add("nudge");el.scrollIntoView({block:"center",behavior:reduceMotion?"auto":"smooth"})}fsToast("Rate this question to continue.");return false}
+ const q=S.q;rfPost("q",{kind:"question",qid:q&&q.id,sk:q&&q.sk,type:q&&q.ty,correct:!!S.ok,practice:!!S.practice,trigger:"question "+((P.qfbN||0)+1)+" of 10"});
+ S.qfbSent=true;P.qfbN=(P.qfbN||0)+1;saveP();return true}
 function fbHTML(sent){if(sent)return `<div class="fbbox" role="dialog" aria-modal="true" aria-label="Feedback"><div class="fbdone">${mascot("dance",120)}<h3>Thank you!</h3><p>Your feedback reached the KBC team.</p><button class="btn gold" data-act="fb-close">Close</button></div></div>`;
- const ok=FB.stars>0&&FB.text.trim().length>=5;
- return `<div class="fbbox" role="dialog" aria-modal="true" aria-labelledby="fbh"><h3 id="fbh">How is KBC so far?</h3><p class="fbreq">Please share your feedback to continue.</p>
-<p class="fbl">Your rating <i>*</i></p><div class="fbstars" role="radiogroup" aria-label="Rating out of 5">${[1,2,3,4,5].map(n=>`<button class="fbs ${n<=FB.stars?"on":""}" data-act="fb-star" data-n="${n}" role="radio" aria-checked="${n===FB.stars}" aria-label="${n} star${n>1?"s":""}">★</button>`).join("")}<span class="fbsl">${["Tap a star","Poor","Okay","Good","Great","Loved it!"][FB.stars]}</span></div>
-<label class="fbl" for="fbtext">Tell us more <i>*</i></label><textarea id="fbtext" maxlength="600" rows="4" placeholder="What did you like? What should we change?">${esc(FB.text)}</textarea>
-<p class="fbhint" id="fbhint">${ok?"Ready to send.":FB.stars?"Write at least 5 characters.":"Pick a rating and write a few words. Both are required."}</p>
-<button class="btn gold fbsend" data-act="fb-send" ${ok?"":"disabled"}>Send feedback</button></div>`}
+ return `<div class="fbbox" role="dialog" aria-modal="true" aria-labelledby="rf-m-h">${rfHTML("m")}</div>`}
+let FB={trigger:""};
 /* Time on the platform counts only while the page is visible, and is saved with the student's progress, so it carries
    across sessions and devices. Each reminder shows once; it waits until no question or puzzle is running. */
 const FB_AT=[5,15,30,60];
@@ -1366,22 +1411,22 @@ function fbTick(){if(document.hidden)return;P.tOn=(P.tOn||0)+10000;P.fbAt=P.fbAt
  if(P.fbSent||ME.feedbackGiven)return;   /* a student who has already sent feedback is never asked again */
  const due=FB_AT.filter(t=>P.tOn>=t*60000&&!P.fbAt.includes(t));if(!due.length||!fbSafe())return;
  P.fbAt.push(...due);saveP();FB.trigger=`after ${due[due.length-1]>=60?due[due.length-1]/60+" hour":due[due.length-1]+" min"} on the platform`;fbOpen();logEv({kind:"feedback_prompt",at:due[due.length-1]})}
-setInterval(fbTick,10000);
+/* timed feedback pop-ups are off: feedback is asked after each of the first 10 questions and on the results screen */
 /* Pixel can be hidden from the header; the hot seat then gives its space to the question */
 function syncBuddy(){const off=!!store.get("kbc-hide-buddy",false),b=$("#buddybtn");document.body.classList.toggle("nobuddy",off);
  if(b){const n=buddyName();b.setAttribute("aria-pressed",off);b.title=off?`Show ${n}`:`Hide ${n}`;b.setAttribute("aria-label",off?`Show ${n}, your KBC buddy`:`Hide ${n}, your KBC buddy`);const l=b.querySelector(".lbl");if(l)l.textContent=off?`Show ${n}`:`Hide ${n}`}}
 syncBuddy();
 /* The hot seat and Fastest Finger shrink their question column to fit the window instead of scrolling */
-function fitScreen(){const m=$("#mainc")||$(".fffw");if(!m||!(S.screen==="play"||S.screen==="fff"||S.screen==="seat"))return;
+/* Phones scroll instead: zooming there changed the text size every time the address bar slid in or out while scrolling */
+const phoneLike=()=>innerWidth<760||matchMedia("(pointer:coarse)").matches;
+function fitScreen(){const m=$("#mainc")||$(".fffw");if(!m)return;if(phoneLike()){if(m.style.zoom)m.style.zoom="";return}if(!(S.screen==="play"||S.screen==="fff"||S.screen==="seat"))return;
  m.style.zoom="";const top=m.getBoundingClientRect().top,avail=innerHeight-top-10,need=m.scrollHeight;
  if(need>avail&&avail>200)m.style.zoom=String(Math.max(.6,Math.floor(avail/need*100)/100))}
 let fitT=null;const fitSoon=()=>{cancelAnimationFrame(fitT);fitT=requestAnimationFrame(()=>requestAnimationFrame(fitScreen))};
 new MutationObserver(fitSoon).observe(document.getElementById("app"),{childList:true,subtree:true});
-addEventListener("resize",fitSoon,SIG);
-function fbOpen(){const m=$("#fbm");m.hidden=false;m.innerHTML=fbHTML();setTimeout(()=>{const t=$("#fbtext");t&&t.focus()},50)}
-function fbSync(){const ok=FB.stars>0&&FB.text.trim().length>=5,b=$(".fbsend"),h=$("#fbhint");if(b)b.disabled=!ok;if(h)h.textContent=ok?"Ready to send.":FB.stars?"Write at least 5 characters.":"Pick a rating and write a few words. Both are required."}
+let fitW=innerWidth;addEventListener("resize",()=>{if(phoneLike()&&innerWidth===fitW)return;fitW=innerWidth;fitSoon()},SIG);
+function fbOpen(){const m=$("#fbm");m.hidden=false;m.innerHTML=fbHTML();setTimeout(()=>{const t=m.querySelector(".rf-s");t&&t.focus()},50)}
 
-document.addEventListener("input",e=>{if(e.target.id==="fbtext"){FB.text=e.target.value;fbSync()}},SIG);
 document.addEventListener("keydown",e=>{const m=$("#fbm");if(m&&!m.hidden&&e.key==="Escape"){e.preventDefault();e.stopPropagation()}},true);
 function diwaliDecor(){cosmos();const t=$(".toran");if(t&&(!t.childElementCount||Math.abs((+t.dataset.w||0)-innerWidth)>40))buildToran();
  const k=$(".kandil");if(k&&!k.childElementCount)k.innerHTML=KANDIL;const d=$(".bigdiya");if(d&&!d.childElementCount)d.innerHTML=BIGDIYA;
@@ -1671,7 +1716,6 @@ const TOUR=[
  {sel:'header [data-act="fame"]',t:"Hall of Fame",d:"Top players overall and in your university."},
  {sel:"#livechip",t:"Live now",d:"How many students are playing right now."},
  {sel:'header [data-act="guide"]',t:"How to play",d:"The rules in pictures. Open it any time, even mid-game."},
- {sel:'header [data-act="fb-open"]',t:"Feedback",d:"Tell us what to improve. We read every message."},
  {sel:"#themebtn",t:"Light or dark",d:"Switch the look whenever you like."},
  {sel:'header [data-act="logout"]',t:"Log out",d:"Done for the day? Log out here. Your progress is saved."}];
 let TI=-1;
@@ -1743,8 +1787,8 @@ function vWallet(){const coins=P.coins||0,best=P.best||0,acc=P.answered?Math.rou
  const top=[...LADDER].reverse().find(v=>NOTE[v]&&v<=coins);
  return `<section class="wallet">
 <div class="wtop card"><div><span class="muted">Your wallet</span><div class="wamt">${fmtR(coins)}</div><span class="muted">Virtual coins from every game you've played.</span></div>${top?`<div class="wbill">${noteBig(top)}</div>`:mascot("chai",120)}</div>
-<div class="wstats"><div class="card"><span>Best rung</span><b>${best?fmtR(amountOf(best)):"—"}</b></div><div class="card"><span>Games</span><b>${P.runs||0}</b></div><div class="card"><span>Answers right</span><b>${P.correct||0}/${P.answered||0}</b></div><div class="card"><span>Accuracy</span><b>${acc}%</b></div></div>
-<div class="card wnotes"><h3>Notes collected <small class="muted">unlock each rung once</small></h3><div class="wgrid">${LADDER.map((v,i)=>`<div class="${i<best?"got":"lock"}">${boardNote(v)}<small>${fmtR(v)}</small></div>`).join("")}</div></div>
+<div class="wstats"><div class="card"><span>Best prize</span><b>${best?fmtR(amountOf(best)):"—"}</b></div><div class="card"><span>Games</span><b>${P.runs||0}</b></div><div class="card"><span>Answers right</span><b>${P.correct||0}/${P.answered||0}</b></div><div class="card"><span>Accuracy</span><b>${acc}%</b></div></div>
+<div class="card wnotes"><h3>Notes collected <small class="muted">unlock each prize once</small></h3><div class="wgrid">${LADDER.map((v,i)=>`<div class="${i<best?"got":"lock"}">${boardNote(v)}<small>${fmtR(v)}</small></div>`).join("")}</div></div>
 <div class="card wlog"><h3>Recent games</h3>${runs.length?`<ul>${runs.map(e=>`<li><span>${new Date(e.t).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</span><span class="muted">${why[e.reason]||"Game over"} · ${e.correct||0}/${e.answered||0} right</span><b>+${fmtR(e.payout||0)}</b></li>`).join("")}</ul>`:'<p class="muted">No games yet. Win Fastest Finger to start earning.</p>'}</div>
 ${quipHTML("wallet")}
 <div class="ractions"><button class="btn gold" data-act="play">Earn more →</button><button class="btn quiet" data-act="fame">Hall of Fame</button></div></section>`}
@@ -1769,7 +1813,7 @@ function guideOverlay(){let m=$("#guidem");if(!m){m=document.createElement("div"
  setTimeout(()=>{const c=m.querySelector(".mx");c&&c.focus()},30)}
 document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;for(const id of ["#solm","#guidem","#leavem"]){const m=$(id);if(m&&!m.hidden){e.preventDefault();m.hidden=true;return}}if(TI>=0){e.preventDefault();tourEnd()}},SIG);
 document.addEventListener("click",e=>{if(e.target.classList&&e.target.classList.contains("modalx"))e.target.hidden=true},SIG);
-document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b||b.disabled)return;const a=b.dataset.act;
+document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b||b.disabled)return;const a=b.dataset.act;if(!qfbGate(a))return;
  if(a==="leave-stay"){modalClose("#leavem");return}
  if(a==="leave-go"){modalClose("#leavem");const el=PEND;PEND=null;if(el){LEAVE_OK=true;try{el.click()}finally{LEAVE_OK=false}}return}
  if(a==="guide"&&inGame()){guideOverlay();return}
@@ -1795,9 +1839,12 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="buddy-toggle"){store.set("kbc-hide-buddy",!store.get("kbc-hide-buddy",false));syncBuddy();const y=scrollY;render();scrollTo({top:y});return}
  if(a==="fb-open"){FB.trigger="";fbOpen();return}
  if(a==="fb-close"){$("#fbm").hidden=true;return}
- if(a==="fb-bonus"){const n=+b.dataset.n;FB.bonus=FB.bonus===n?0:n;FB.text=($("#fbtext")||{}).value||FB.text;$("#fbm").innerHTML=fbHTML();SFX.pick();return}
- if(a==="fb-star"){FB.stars=+b.dataset.n;FB.text=($("#fbtext")||{}).value||FB.text;$("#fbm").innerHTML=fbHTML();SFX.pick();return}
- if(a==="fb-send"){if(!(FB.stars>0&&FB.text.trim().length>=5))return;logEv({kind:"feedback",stars:FB.stars,text:FB.text.trim().slice(0,600),screen:S.screen});P.fbSent=true;saveP();KBCQ.api("POST","/api/feedback",{text:FB.text.trim().slice(0,600),ctx:{stars:FB.stars,screen:S.screen,trigger:FB.trigger||"feedback button"}}).catch(()=>{});FB={stars:0,bonus:0,text:""};$("#fbm").innerHTML=fbHTML(true);ROBO.happy();return}
+ if(a==="rf-star"){const f=b.dataset.f;if(!RF[f])return;RF[f].stars=+b.dataset.n;RF[f].tags=[];rfRedraw(f);SFX.pick();const n=document.querySelector(`#rf-${f} .rf-s[data-n="${b.dataset.n}"]`);n&&n.focus({preventScroll:true});return}
+ if(a==="rf-tag"){const f=b.dataset.f,F=RF[f];if(!F||!F.stars)return;const t=RF_CFG[f].set[F.stars].tags[+b.dataset.i];F.tags=F.tags.includes(t)?F.tags.filter(x=>x!==t):F.tags.concat(t);b.setAttribute("aria-pressed",F.tags.includes(t));return}
+ if(a==="rf-send"){const f=b.dataset.f;if(!RF[f]||!RF[f].stars)return;
+  if(f==="m"){rfPost("m",{kind:"general",trigger:FB.trigger||"feedback button"});P.fbSent=true;saveP();$("#fbm").innerHTML=fbHTML(true);ROBO.happy();return}
+  if(f==="g"&&S.res){rfPost("g",{kind:"game",reason:S.res.reason,correct:S.res.correct,answered:S.res.answered,reached:S.res.reached,trigger:"after results"});S.res.fbDone="sent";render();ROBO.happy()}return}
+ if(a==="rf-skip"){if(S.res){S.res.fbDone="skip";RF.g=rfBlank();logEv({kind:"feedback_skip",form:"g"});render()}return}
  if(a==="theme"){setTheme(document.documentElement.dataset.theme==="light"?"dark":"light");return}
  if(a==="pathjump"){pathJump(true);return}
  if(a==="pathsk"){if(b.classList.contains("lock"))return;const sk=b.dataset.sk,g=curGroup(),cur=curSkill(g);
@@ -1827,7 +1874,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="quit-no"){S.quitAsk=false;syncAct();return}
  if(a==="quit"){endRun("stop");return}
  if(a==="next"){leaveReveal();newQ();render();scrollTo({top:0});return}
- if(a==="second"&&S.screen==="play"){logEv({kind:"retry",rung:rungOf()});leaveReveal();newQ();render();scrollTo({top:0});say("New variant of the same question.");return}
+ if(a==="second"&&S.screen==="play"){logEv({kind:"retry",rung:rungOf(),sk:S.q&&S.q.sk});S.retryOf=S.q&&S.q.sk;leaveReveal();newQ();render();scrollTo({top:0});say("New variant of the same question.");return}
  if(a==="practice-end"&&S.practice){leaveReveal();logEv({kind:"practice_end",answered:S.run.answered,correct:S.run.correct});S={screen:"home",name:S.name};render();scrollTo({top:0});return}
  if(a==="board"){document.body.classList.toggle("boardopen");return}
  if(a==="stop"){endRun("stop");return}

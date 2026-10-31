@@ -204,6 +204,9 @@ test('feedback: once a student has sent it, the game knows not to ask again', as
   assert.equal((await call('s', 'GET', '/api/boot')).body.me.feedbackGiven, false);
   assert.equal((await call('s', 'POST', '/api/feedback', { text: 'Loved the maze puzzle', ctx: { stars: 5, trigger: 'after 5 min on the platform' } })).status, 200);
   assert.equal((await call('s', 'GET', '/api/boot')).body.me.feedbackGiven, true);
+  // a star rating alone is accepted; a question rating does not count as the general feedback
+  assert.equal((await call('s', 'POST', '/api/feedback', { text: '', ctx: { stars: 4, kind: 'question', tags: ['clear question'] } })).status, 200);
+  assert.equal((await call('s', 'POST', '/api/feedback', { text: '', ctx: {} })).status, 400);
 });
 
 test('a CT Skill Graph HTML export uploads as a graph; starter skills are done; a fresh start empties every journey', async () => {

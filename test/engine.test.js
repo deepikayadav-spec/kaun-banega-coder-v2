@@ -63,6 +63,21 @@ test('wrong at L1 on starting R2 drops to R1; two misses on a cell switch type',
   assert.notEqual(address(G, A, st, 'S2', 'hotseat').type, t0);
 });
 
+test('variety: after a right answer the next question is a different type; after a wrong one the same type comes back', () => {
+  const A = fullAvail(), st = newState(G);
+  for (const s of Object.keys(st.skills)) st.skills[s].status = 'done';
+  st.skills.S7.status = 'open'; // rmax 3: two rights at L1 stay in L1 (R2 -> R3, then the streak)
+  let prev = null;
+  for (let i = 0; i < 3; i++) {
+    const a = address(G, A, st, 'S7', 'hotseat');
+    if (prev && a.level === prev.level) assert.notEqual(a.type, prev.type, 'question ' + (i + 1) + ' repeats the type');
+    applyAnswer(G, st, 'S7', a.type, true); prev = a;
+  }
+  const w = address(G, A, st, 'S7', 'hotseat');
+  applyAnswer(G, st, 'S7', w.type, false);
+  assert.equal(address(G, A, st, 'S7', 'hotseat').type, w.type, 'a similar question follows a miss');
+});
+
 test('AND-of-OR unlock (S58 needs one of S56/S8 and one of S26/S32/S33/S28)', () => {
   const A = fullAvail(), st = newState(G);
   for (const s of Object.keys(st.skills)) st.skills[s].status = 'done';

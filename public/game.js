@@ -896,7 +896,7 @@ function logEv(e){const ev=Object.assign({t:Date.now()},e);
  if(e.kind==="answer")return; /* answers are stored by the server when graded */
  EVQ.push(ev);clearTimeout(evT);evT=setTimeout(flushEv,EVQ.length>=20?0:3000)}
 function syncLive(){document.querySelectorAll(".livenum").forEach(e=>e.textContent=LIVE);const c=$("#livechip");if(c){c.hidden=!LIVE;c.querySelector("b").textContent=LIVE;c.title=`${LIVE} student${LIVE===1?" is":"s are"} playing right now`}}
-async function pingLive(){if(document.hidden)return;try{const d=await KBCQ.api("POST","/api/live");LIVE=d.live||0;syncLive()}catch(e){}}
+async function pingLive(){if(document.hidden)return;pingLive.at=Date.now();try{const d=await KBCQ.api("POST","/api/live",{screen:S.screen,practice:!!S.practice,answered:S.run?S.run.answered||0:0});LIVE=d.live||0;syncLive()}catch(e){}}
 /* Hall of Fame: scope "all" ranks every university, scope "uni" one university (the student's own by default) */
 async function loadFame(scope,uni,quiet){FQ={scope:scope||"all",uni:uni||""};const want=JSON.stringify(FQ);if(S.screen==="fame"&&!quiet){FAMEC=null;render()}
  try{const d=await KBCQ.api("GET",`/api/fame?scope=${encodeURIComponent(FQ.scope)}&uni=${encodeURIComponent(FQ.uni)}`);if(JSON.stringify(FQ)!==want)return;
@@ -1474,7 +1474,7 @@ function noteZoomMaybe(){if(S.screen!=="play"||S.practice||!S.run||S.phase!=="as
   a.onfinish=()=>{o.remove();t.classList.remove("wait");t.classList.add("land");setTimeout(()=>t.classList.remove("land"),600)}},1500)}
 function resultCountUp(){if(S.screen!=="result"||!S.res||S.res.counted)return;S.res.counted=true;const el=$(".res .ramt"),to=S.res.payout||0;if(!el||!to||reduceMotion)return;
  const t0=performance.now(),d=1200,st=n=>{const k=Math.min(1,(n-t0)/d),e=1-Math.pow(1-k,3);el.textContent=fmtR(Math.round(to*e));if(k<1)requestAnimationFrame(st)};requestAnimationFrame(st)}
-function render(){const prev=render.scr;render.scr=S.screen;const r=render0();screenH1();setTimeout(()=>{noteZoomMaybe();resultCountUp();if(prev!==S.screen)pxRest()},60);
+function render(){const prev=render.scr;render.scr=S.screen;if(prev&&prev!==S.screen&&pingLive.at&&Date.now()-pingLive.at>8000)pingLive();const r=render0();screenH1();setTimeout(()=>{noteZoomMaybe();resultCountUp();if(prev!==S.screen)pxRest()},60);
  if(prev!==S.screen){const app=$("#app");if(app&&prev){app.classList.remove("scr-in");void app.offsetWidth;app.classList.add("scr-in")}
   if(S.screen==="path")requestAnimationFrame(pauseOffscreen)}
  return r}

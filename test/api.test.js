@@ -331,3 +331,16 @@ test('analytics: university comparison, filters, test-data rules and university 
   assert.equal((await call('a', 'DELETE', '/api/admin/settings/universities/ZZ9')).status, 200);
   await call('a', 'PUT', '/api/admin/settings/test-rules', { rollPrefixes: ['TEST'], universities: ['Test'], batches: ['TEST'] });
 });
+
+test('analytics: live now lists who is on the portal and what they are doing', async () => {
+  assert.equal((await call('s', 'POST', '/api/live', { screen: 'play', practice: false, answered: 3 })).status, 200);
+  const l = await call('a', 'GET', '/api/admin/stats/live');
+  assert.equal(l.status, 200, JSON.stringify(l.body));
+  const asha = l.body.rows.find((r) => r.roll_no === 'N26P02A0001');
+  assert.ok(asha && asha.live && asha.mode === 'hotseat' && asha.doing === 'Hot seat' && asha.answeredThisGame === 3, JSON.stringify(asha));
+  assert.ok(l.body.summary.live >= 1 && l.body.summary.hotseat >= 1);
+  await call('s', 'POST', '/api/live', { screen: 'nonsense' });
+  assert.equal((await call('a', 'GET', '/api/admin/stats/live')).body.rows.find((r) => r.roll_no === 'N26P02A0001').doing, 'Hot seat', 'unknown screens keep the last one');
+  const mr = await call('m', 'GET', '/api/admin/stats/live');
+  assert.ok(!mr.body.rows.some((r) => r.roll_no === 'N26P02A0001'), 'scoped admin sees only their university');
+});

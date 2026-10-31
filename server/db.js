@@ -167,6 +167,9 @@ CREATE TABLE IF NOT EXISTS presence (           -- who has the game open: a page
   roll_no     TEXT PRIMARY KEY,
   last_seen   BIGINT NOT NULL
 );
+ALTER TABLE presence ADD COLUMN IF NOT EXISTS since BIGINT;      -- when this live session began
+ALTER TABLE presence ADD COLUMN IF NOT EXISTS screen TEXT;       -- the game screen at the last ping (home, play, path…)
+ALTER TABLE presence ADD COLUMN IF NOT EXISTS info JSONB;        -- { practice, answered } for the screen
 CREATE TABLE IF NOT EXISTS feedback (
   id          BIGSERIAL PRIMARY KEY,
   roll_no     TEXT,

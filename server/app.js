@@ -287,9 +287,15 @@ async function liveCount() {
   liveCache = { at: Date.now(), n: r.n };
   return r.n;
 }
-app.post('/api/live', requireStudent, wrap(async (req, res) => {
-  const was = await one('SELECT last_seen FROM presence WHERE roll_no = ?', req.student.roll_no);
-  await run('INSERT INTO presence (roll_no, last_seen) VALUES (?, ?) ON CONFLICT (roll_no) DO UPDATE SET last_seen = excluded.last_seen', req.student.roll_no, Date.now());
+const SCREENS = new Set(['home', 'play', 'result', 'fame', 'team', 'path', 'fff', 'seat', 'guide', 'wallet', 'buddy']);
+app.post('/api/live', requireStudent, jsonBody, wrap(async (req, res) => {
+  const was = await one('SELECT last_seen, since FROM presence WHERE roll_no = ?', req.student.roll_no), now = Date.now();
+  const screen = SCREENS.has(req.body?.screen) ? req.body.screen : null;
+  const info = screen ? { practice: !!req.body?.practice, answered: Math.max(0, Math.min(999, Number(req.body?.answered) || 0)) } : null;
+  const since = was && was.since && was.last_seen > now - LIVE_MS ? was.since : now; // a new live session after a gap
+  await run(`INSERT INTO presence (roll_no, last_seen, since, screen, info) VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT (roll_no) DO UPDATE SET last_seen = excluded.last_seen, since = excluded.since, screen = COALESCE(excluded.screen, presence.screen), info = COALESCE(excluded.info, presence.info)`,
+  req.student.roll_no, now, since, screen, json(info));
   await stats.recordPing(run, one, req.student.roll_no);
   if (!was || was.last_seen <= Date.now() - LIVE_MS) liveCache.at = 0; // a newly live player shows up at once
   res.json({ live: await liveCount() });
@@ -564,6 +570,11 @@ admin.get('/stats/filters', wrap(async (req, res) => {
 admin.get('/stats/overview', wrap(async (req, res) => {
   const c = await content();
   res.json(await stats.overview(await filters(req), c.G));
+}));
+// Who is on the portal right now (seen in the last 75 s) and what they are doing; the page refreshes it every 15 s.
+admin.get('/stats/live', wrap(async (req, res) => {
+  const c = await content();
+  res.json(await stats.liveNow(await filters(req), c.G, LIVE_MS));
 }));
 admin.get('/stats/compare', wrap(async (req, res) => {
   const c = await content();

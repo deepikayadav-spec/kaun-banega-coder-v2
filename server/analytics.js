@@ -282,3 +282,43 @@ export async function studentDetail(roll, F, G) {
     steps: tr.map((t) => ({ ...t, name: name(t.skill), at: Number(t.at) }))
   };
 }
+
+// ---------- live now: students with the game open (pinged in the last `liveMs`), and what they are doing
+const SCREEN = { home: 'Home', play: 'Hot seat', result: 'Results', fame: 'Hall of Fame', team: 'Team', path: 'My path', fff: 'Fastest Finger', seat: 'Walking to the hot seat',
+  guide: 'How to play', wallet: 'Wallet', buddy: 'Pixel' };
+export async function liveNow(F, G, liveMs = 75000) {
+  const C = cohortWhere(F), now = Date.now(), today = istDay(now);
+  const rows = await all(`SELECT p.roll_no, p.last_seen, p.since, p.screen, p.info, m.name, m.university, m.batch, e.pending, e.state,
+      a.ms AS today_ms, t.n AS today_n, t.right_n AS today_right, t.last_at
+    FROM presence p JOIN students_master m ON m.roll_no = p.roll_no
+    LEFT JOIN engine_state e ON e.roll_no = p.roll_no
+    LEFT JOIN activity a ON a.roll_no = p.roll_no AND a.day = ?
+    LEFT JOIN (SELECT roll_no, COUNT(*)::int AS n, SUM(correct)::int AS right_n, MAX(at) AS last_at FROM attempts WHERE at >= ? GROUP BY roll_no) t ON t.roll_no = p.roll_no
+    WHERE ${C.sql} AND p.last_seen > ? ORDER BY p.last_seen DESC LIMIT 3000`, today, dayStart(today), ...C.args, now - 15 * 60e3);
+  const name = (id) => (G && G.idx[id] != null ? G.skills[G.idx[id]].name : id);
+  const out = rows.map((r) => {
+    const info = r.info || {}, pend = r.pending, sk = (r.state && r.state.skills) || {};
+    const playing = r.screen === 'play' || r.screen === 'fff' || r.screen === 'seat';
+    const mode = r.screen === 'play' ? (info.practice ? 'practice' : 'hotseat') : r.screen === 'fff' || r.screen === 'seat' ? 'hotseat' : 'browsing';
+    const q = playing && pend && pend.skill ? { skill: pend.skill, name: name(pend.skill), level: pend.level, type: pend.type, mode: pend.mode, servedAt: Number(pend.servedAt) || null } : null;
+    const cur = G ? G.skills.find((S) => sk[S.id] && sk[S.id].status === 'open' && sk[S.id].q > 0) || G.skills.find((S) => sk[S.id] && sk[S.id].status === 'open') : null;
+    return {
+      roll_no: r.roll_no, name: r.name, university: r.university || '', batch: r.batch || '', live: Number(r.last_seen) > now - liveMs,
+      lastSeen: Number(r.last_seen), since: Number(r.since) || null, screen: r.screen || null, doing: (r.screen && SCREEN[r.screen]) || 'On the portal',
+      mode: r.screen ? mode : 'unknown', practice: !!info.practice, answeredThisGame: Number(info.answered) || 0, question: q,
+      nowAt: cur ? { id: cur.id, name: cur.name, level: sk[cur.id].level } : null,
+      todayMs: Number(r.today_ms) || 0, todayAnswers: Number(r.today_n) || 0, todayAcc: pct(Number(r.today_right) || 0, Number(r.today_n) || 0),
+      lastAnswer: Number(r.last_at) || null
+    };
+  });
+  const live = out.filter((r) => r.live), left = out.filter((r) => !r.live);
+  const count = (f) => live.filter(f).length, byUni = {};
+  for (const r of live) byUni[r.university || '(no university)'] = (byUni[r.university || '(no university)'] || 0) + 1;
+  return {
+    at: now, liveMs, filters: { university: F.uni || null, batch: F.batch || null },
+    summary: { live: live.length, hotseat: count((r) => r.mode === 'hotseat'), practice: count((r) => r.mode === 'practice'), browsing: count((r) => r.mode === 'browsing' || r.mode === 'unknown'),
+      leftRecently: left.length, answersToday: live.reduce((n, r) => n + r.todayAnswers, 0) },
+    byUniversity: Object.entries(byUni).map(([university, n]) => ({ university, n })).sort((a, b) => b.n - a.n),
+    rows: live, recent: left.slice(0, 200)
+  };
+}

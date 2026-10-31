@@ -65,6 +65,10 @@ input[type=checkbox]{width:18px;height:18px}
 .an-cmp .bar{margin-top:6px;height:5px}
 button.th{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer}
 @media (max-width:640px){.who{margin-left:0;flex-wrap:wrap}.who select,.an-filters select,.an-filters label{max-width:100%;min-width:0}}
+.an-livek .kpi{text-align:left;font:inherit;color:inherit;cursor:pointer}.an-livek .kpi.on{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-2)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:4px;vertical-align:1px;animation:lvp 2s ease-in-out infinite}
+@keyframes lvp{50%{opacity:.35}}@media (prefers-reduced-motion:reduce){.dot{animation:none}}
+.an-livenote{margin:0;align-self:center}.an-unichips{gap:8px}.an-live td{white-space:nowrap}.an-live td:nth-child(3){white-space:normal;min-width:200px}
 .set-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.set-grid input{font-weight:400}
 </style></head>
 <body>
@@ -117,14 +121,14 @@ async function analytics(){
  if(AP.batch&&!AF.batches.some(b=>b.name===AP.batch))AP.batch="";
  if(AF.lockedUniversity&&AP.view==="compare")AP.view="overview";
  const per=[[1,"Today"],[7,"7 days"],[30,"30 days"],[90,"90 days"],[3650,"All time"],["custom","Custom"]];
- const views=[["overview","Overview"],...(AF.lockedUniversity?[]:[["compare","Compare universities"]]),["students","Students"]];
+ const views=[["live","Live now"],["overview","Overview"],...(AF.lockedUniversity?[]:[["compare","Compare universities"]]),["students","Students"]];
  const today=new Date(Date.now()+5.5*36e5).toISOString().slice(0,10);
  $("#m").innerHTML=`<div class="card an-bar">
   <div class="an-filters">
    <label>University${AF.lockedUniversity?`<span class="pill an-lock">${esc(AF.lockedUniversity)}</span>`:`<select id="af-uni"><option value="">All universities</option>${AF.universities.map(u=>`<option value="${esc(u.name)}" ${u.name===UNI?"selected":""}>${esc(u.name)} (${u.n.toLocaleString("en-IN")})</option>`).join("")}</select>`}</label>
    <label>Batch<select id="af-batch" ${AF.batches.length?"":"disabled"}><option value="">${AF.batches.length?"All batches":"No batches on the list"}</option>${AF.batches.map(b=>`<option value="${esc(b.name)}" ${b.name===AP.batch?"selected":""}>${esc(b.name)} (${b.n.toLocaleString("en-IN")})</option>`).join("")}</select></label>
-   <div class="an-per"><span class="lbl">Period</span><div class="seg" role="tablist" aria-label="Period">${per.map(([n,l])=>`<button class="b q ${AP.days===n?"on":""}" role="tab" aria-selected="${AP.days===n}" data-days="${n}">${l}</button>`).join("")}</div></div>
-   ${AP.days==="custom"?`<label>From<input type="date" id="af-from" max="${today}" value="${esc(AP.from)}"></label><label>To<input type="date" id="af-to" max="${today}" value="${esc(AP.to||today)}"></label>`:""}
+   ${AP.view==="live"?`<p class="muted an-livenote"><span class="dot"></span> Live view refreshes every 15 seconds. The period doesn't apply here.</p>`:`<div class="an-per"><span class="lbl">Period</span><div class="seg" role="tablist" aria-label="Period">${per.map(([n,l])=>`<button class="b q ${AP.days===n?"on":""}" role="tab" aria-selected="${AP.days===n}" data-days="${n}">${l}</button>`).join("")}</div></div>
+   ${AP.days==="custom"?`<label>From<input type="date" id="af-from" max="${today}" value="${esc(AP.from)}"></label><label>To<input type="date" id="af-to" max="${today}" value="${esc(AP.to||today)}"></label>`:""}`}
   </div>
   <div class="an-views" role="tablist" aria-label="Analytics view">${views.map(([k,l])=>`<button role="tab" aria-selected="${AP.view===k}" class="${AP.view===k?"on":""}" data-view="${k}">${l}</button>`).join("")}</div>
   <p class="muted an-note">Test data is left out (${esc([...AF.rules.rollPrefixes.map(p=>"IDs starting "+p),...AF.rules.universities,...AF.rules.batches.map(b=>"batch "+b)].join(", ")||"no rules set")}). Change it in <a href="#" id="af-set">Settings</a>.</p>
@@ -136,7 +140,33 @@ async function analytics(){
  const fr=$("#af-from"),to=$("#af-to");if(fr){fr.onchange=()=>{AP.from=fr.value;reload()};to.onchange=()=>{AP.to=to.value;reload()}}
  document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{AP.view=b.dataset.view;reload()});
  $("#af-set").onclick=e=>{e.preventDefault();TAB="settings";draw()};
- await ({overview:anOverview,compare:anCompare,students:anStudents})[AP.view]()}
+ await ({live:anLive,overview:anOverview,compare:anCompare,students:anStudents})[AP.view]()}
+
+/* Live now: who has the game open this minute and what they are doing. Refreshes every 15 s while the view is open. */
+const ago=t=>{if(!t)return "—";const s=Math.max(0,Math.round((Date.now()-t)/1000));return s<60?s+" s ago":s<3600?Math.floor(s/60)+" min ago":Math.floor(s/3600)+" h ago"};
+const dur=t=>{if(!t)return "—";const m=Math.max(0,Math.round((Date.now()-t)/60000));return m<1?"just now":m<60?m+" min":Math.floor(m/60)+" h "+(m%60)+" min"};
+const MODE={hotseat:["Hot seat","ok"],practice:["Practice","warn"],browsing:["Browsing","muted"],unknown:["On the portal","muted"]};
+async function anLive(){const box=$("#an-body");if(!box)return;
+ clearTimeout(AP.liveT);
+ const d=await api("GET","/api/admin/stats/live?"+aq());
+ if(TAB!=="analytics"||AP.view!=="live"||!$("#an-body"))return;
+ const S=d.summary,f=AP.liveF||"all",rows=d.rows.filter(r=>f==="all"||r.mode===f||(f==="browsing"&&r.mode==="unknown"));
+ const doing=r=>r.question&&(r.mode==="hotseat"||r.mode==="practice")?`${esc(r.doing)}${r.mode==="practice"?" (practice)":""}<br><small class="muted">${esc(r.question.skill)} ${esc(r.question.name)} · L${r.question.level} ${esc(r.question.type)}${r.answeredThisGame?` · ${r.answeredThisGame} answered this game`:""}</small>`:esc(r.doing);
+ box.innerHTML=`<div class="kpis an-livek">
+  <button class="kpi ${f==="all"?"on":""}" data-lf="all"><small><span class="dot"></span> On the portal now</small><b>${S.live.toLocaleString("en-IN")}</b><span class="of">seen in the last ${Math.round(d.liveMs/1000)} s</span></button>
+  <button class="kpi ${f==="hotseat"?"on":""}" data-lf="hotseat"><small>In the hot seat</small><b>${S.hotseat}</b><span class="of">Fastest Finger or answering</span></button>
+  <button class="kpi ${f==="practice"?"on":""}" data-lf="practice"><small>Practising</small><b>${S.practice}</b></button>
+  <button class="kpi ${f==="browsing"?"on":""}" data-lf="browsing"><small>Browsing</small><b>${S.browsing}</b><span class="of">home, path, Hall of Fame…</span></button>
+  <div class="kpi"><small>Left in the last 15 min</small><b>${S.leftRecently}</b></div>
+ </div>
+ ${d.byUniversity.length>1?`<div class="card"><h2>Live by university</h2><div class="row an-unichips">${d.byUniversity.map(u=>`<span class="pill">${esc(u.university)} · <b>${u.n}</b></span>`).join("")}</div></div>`:""}
+ <div class="card"><div class="an-head"><div><h2 style="margin:0">Students on the portal now${f!=="all"?" · "+esc(MODE[f][0]):""}</h2><p class="muted" style="margin:4px 0 0">${rows.length} shown · updated ${new Date(d.at).toLocaleTimeString("en-IN")}</p></div><button class="b q" id="lv-r">Refresh</button></div>
+ <div class="tw"><table class="an-live"><tr><th>Student</th><th>University · batch</th><th>Doing now</th><th>Mode</th><th>Online for</th><th>Today</th><th>Now at</th><th>Last ping</th></tr>
+ ${rows.map(r=>`<tr><td><b>${esc(r.name||"—")}</b><br><small class="muted">${esc(r.roll_no)}</small></td><td class="muted">${esc(r.university)}${r.batch?`<br><small>${esc(r.batch)}</small>`:""}</td><td>${doing(r)}</td><td><span class="${MODE[r.mode][1]}">${MODE[r.mode][0]}</span></td><td>${dur(r.since)}</td><td>${r.todayAnswers} Q${r.todayAcc!=null?` · ${r.todayAcc}%`:""}<br><small class="muted">${fmtMs(r.todayMs)} on portal</small></td><td>${r.nowAt?`${esc(r.nowAt.id)} · L${r.nowAt.level}`:'<span class="muted">—</span>'}</td><td class="muted">${ago(r.lastSeen)}</td></tr>`).join("")||`<tr><td colspan="8" class="muted">${S.live?"No one in this group right now.":"No students on the portal right now."}</td></tr>`}</table></div></div>
+ ${d.recent.length?`<details class="card"><summary><b>Left in the last 15 minutes (${d.recent.length})</b></summary><div class="tw"><table><tr><th>Student</th><th>University</th><th>Last seen on</th><th>Today</th><th>Left</th></tr>${d.recent.map(r=>`<tr><td><b>${esc(r.name||"—")}</b><br><small class="muted">${esc(r.roll_no)}</small></td><td class="muted">${esc(r.university)}</td><td>${esc(r.doing)}</td><td>${r.todayAnswers} Q</td><td class="muted">${ago(r.lastSeen)}</td></tr>`).join("")}</table></div></details>`:""}`;
+ box.querySelectorAll("[data-lf]").forEach(b=>b.onclick=()=>{AP.liveF=b.dataset.lf;anLive()});
+ $("#lv-r").onclick=()=>anLive();
+ AP.liveT=setTimeout(function tick(){if(TAB!=="analytics"||AP.view!=="live"||!$("#an-body"))return;if(document.hidden){AP.liveT=setTimeout(tick,15000);return}anLive().catch(()=>{AP.liveT=setTimeout(tick,15000)})},15000)}
 
 async function anOverview(){const d=await api("GET","/api/admin/stats/overview?"+aq());
  const maxA=Math.max(1,...d.daily.map(x=>x.active)),maxQ=Math.max(1,...d.daily.map(x=>x.answers));

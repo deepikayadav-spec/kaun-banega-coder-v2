@@ -131,7 +131,7 @@
         '<div class="pa-sheet-act"><span class="btn-g">Play this level →</span><span class="btn-o">Close</span></div></div>' +
     "</div>";
   var hofScr =
-    '<div class="sc sc-hof"><div class="hf-main"><div class="hf-head">' + pixel("trophy", "hf-pix") + '<div><h4>Hall of Fame</h4><p>Overall and by university · ranked by prize money</p></div></div>' +
+    '<div class="sc sc-hof"><div class="hf-main"><div class="hf-head">' + pixel("trophy", "hf-pix") + '<div><h4>Hall of Fame</h4><p>Across India and by campus · ranked by prize money</p></div></div>' +
       '<div class="hf-pod"><div class="p2"><span class="av">?</span><small>Your spot</small><b>2</b></div><div class="p1"><span class="av">A</span><small>Aarav</small><b>1</b></div><div class="p3"><span class="av">?</span><small>Your spot</small><b>3</b></div></div>' +
       '<div class="hf-row"><i>1</i><b>Aarav</b><em>you</em><small>50% right</small></div></div>' +
       '<div class="hf-fb"><h4>How is KBC so far?</h4><p>Please share your feedback to continue.</p><small>Your rating <i>*</i></small>' +

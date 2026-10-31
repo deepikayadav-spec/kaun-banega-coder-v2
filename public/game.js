@@ -1050,17 +1050,18 @@ function homeLine(r,st){if(!P.answered)return `Hi! I'm ${buddyName()}, your KBC 
  return `Welcome back! Every game starts fresh at 10. Wallet: ${fmtR(P.coins||0)}.`}
 function vHome(){const best=P.best||0,coins=P.coins||0;
  const greet=esc(quipText("homebubble"));
- return `<div class="wishc" role="note"><b>Happy Diwali!</b><span>Wishes first, KBC Next!</span></div><section class="home4 enter">
+ return `<div class="wishc" role="note"><b>Happy Diwali!</b></div><section class="home4 enter">
 <div class="h4-bot"><p class="say">${P.answered?greet:esc(`Hi! I'm ${buddyName()}, your KBC buddy. Win Fastest Finger First to take the hot seat!`)}</p>${mascot(ctxPose(),300)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span><button class="btn quiet sm" data-act="buddy">Change buddy</button></div>
 <div class="h-hero">
 <span class="emb hlogo" aria-hidden="true"><i class="er"></i><i class="er er2"></i><span class="ec">{ }</span></span>
 <h1 class="ttl"><span>Kaun Banega</span><b class="typed" aria-label="Coder"><em class="tw" aria-hidden="true">Coder</em><i class="caret" aria-hidden="true"></i></b></h1>
+<p class="htag">Code. Climb. Crorepati.</p>
 <div class="ctready" aria-label="Your GRIT Computational Thinking readiness: ${gritReady()} percent"><div class="ct-ring" style="--v:${Math.min(100,parseFloat(gritReady()))}"><b>${gritReady()}<small>%</small></b></div><div class="ct-txt"><span class="ct-k">Your GRIT</span><strong>Computational Thinking readiness</strong><span class="ct-s">Rises with every level you clear</span></div></div>
 <p class="hhey">Hey ${esc(String(S.name||"").split(" ")[0]||"coder")} 👋 Your seat is waiting</p>
 <button class="hplay" type="button" data-act="play"><span>Play Fastest Finger</span><i aria-hidden="true">→</i></button>
 <div class="hmeta3"><span class="hlive"><i class="ldot"></i><b class="livenum">${LIVE}</b> playing now</span><span class="hdot" aria-hidden="true"></span><button class="hlink" type="button" data-act="tour">Quick tour</button><span class="hdot" aria-hidden="true"></span><button class="hlink" type="button" data-act="intro">▶ Watch intro</button></div>
 
-<div class="h4-stats"><span>Wallet <b>${fmtR(coins)}</b></span><span>Best <b>${best?fmtR(amountOf(best)):"—"}</b></span><span>Every game starts at <b>10</b></span></div>
+<div class="h4-stats"><span>Wallet <b>${fmtR(coins)}</b></span><span>Best <b>${best?fmtR(amountOf(best)):"—"}</b></span><span>First prize <b>10</b></span></div>
 </div>
 ${(()=>{const g=curGroup(),sk=curSkill(g),pct=Math.round(gDone(g)/gTotal(g)*100);const top=(fameRows().rows||[]).sort((a,b)=>(b.coins||0)-(a.coins||0)).slice(0,3);
  return `<aside class="h4-side"><div class="hs-card"><small>Up next on your path</small><h3>${sk?esc(sk.name):"All clear"}</h3><span class="hs-c">${stg(g.c)} · ${esc(g.name)}</span>
@@ -1146,10 +1147,10 @@ function vResult(){const R=S.res,rc=R.reached||0,pay=R.payout||0;
  return `<section class="res enter"><div class="res-card card">
 <div class="res-top"><div class="res-head">
 <div class="coach">${mascot(mood,84)}<p class="say">${esc(msg)}</p></div>
-<div class="muted">${esc(S.name||"Player")} takes home</div><div class="ramt">${fmtR(pay)}</div><div class="muted">Highest prize this game: ${rc?fmtR(amountOf(rc)):"none yet"}</div>
+<div class="muted">${esc(S.name||"Player")} takes home</div><div class="ramt">${fmtR(pay)}</div><div class="muted">${rc?`Highest prize this game: ${fmtR(amountOf(rc))}`:"No prize won this game yet"}</div>
 </div>${NOTE[pay]?`<div class="res-bill">${noteBig(pay)}</div>`:""}</div>
-<dl class="res-line"><div><dt>Correct this game</dt><dd>${R.correct}/${R.answered}</dd></div><div><dt>Time played</dt><dd>${Math.floor(R.secs/60)}:${String(R.secs%60).padStart(2,"0")}</dd></div><div><dt>Highest prize</dt><dd>${rc}/15</dd></div><div><dt>Wallet</dt><dd>${fmtR(R.wallet)}</dd></div></dl>
-<div class="res-goal"><div class="res-goal-h"><b>Next game starts fresh at 10</b><span class="muted">Best ever: ${fmtR(amountOf(P.best))}</span></div><span class="muted">Win Fastest Finger First to take the hot seat again.</span></div>
+<dl class="res-line"><div><dt>Correct this game</dt><dd>${R.correct}/${R.answered}</dd></div><div><dt>Time played</dt><dd>${Math.floor(R.secs/60)}:${String(R.secs%60).padStart(2,"0")}</dd></div><div><dt>Prizes won</dt><dd>${rc} of ${LADDER.length}</dd></div><div><dt>Wallet</dt><dd>${fmtR(R.wallet)}</dd></div></dl>
+<div class="res-goal"><div class="res-goal-h"><b>Next game: win Fastest Finger, then play for your first prize of 10</b><span class="muted">Best ever: ${fmtR(amountOf(P.best))}</span></div><span class="muted">Your path progress is always kept.</span></div>
 ${R.fbDone==="sent"?`<div class="rf rf-done"><b>Thanks!</b> Your rating reached the KBC team.</div>`:R.fbDone?"":rfHTML("g")}
 ${learn}
 <div class="ractions"><button class="btn gold" data-act="play">Play again →</button><button class="btn quiet" data-act="fame">Hall of Fame</button><button class="btn quiet" data-act="home">Home</button></div>
@@ -1302,14 +1303,14 @@ function pathJump(smooth){const n=$(".mnode.now")||$(".mprize.cur");if(!n)return
 function fameRows(){return {live:true,rows:(FAMEALL||[]).map(r=>({n:r.name,coins:r.coins,correct:r.correct,answered:r.answered,rung:r.best,me:r.me}))}}
 function vFame(){const F=FAMEC,uni=FQ.scope==="uni",myU=(ME&&ME.university)||"",unis=((F&&F.universities)||[]).length?F.universities:(myU?[myU]:[]);
  const cur=(F&&F.university)||FQ.uni||myU,rows=(F&&F.rows)||[],pct=r=>r.answered?Math.round(r.correct/r.answered*100):0,ini=n=>esc(String(n||"?").trim().charAt(0).toUpperCase()||"?");
- const tabs=`<div class="ftabs" role="tablist" aria-label="Leaderboard"><button role="tab" aria-selected="${!uni}" class="ftab ${!uni?"on":""}" data-act="fame-tab" data-s="all">🌍 Overall</button><button role="tab" aria-selected="${uni}" class="ftab ${uni?"on":""}" data-act="fame-tab" data-s="uni">🏛️ University</button></div>`;
- const pick=uni&&unis.length?`<label class="fsel"><span>University</span><select id="fameuni">${unis.map(u=>`<option value="${esc(u)}" ${u===cur?"selected":""}>${esc(u)}</option>`).join("")}</select></label>`:"";
+ const tabs=`<div class="ftabs" role="tablist" aria-label="Leaderboard"><button role="tab" aria-selected="${!uni}" class="ftab ${!uni?"on":""}" data-act="fame-tab" data-s="all">🏆 Top players in India</button><button role="tab" aria-selected="${uni}" class="ftab ${uni?"on":""}" data-act="fame-tab" data-s="uni">🏫 My campus</button></div>`;
+ const pick=uni&&unis.length?`<label class="fsel"><span>Campus</span><select id="fameuni">${unis.map(u=>`<option value="${esc(u)}" ${u===cur?"selected":""}>${esc(u)}</option>`).join("")}</select></label>`:"";
  const pod=(i,cls)=>{const r=rows[i];return `<div class="fpod ${cls} ${r?"":"empty"} ${r&&r.me?"me":""}"><span class="fav">${r?ini(r.name):"?"}</span><b class="fnm">${r?esc(r.name):"Your spot"}</b>${r&&!uni&&r.university?`<small class="fu">${esc(r.university)}</small>`:""}<span class="famt">${r?fmtR(r.coins):"—"}</span><span class="fblk">${cls==="p1"?"🥇":cls==="p2"?"🥈":"🥉"}</span></div>`};
  const row=r=>`<li class="${r.me?"me":""} ${r.rank<=3?"top":""}"><span class="frk">${r.rank}</span><span class="fav sm">${ini(r.name)}</span><span class="fwho"><b>${esc(r.name)}${r.me?' <em>you</em>':""}</b>${!uni&&r.university?`<small>${esc(r.university)}</small>`:""}</span><span class="facc" title="${r.correct} of ${r.answered} right"><i style="--v:${pct(r)}%"></i><b>${pct(r)}%</b><small>right</small></span><span class="famtr">${fmtR(r.coins)}</span></li>`;
- const body=!F?`<p class="fempty">Loading the leaderboard…</p>`:F.err?`<p class="fempty">${esc(F.err)}</p>`:uni&&!cur?`<p class="fempty">Your university isn't on the student list yet, so there is no university board for you. Ask your mentor to add it.</p>`
+ const body=!F?`<p class="fempty">Loading the leaderboard…</p>`:F.err?`<p class="fempty">${esc(F.err)}</p>`:uni&&!cur?`<p class="fempty">Your campus isn't on the student list yet, so there is no campus board for you. Ask your mentor to add it.</p>`
   :rows.length?`${podiumOK(rows)?`<div class="fpodium">${pod(1,"p2")}${pod(0,"p1")}${pod(2,"p3")}</div>`:""}<ol class="flist">${rows.map(row).join("")}</ol>${F.me&&!rows.some(r=>r.me)?`<ol class="flist mine">${row(F.me)}</ol>`:""}`
   :`<p class="fempty">No names on this board yet. Play a game to be the first! 🚀</p>`;
- return `<section class="center"><div class="fame fame2"><div class="fhead">${mascot(rows.slice(0,3).some(r=>r.me)?"trophy":"review",84)}<div><h2>Hall of Fame</h2><p><span class="hlive"><i class="ldot"></i><b class="livenum">${LIVE}</b> playing now</span><span class="muted">${uni?esc(cur||"Your university"):"All universities"} · ranked by prize money</span></p></div></div>
+ return `<section class="center"><div class="fame fame2"><div class="fhead">${mascot(rows.slice(0,3).some(r=>r.me)?"trophy":"review",84)}<div><h2>Hall of Fame</h2><p><span class="hlive"><i class="ldot"></i><b class="livenum">${LIVE}</b> playing now</span><span class="muted">${uni?esc(cur||"Your campus"):"Across the country"} · ranked by prize money</span></p></div></div>
 ${tabs}${pick}<div class="fboard card">${body}</div>
 ${quipHTML("fame")}<div class="ractions"><button class="btn gold" data-act="play">Play →</button></div></div></section>`}
 const podiumOK=rows=>rows.length>=1;
@@ -1501,9 +1502,13 @@ function syncAct(){const a=$(".actions");if(a)a.innerHTML=actHTML();if(S.screen=
 
 /* ================= Effects ================= */
 function flash(){const f=$("#flash");f.classList.remove("on");void f.offsetWidth;f.classList.add("on");const m=$("#mainc");if(m){m.classList.remove("shake");void m.offsetWidth;m.classList.add("shake")}}
-function confetti(n){if(reduceMotion)return;const c=$("#confetti"),x=c.getContext("2d");c.width=innerWidth;c.height=innerHeight;const cols=["#FFC83D","#FF9F1C","#FFFFFF","#E879F9","#3DDC84"];
- const P2=Array.from({length:n},()=>({x:innerWidth/2+(Math.random()-.5)*260,y:innerHeight*.45,vx:(Math.random()-.5)*15,vy:-Math.random()*15-4,r:Math.random()*7+4,c:cols[Math.random()*cols.length|0],a:Math.random()*6,va:(Math.random()-.5)*.3}));
- const t0=performance.now();const f=t=>{const e=t-t0;x.clearRect(0,0,c.width,c.height);P2.forEach(p=>{p.vy+=.35;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.a+=p.va;x.save();x.globalAlpha=Math.max(0,1-e/2600);x.translate(p.x,p.y);x.rotate(p.a);x.fillStyle=p.c;x.fillRect(-p.r/2,-p.r/4,p.r,p.r/2);x.restore()});if(e<2600)requestAnimationFrame(f);else x.clearRect(0,0,c.width,c.height)};requestAnimationFrame(f)}
+/* confetti: a burst of code symbols in the game's gold, cyan and white */
+function confetti(n){if(reduceMotion)return;const c=$("#confetti"),x=c.getContext("2d");c.width=innerWidth;c.height=innerHeight;
+ const cols=["#FFC83D","#FDE68A","#5EEAD4","#FFFFFF","#F5B70A"],GL=["{ }","</>",";","()","[ ]","==","+=","#","print()","def","True","0","1"];
+ const P2=Array.from({length:n},()=>({x:innerWidth/2+(Math.random()-.5)*260,y:innerHeight*.45,vx:(Math.random()-.5)*15,vy:-Math.random()*15-4,s:13+Math.random()*13,g:GL[Math.random()*GL.length|0],c:cols[Math.random()*cols.length|0],a:(Math.random()-.5)*.8,va:(Math.random()-.5)*.12}));
+ const t0=performance.now();const f=t=>{const e=t-t0;x.clearRect(0,0,c.width,c.height);x.textAlign="center";x.textBaseline="middle";
+  P2.forEach(p=>{p.vy+=.35;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.a+=p.va;x.save();x.globalAlpha=Math.max(0,1-e/2600);x.translate(p.x,p.y);x.rotate(p.a);x.font=`800 ${p.s}px "JetBrains Mono",ui-monospace,monospace`;x.shadowColor=p.c;x.shadowBlur=8;x.fillStyle=p.c;x.fillText(p.g,0,0);x.restore()});
+  if(e<2600)requestAnimationFrame(f);else x.clearRect(0,0,c.width,c.height)};requestAnimationFrame(f)}
 
 /* ================= 3D studio (three.js): gold { } coin with rings, spotlights, gems and code glyphs ================= */
 window.KB3D=(function(){if(!window.THREE)return null;try{document.body.classList.add("has3d");
@@ -1631,7 +1636,8 @@ function fffClock(secs){const F=S.fff;clearInterval(fInt);F.max=secs;F.time=secs
 function fffFinish(ok){const F=S.fff;if(F.done)return;clearInterval(fInt);F.secs=(Date.now()-(F.tStart||F.t0))/1000;F.done=ok?"ok":"bad";
  if(ok){SFX.fffWin();spotFx("win");confetti(90)}else{SFX.wrong();spotFx("lose")}render();say(ok?"You've earned the hot seat.":"Not quite.");logEv({kind:"fff",mode:F.mode,ok,ms:Math.round(F.secs*1000),away:F.away||0})}
 function fffFocus(){requestAnimationFrame(()=>{const i=$("#sprin")||$('[data-act="fff-begin"]');i&&i.focus({preventScroll:true})})}
-function startFFF(idx){prefetchQ("hotseat");ctx();goFull();clearInterval(fInt);stopQ();if(idx==null)idx=Math.random()*999|0;const mode=FMODES[idx%FMODES.length];
+function startFFF(idx){prefetchQ("hotseat");ctx();goFull();clearInterval(fInt);stopQ();if(idx==null)idx=Math.random()*999|0;const mode=(()=>{/* every round, and "Try a different puzzle", brings the next puzzle type in turn */
+  const last=store.get("kbc-fff-last",null),i=last!=null&&FMODES.includes(last)?(FMODES.indexOf(last)+1)%FMODES.length:Math.random()*FMODES.length|0;store.set("kbc-fff-last",FMODES[i]);return FMODES[i]})();
  const F={idx,mode,intro:true,time:xtime(FMODE[mode].secs),max:xtime(FMODE[mode].secs),done:null,t0:Date.now(),timeout:false};
  S={screen:"fff",name:S.name,q:{fff:idx},phase:"ask",run:{answered:0},fff:F};render();scrollTo({top:0});fffFocus()}
 function fffBegin(){const F=S.fff;if(!F||!F.intro)return;F.intro=false;F.t0=Date.now()+1;

@@ -2644,3 +2644,6 @@ html[data-theme="light"] details.res-learn summary{color:#BE123C}
 html:not([data-theme="light"]) body.boardopen .play>.side{background:rgba(9,12,26,.98)!important;border-top:1px solid rgba(233,196,106,.35)!important;box-shadow:0 -20px 60px rgba(0,0,0,.6)}
 /* big combos (5x and more) are achievements: they get a gold glow */
 .combo.big{color:#FFD65A;text-shadow:0 5px 0 var(--ink),0 0 34px rgba(255,200,61,.75)}
+/* KBC tagline under the title */
+.htag{margin:-2px 0 6px;text-align:center;font:700 clamp(13px,1.3vw,16px) var(--f-mono);letter-spacing:.32em;text-transform:uppercase;color:#FDE68A;opacity:.9}
+html[data-theme="light"] .htag{color:#B45309}

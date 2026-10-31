@@ -2631,3 +2631,16 @@ html[data-theme="light"] details.res-learn summary{color:#BE123C}
 .res-side .board .rung{padding-block:4px!important;min-height:0!important}
 .res-side .board .rung .bnote{width:38px!important}
 @media (min-width:1001px) and (max-height:1000px){.res-side .board .rung{font-size:14px!important}}
+/* ===================== Hot seat polish (31 Oct) ===================== */
+/* question rating in the side column: five stars in one row, clear of the feedback button */
+.mcol .rf-q .rf-stars{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px!important;width:100%}
+.mcol .rf-q .rf-s{width:auto!important;min-width:0}
+.mcol .rf-q .rf-l{grid-column:1/-1}
+.play .mcol{padding-bottom:72px}
+/* money board: the minimise button never sits on the title */
+.board h2{position:relative;padding-right:56px}
+.board.min h2{font-size:clamp(16px,1.5vw,20px)}
+/* phones: the money board sheet matches the dark theme instead of a cream panel */
+html:not([data-theme="light"]) body.boardopen .play>.side{background:rgba(9,12,26,.98)!important;border-top:1px solid rgba(233,196,106,.35)!important;box-shadow:0 -20px 60px rgba(0,0,0,.6)}
+/* big combos (5x and more) are achievements: they get a gold glow */
+.combo.big{color:#FFD65A;text-shadow:0 5px 0 var(--ink),0 0 34px rgba(255,200,61,.75)}

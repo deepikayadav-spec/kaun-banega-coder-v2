@@ -13,11 +13,19 @@ const ENVELOPE = ['id', 'skill', 'level', 'type', 'difficulty', 'variant', 'task
 const ID_RE = /^C\d+-G\d+-S\d+-L[1-4]-T\d+-R[1-3]-V\d+$/;
 
 // ---------- cache: the compiled graph and what the bank can serve. Reloaded after an upload, and every minute
-// so that other serverless instances pick up bank uploads too. The active graph version is checked on every call,
+// so that other serverless instances pick up bank uploads too. The active graph version is checked every few seconds,
 // so a new skill graph reaches every instance (and every student's path) straight away.
 let cache = null;
-export function invalidate() { cache = null; }
+export function invalidate() { cache = null; ver = { at: 0, v: null }; }
+// The active graph version, looked up at most every 3 s per instance: a new graph still reaches every student within
+// seconds, without a database round trip on every request.
+let ver = { at: 0, v: null };
 const activeVersion = async () => {
+  if (Date.now() - ver.at < 3000) return ver.v;
+  ver = { at: Date.now(), v: await activeVersionNow() };
+  return ver.v;
+};
+const activeVersionNow = async () => {
   const r = await one('SELECT version FROM skill_graph WHERE active = 1 ORDER BY created_at DESC LIMIT 1');
   return r ? r.version : 'file';
 };

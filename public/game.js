@@ -411,7 +411,14 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
  function persist(k,v){try{const o=indexedDB.open("kbc-cache",1);o.onupgradeneeded=()=>o.result.createObjectStore("m3d");
   o.onsuccess=()=>{try{const st=o.result.transaction("m3d","readwrite").objectStore("m3d");st.put(v,k);
    if(!pruned){pruned=true;const c=st.openCursor();c.onsuccess=()=>{const x=c.result;if(!x)return;if(String(x.key).split("|")[3]!==ver())x.delete();x.continue()}}}catch(e){}}}catch(e){}}
+ /* Pixel's poses are drawn ahead of time and shipped as images (public/media/pixel/poses), so the browser never has to
+    model him: drawing a pose took 80–200 ms of blocked page each time and made Fastest Finger and the hot seat stutter.
+    The images are used only while the model, costume and lighting code are the ones they were drawn from (same key);
+    after any change to those, the browser draws them as before until the images are exported again. */
+ const PIXEL_SHEETS={key:"1vn8d6e|anbojt",poses:["bonk","chai","dance","drink","finish","idle","missed","panic","pointa","pointq","pointup","read","review","run","stare","streak","stretch","think","tired","trophy","type","vibe","warm","zen"]};
+ const shipped=(C,pose)=>C.id==="pixel"&&PIXEL_SHEETS.poses.includes(pose)&&PIXEL_SHEETS.key===ver()+"|"+hash(JSON.stringify(C))?"/media/pixel/poses/"+pose+".webp?k="+encodeURIComponent(PIXEL_SHEETS.key):null;
  function render(C,pose){const key=C.id+"|"+pose;if(cache[key]!==undefined)return cache[key];
+  const sh=shipped(C,pose);if(sh)return cache[key]=sh;
   const pk=pkey(C,pose);if(SAVED[pk])return cache[key]=SAVED[pk];if(!init())return null;
   try{const T=THREE,sheet=document.createElement("canvas");sheet.width=FW*N;sheet.height=FH;const g2=sheet.getContext("2d");
    for(let f=0;f<N;f++){const sc=new T.Scene();sc.environment=ENV;sc.add(new T.HemisphereLight(0xF3F6FF,0x10152A,.4));
@@ -422,7 +429,8 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
     sc.traverse(o=>{o.geometry&&o.geometry.dispose();if(o.material&&o.material.map)o.material.map.dispose()})}
    const url=sheet.toDataURL("image/png");persist(pk,url);return cache[key]=url}catch(e){return cache[key]=null}}
  /* draw the remaining poses of a costume one at a time while the browser is idle, so no screen waits for its mascot */
- function warm(C,poses){const todo=poses.filter(p=>cache[C.id+"|"+p]===undefined);const idle=window.requestIdleCallback||(f=>setTimeout(()=>f({timeRemaining:()=>50}),200));
+ function warm(C,poses){if(shipped(C,poses[0])){const idle=window.requestIdleCallback||(f=>setTimeout(f,300));poses.forEach((p,i)=>idle(()=>{const im=new Image();im.src=shipped(C,p)},{timeout:2000+i*150}));return}
+  const todo=poses.filter(p=>cache[C.id+"|"+p]===undefined);const idle=window.requestIdleCallback||(f=>setTimeout(()=>f({timeRemaining:()=>50}),200));
   const step=d=>{if(!todo.length||AC.signal.aborted)return;if(d.timeRemaining()<8||document.hidden)return idle(step,{timeout:4000});render(C,todo.shift());setTimeout(()=>idle(step,{timeout:4000}),120)};
   idle(step,{timeout:4000})}
  return {render,warm}})();
@@ -801,7 +809,7 @@ function energyHTML(){if(S.practice||!S.run)return "";const e=S.run.en,c=e>50?"h
 function dockHTML(mood,cls,extra){const I=S.info,q=S.q;let say;
  if(!q)say=S.phase==="loading"?"Picking your next question…":S.phase==="error"?"Hmm, the line dropped. Try again?":"Nice work! More levels are coming.";
  else if(S.phase==="locked")say="Locked in… fingers crossed!";
- else if(S.phase==="reveal")say=S.ok?(I&&I.rungUp?`You won ${fmtR(amountOf(I.after))}! Next question.`:CHEER[hashStr(q.id)%CHEER.length]):(S.practice?(S.timeout?"Time ran out. Read why, then try the next one.":"Not quite. Read why, then try the next one."):(S.timeout?"Too slow! Read why, then try a fresh variant.":"Not quite. Read why, then try a fresh variant."));
+ else if(S.phase==="reveal")say=S.ok?(I&&I.rungUp?`You won ${fmtR(amountOf(I.after))}! Next question.`:CHEER[hashStr(q.id)%CHEER.length]):(S.practice?(S.timeout?"Time ran out. Read why, then try the next one.":"Not quite. Read why, then try the next one."):(S.timeout?"Too slow! Read why, then try a new question.":"Not quite. Read why, then try a new question."));
  else say=!S.practice&&S.run.en<=20?"Low battery! One more miss and we power down.":S.hint?"Hint's up there. You've got this.":S.run.answered===0?"First question! Read the code line by line.":CALM[hashStr(q.id)%CALM.length];
  const r=rungOf(),stake=r<OPEN?LADDER[r]:0;
  if(cls==="col")return `<aside class="mcol" aria-label="${esc(buddyName())}, your KBC buddy"><p class="say">${esc(say)}</p>${mascot(mood,176)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span>${extra||""}</aside>`;
@@ -871,12 +879,12 @@ let saveT=null;
 function dayTick(){const d=new Date(),k=d.toDateString(),y=new Date(d-864e5).toDateString();if(P.lastDay!==k){P.day=(P.lastDay===y?(P.day||0):0)+1;P.lastDay=k}}
 function liveDay(){const k=new Date().toDateString(),y=new Date(Date.now()-864e5).toDateString();return (P.lastDay===k||P.lastDay===y)?(P.day||0):0}
 let COMBO=0;
-function comboTick(ok){if(!ok){COMBO=0;return}COMBO++;if(COMBO<2)return;const w=["","","Double!","Triple!","On fire!","Unstoppable!","Legendary!"];const el=document.createElement("div");el.className="combo";el.setAttribute("aria-hidden","true");el.innerHTML=`${COMBO}x combo<small>${w[Math.min(COMBO,6)]}</small>`;document.body.appendChild(el);requestAnimationFrame(()=>el.classList.add("go"));setTimeout(()=>el.remove(),1400)}
+function comboTick(ok){if(!ok){COMBO=0;return}COMBO++;if(COMBO<2)return;const w=["","","Double!","Triple!","On fire!","Unstoppable!","Legendary!"];const el=document.createElement("div");el.className="combo";el.setAttribute("aria-hidden","true");el.innerHTML=`${COMBO}x combo<small>${w[Math.min(COMBO,6)]}</small>`;const big=COMBO>=5;if(big)el.classList.add("big");document.body.appendChild(el);requestAnimationFrame(()=>el.classList.add("go"));setTimeout(()=>el.remove(),big?2400:1400)}
 const FLAME='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3-1-3 0-7 1-9.5z" fill="#FF7A1A" stroke="#2B1A0E" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 12c.6 1.6 2.4 2.4 2.4 4.4a2.4 2.4 0 0 1-4.8 0c0-1.2.8-2 1.4-2.6.2 1 .6 1.4 1 1.4-.4-1.2-.2-2.2 0-3.2z" fill="#FFD23F"/></svg>';
 function syncFire(){const c=$("#wchip");if(!c)return;let f=$("#fire");if(!f){f=document.createElement("span");f.id="fire";c.parentNode.insertBefore(f,c)}const n=liveDay();f.className="fire "+(n?(n>=3?"hot":""):"cold");f.title=n?`${n}-day streak. Play tomorrow to keep it.`:"Play today to start a streak";f.setAttribute("aria-label",f.title);f.innerHTML=FLAME+n}
 function saveP(){P.t=Date.now();syncChip();clearTimeout(saveT);saveT=setTimeout(pushP,1200)}
 /* epoch: the last "fresh start" this page knows of; after a newer one the server refuses the old wallet and the page reloads */
-function pushP(keep){clearTimeout(saveT);return KBCQ.api("PUT","/api/progress",{progress:P,epoch:BOOT.epoch||0},keep).then(()=>{if(!keep)loadFame(FQ.scope,FQ.uni,true)}).catch(e=>{if(e&&e.status===409&&!keep&&!pushP.reload){pushP.reload=1;location.reload()}})}
+function pushP(keep){clearTimeout(saveT);return KBCQ.api("PUT","/api/progress",{progress:P,epoch:BOOT.epoch||0},keep).then(()=>{/* the Hall of Fame refreshes at most every 30 s while playing, and at once on its own screen */if(!keep&&(S.screen==="fame"||Date.now()-(pushP.fame||0)>30e3)){pushP.fame=Date.now();loadFame(FQ.scope,FQ.uni,true)}}).catch(e=>{if(e&&e.status===409&&!keep&&!pushP.reload){pushP.reload=1;location.reload()}})}
 
 
 /* ================= Online: event log, Hall of Fame (overall and per university), live players, progress on the server ================= */
@@ -980,7 +988,7 @@ function startQ(){stopQ();if(S.screen!=="play"||S.phase!=="ask")return;clearTime
 /* Locked answer: a heartbeat plays while the verdict is held back for a random 1.5–4 seconds */
 let hbInt=null;
 function lockIn(){if(S.phase!=="ask")return;S.phase="locked";stopQ();SFX.lock();S.pendingRes=submitAnswer();S.pendingRes.catch(()=>{});render();
- const wait=reduceMotion?400:1500+Math.random()*2500;clearInterval(hbInt);const q0=S.q;
+ const wait=reduceMotion?400:700+Math.random()*700;clearInterval(hbInt);const q0=S.q;
  setTimeout(()=>{clearInterval(hbInt);if(S.screen==="play"&&S.phase==="locked"&&S.q===q0)reveal()},wait)}
 async function reveal(){if(S.phase==="reveal"||S.revealing)return;S.revealing=true;const q=S.q;
  if(S.phase==="ask"){S.phase="locked";render()}
@@ -1080,10 +1088,10 @@ function actHTML0(){const q=S.q;
   if(!ready())return `${S.practice?'<button class="btn quiet sm" data-act="practice-end">End practice</button>':'<button class="btn quiet sm" data-act="quit-ask">Stop playing</button>'}`;
   return `<span class="ask">Final answer?</span><button class="btn gold" id="lockbtn" data-act="lock">Lock answer</button>${q.kind==="mcq"?`<button class="btn quiet" data-act="unpick">Change</button>`:""}`}
  if(S.phase==="locked")return `<span class="ask pulse">Answer locked… let's see</span>`;
- if(S.practice)return `<span class="banner ${S.ok?"win":"lose"}">${S.ok?"Correct!":S.timeout?"Time's up":"Not quite"}</span><button class="btn gold" data-act="next">Next question →</button><button class="btn quiet" data-act="practice-end">End practice</button>`;
+ if(S.practice)return `<span class="banner ${S.ok?"win":"lose"}">${S.ok?"Correct!":S.timeout?"Time's up":"Not quite"}</span><button class="btn gold" data-act="next">Next →</button><button class="btn quiet" data-act="practice-end">End practice</button>`;
  if(!S.ok&&S.run.en<=0)return `<span class="banner lose">Out of energy</span><button class="btn gold" data-act="end">See my game →</button>`;
  if(!S.ok)return `<span class="banner lose">${S.timeout?"Time's up":"Not this time"}</span><button class="btn gold" data-act="second">Try a similar question →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
- if(S.ok)return rungOf()>=OPEN&&!S.practice?`<span class="banner win">Correct answer!</span><button class="btn gold" data-act="collect">Collect ${fmtR(LADDER[OPEN-1])} →</button>`:`<span class="banner win">${S.retryWin?"You fixed it! ✓":"Correct answer!"}</span><button class="btn gold" data-act="next">Next question →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
+ if(S.ok)return rungOf()>=OPEN&&!S.practice?`<span class="banner win">Correct answer!</span><button class="btn gold" data-act="collect">Collect ${fmtR(LADDER[OPEN-1])} →</button>`:`<span class="banner win">${S.retryWin?"You fixed it! ✓":"Correct answer!"}</span><button class="btn gold" data-act="next">Next →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
  return `<span class="banner lose">${S.timeout?"Time's up":"Wrong answer"}</span><button class="btn gold" data-act="end">See my game →</button>`}
 function feedbackHTML(){const I=S.info;if(S.phase!=="reveal"||!I)return "";let h="";
  if(S.ok&&I.rungUp)h+=`<div class="rungup">${noteBig(amountOf(I.after),"won")||mascot("happy",72)}<b>You won ${fmtR(amountOf(I.after))}!</b><span>${I.ck?`${stg(I.ck)} locked in. A wrong answer can't take you below this.`:`Prize ${I.after} of 15 won. ${I.after<OPEN?`Next: ${fmtR(LADDER[I.after])}.`:""}`}</span></div>`;

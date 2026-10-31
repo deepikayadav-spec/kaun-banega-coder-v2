@@ -52,6 +52,7 @@ label{display:block;font:700 12px var(--f-mono);letter-spacing:.08em;text-transf
 input{width:100%;min-height:50px;margin-top:7px;padding:0 14px;border-radius:14px;border:1px solid var(--hl);background:var(--in);color:var(--tx);font:600 16px var(--f-mono);outline:none;transition:border-color .15s,box-shadow .15s}
 input::placeholder{color:#64748B}
 input:focus{border-color:var(--cy);box-shadow:0 0 0 3px rgba(94,234,212,.18)}
+input[aria-invalid="true"]{border-color:var(--bad);box-shadow:0 0 0 3px rgba(251,113,133,.16)}
 html[data-theme="light"] input{border-color:#94A3B8}
 button{min-height:52px;margin-top:4px;border:0;border-radius:14px;font:800 16.5px var(--f-body);cursor:pointer;color:#1A1205;background:linear-gradient(180deg,#FDE68A,#F59E0B);box-shadow:0 0 24px rgba(245,158,11,.35);transition:transform .12s,filter .15s}
 button:hover{filter:brightness(1.06);transform:translateY(-1px)}
@@ -76,8 +77,8 @@ small{color:var(--tx2);font-size:13px;line-height:1.5}
   <p class="term" aria-hidden="true"><b>&gt;&gt;&gt;</b> login(niat_id, name)</p>
   <form class="card" id="f" novalidate>
     <label>NIAT ID<input id="roll" autocomplete="username" autocapitalize="characters" spellcheck="false" placeholder="Your NIAT ID" required></label>
-    <label>Your name, as in the student list<input id="name" autocomplete="name" placeholder="Your full name" required></label>
-    <small style="margin-top:-6px">Your first name is enough, unless a classmate shares it: then type your full name.</small>
+    <label>Your name<input id="name" autocomplete="name" placeholder="As on the student list" aria-describedby="namehint" required></label>
+    <small id="namehint" style="margin-top:-6px">Your first name is enough. If a classmate shares it, type your full name.</small>
     <div class="err" id="err" role="alert"></div>
     <button type="submit" id="go">Enter the studio →</button>
     <small>Not on the list, or your name doesn't match? Ask your mentor.</small>
@@ -93,20 +94,25 @@ small{color:var(--tx2);font-size:13px;line-height:1.5}
   code.innerHTML = h;
 
   var f = document.getElementById('f'), err = document.getElementById('err'), go = document.getElementById('go');
-  var roll = document.getElementById('roll'), name = document.getElementById('name');
+  var roll = document.getElementById('roll'), name = document.getElementById('name'), label = go.textContent;
+  function mark(el, bad) { if (bad) { el.setAttribute('aria-invalid', 'true'); el.setAttribute('aria-errormessage', 'err'); } else { el.removeAttribute('aria-invalid'); el.removeAttribute('aria-errormessage'); } }
+  [roll, name].forEach(function (el) { el.addEventListener('input', function () { mark(el, false); }); });
   // Already logged in: straight to the game.
   fetch('/api/boot', { credentials: 'same-origin' }).then(function (r) { if (r.ok) location.replace('/'); }).catch(function () {});
   try { roll.value = localStorage.getItem('kbc-roll') || ''; } catch (e) {}
   (roll.value ? name : roll).focus();
   f.addEventListener('submit', function (e) {
     e.preventDefault();
-    err.classList.remove('on');
-    if (!roll.value.trim() || !name.value.trim()) { err.textContent = 'Enter your NIAT ID and your name.'; err.classList.add('on'); return; }
-    go.disabled = true;
+    err.classList.remove('on'); mark(roll, false); mark(name, false);
+    var noR = !roll.value.trim(), noN = !name.value.trim();
+    if (noR || noN) { mark(roll, noR); mark(name, noN); err.textContent = noR && noN ? 'Enter your NIAT ID and your name.' : noR ? 'Enter your NIAT ID.' : 'Enter your name.'; err.classList.add('on'); (noR ? roll : name).focus(); return; }
+    go.disabled = true; go.textContent = 'Checking…';
     fetch('/api/auth/login', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ roll: roll.value.trim(), name: name.value.trim() }) })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || 'Could not log in. Try again.'); return d; }); })
       .then(function () { try { localStorage.setItem('kbc-roll', roll.value.trim()); } catch (e) {} location.replace('/'); },
-        function (x) { err.textContent = x.message === 'Failed to fetch' ? 'No connection. Check your internet and try again.' : x.message; err.classList.add('on'); go.disabled = false; });
+        function (x) { err.textContent = x.message === 'Failed to fetch' ? 'No connection. Check your internet and try again.' : x.message; err.classList.add('on'); go.disabled = false; go.textContent = label;
+          // point at the field the message is about
+          if (/NIAT ID/i.test(x.message)) { mark(roll, true); roll.focus(); } else if (/name/i.test(x.message)) { mark(name, true); name.focus(); } });
   });
 })();
 </script>

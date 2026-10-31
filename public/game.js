@@ -1158,7 +1158,7 @@ ${answerHTML()}${fixHTML()}${qfbHere(false)?rfHTML("q"):""}
 ${feedbackHTML()}
 </section></div><div class="side">${boardHTML(r)}</div></div>`}
 function vResult(){const R=S.res,rc=R.reached||0,pay=R.payout||0;
- const msg=R.reason==="win"?`${fmtR(pay)} collected! You're a Crorepati Coder.`:R.reason==="stop"?`Smart move. You walked away with ${fmtR(pay)}.`:R.reason==="energy"?`Out of energy! Your path progress is saved${pay?` and ${fmtR(pay)} went to your wallet`:""}. Recharge with a new game.`:pay?`Game over, but you keep it all. ${fmtR(pay)} goes to your wallet.`:"Tough one. Nothing banked this time. Read why, then go again.";
+ const msg=R.reason==="win"?`${fmtR(pay)} collected! You're a Crorepati Coder.`:R.reason==="stop"?(pay?`Smart move. You walked away with ${fmtR(pay)}.`:"You stopped here. Nothing banked this time, but your path progress is saved."):R.reason==="energy"?`Out of energy! Your path progress is saved${pay?` and ${fmtR(pay)} went to your wallet`:""}. Recharge with a new game.`:pay?`Game over, but you keep it all. ${fmtR(pay)} goes to your wallet.`:"Tough one. Nothing banked this time. Read why, then go again.";
  const mood=R.reason==="win"?"trophy":R.reason==="stop"?"chai":pay?"dance":R.reason==="timeout"?"tired":"bonk";
  const learn=""; /* the results screen no longer repeats the last wrong answer's working (it was shown in the hot seat) */
  return `<section class="res enter"><div class="res-card card">
@@ -1167,7 +1167,7 @@ function vResult(){const R=S.res,rc=R.reached||0,pay=R.payout||0;
 <div class="muted">${esc(S.name||"Player")} takes home</div><div class="ramt">${fmtR(pay)}</div><div class="muted">${rc?`Highest prize this game: ${fmtR(amountOf(rc))}`:"No prize won this game yet"}</div>
 </div>${NOTE[pay]?`<div class="res-bill">${noteBig(pay)}</div>`:""}</div>
 <dl class="res-line"><div><dt>Correct this game</dt><dd>${R.correct}/${R.answered}</dd></div><div><dt>Time played</dt><dd>${Math.floor(R.secs/60)}:${String(R.secs%60).padStart(2,"0")}</dd></div><div><dt>Prizes won</dt><dd>${rc} of ${LADDER.length}</dd></div><div><dt>Wallet</dt><dd>${fmtR(R.wallet)}</dd></div></dl>
-<div class="res-goal"><div class="res-goal-h"><b>Next game: win Fastest Finger, then play for your first prize of 10</b><span class="muted">Best ever: ${fmtR(amountOf(P.best))}</span></div><span class="muted">Your path progress is always kept.</span></div>
+<div class="res-goal"><div class="res-goal-h"><b>${P.best?`Next game: win Fastest Finger, then beat your best of ${fmtR(amountOf(P.best))}`:`Next game: win Fastest Finger, then play for your first prize of ${fmtR(amountOf(1))}`}</b><span class="muted">Best ever: ${fmtR(amountOf(P.best))}</span></div><span class="muted">Your path progress is always kept.</span></div>
 ${R.fbDone==="sent"?`<div class="rf rf-done"><b>Thanks!</b> Your rating reached the KBC team.</div>`:R.fbDone?"":rfHTML("g")}
 ${learn}
 <div class="ractions"><button class="btn gold" data-act="play">Play again →</button><button class="btn quiet" data-act="fame">Hall of Fame</button><button class="btn quiet" data-act="home">Home</button></div>
@@ -1321,7 +1321,7 @@ function fameRows(){return {live:true,rows:(FAMEALL||[]).map(r=>({n:r.name,coins
 function vFame(){const F=FAMEC,uni=FQ.scope==="uni",myU=(ME&&ME.university)||"",unis=((F&&F.universities)||[]).length?F.universities:(myU?[myU]:[]);
  const cur=(F&&F.university)||FQ.uni||myU,rows=(F&&F.rows)||[],pct=r=>r.answered?Math.round(r.correct/r.answered*100):0,ini=n=>esc(String(n||"?").trim().charAt(0).toUpperCase()||"?");
  const tabs=`<div class="ftabs" role="tablist" aria-label="Leaderboard"><button role="tab" aria-selected="${!uni}" class="ftab ${!uni?"on":""}" data-act="fame-tab" data-s="all">🏆 Top players in India</button><button role="tab" aria-selected="${uni}" class="ftab ${uni?"on":""}" data-act="fame-tab" data-s="uni">🏫 My campus</button></div>`;
- const pick=uni&&unis.length?`<label class="fsel"><span>Campus</span><select id="fameuni">${unis.map(u=>`<option value="${esc(u)}" ${u===cur?"selected":""}>${esc(u)}</option>`).join("")}</select></label>`:"";
+ const pick=uni&&unis.length?`<label class="fsel"><span>Campus</span><select id="fameuni">${(cur&&!unis.includes(cur)?[cur,...unis]:unis).map(u=>`<option value="${esc(u)}" ${u===cur?"selected":""}>${esc(u)}</option>`).join("")}</select></label>`:"";
  const pod=(i,cls)=>{const r=rows[i];return `<div class="fpod ${cls} ${r?"":"empty"} ${r&&r.me?"me":""}"><span class="fav">${r?ini(r.name):"?"}</span><b class="fnm">${r?esc(r.name):"Your spot"}</b>${r&&!uni&&r.university?`<small class="fu">${esc(r.university)}</small>`:""}<span class="famt">${r?fmtR(r.coins):"—"}</span><span class="fblk">${cls==="p1"?"🥇":cls==="p2"?"🥈":"🥉"}</span></div>`};
  const row=r=>`<li class="${r.me?"me":""} ${r.rank<=3?"top":""}"><span class="frk">${r.rank}</span><span class="fav sm">${ini(r.name)}</span><span class="fwho"><b>${esc(r.name)}${r.me?' <em>you</em>':""}</b>${!uni&&r.university?`<small>${esc(r.university)}</small>`:""}</span><span class="facc" title="${r.correct} of ${r.answered} right"><i style="--v:${pct(r)}%"></i><b>${pct(r)}%</b><small>right</small></span><span class="famtr">${fmtR(r.coins)}</span></li>`;
  const body=!F?`<p class="fempty">Loading the leaderboard…</p>`:F.err?`<p class="fempty">${esc(F.err)}</p>`:uni&&!cur?`<p class="fempty">Your campus isn't on the student list yet, so there is no campus board for you. Ask your mentor to add it.</p>`
@@ -1492,7 +1492,7 @@ function render0(){if(SAFE_SCREENS.includes(S.screen)){if(S.graphChanged)return 
  else app.innerHTML=S.screen==="home"?vHome():S.screen==="play"?vPlay():S.screen==="result"?vResult():S.screen==="fame"?vFame():S.screen==="team"?vTeam():S.screen==="path"?vPath():S.screen==="fff"?vFFF():S.screen==="seat"?vSeat():S.screen==="guide"?vGuide():S.screen==="wallet"?vWallet():S.screen==="buddy"?vBuddy():vHome();
  if(S.screen==="play"&&S.phase==="ask")startQ();syncChip();syncTeam();setTimeout(botTalk,250);
  document.body.classList.toggle("qscreen",S.screen==="play"||S.screen==="fff");if(S.screen!=="home")document.body.classList.remove("homespot");if(S.screen!=="fff")clearInterval(fInt);requestAnimationFrame(placeSpot);
- document.body.classList.toggle("inplay",S.screen==="play"||S.screen==="result");document.body.classList.toggle("inteam",S.screen==="team");
+ document.body.classList.toggle("inplay",S.screen==="play"||S.screen==="result");document.body.classList.toggle("inteam",S.screen==="team");document.body.classList.toggle("rscreen",S.screen==="result");
  window.KB3D&&KB3D.mode(S.screen==="result"||S.screen==="fff"||S.screen==="play"||S.screen==="guide"||S.screen==="buddy"||S.screen==="wallet"?"hide":S.screen==="path"?"home":S.screen);
  if(S.screen==="home"){requestAnimationFrame(placeHomeCoin);[150,600,1500].forEach(t=>setTimeout(placeHomeCoin,t));typeHome()}else clearTimeout(typeT);syncLive();
  if(S.screen==="path"){if(!S.mapped){S.mapped=1;requestAnimationFrame(()=>pathJump(false))}else if(S.mapTop!=null)scrollTo({top:S.mapTop})}}
@@ -1864,6 +1864,7 @@ function guideOverlay(){let m=$("#guidem");if(!m){m=document.createElement("div"
 document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;for(const id of ["#solm","#guidem","#leavem"]){const m=$(id);if(m&&!m.hidden){e.preventDefault();m.hidden=true;return}}if(TI>=0){e.preventDefault();tourEnd()}},SIG);
 document.addEventListener("click",e=>{if(e.target.classList&&e.target.classList.contains("modalx"))e.target.hidden=true},SIG);
 document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b||b.disabled)return;const a=b.dataset.act;if(!qfbGate(a))return;
+ if(a!=="menu"&&b.closest("#menu"))setMenu(false);
  if(a==="leave-stay"){modalClose("#leavem");return}
  if(a==="leave-go"){modalClose("#leavem");const el=PEND;PEND=null;if(el){LEAVE_OK=true;try{el.click()}finally{LEAVE_OK=false}}return}
  if(a==="guide"&&inGame()){guideOverlay();return}

@@ -92,3 +92,8 @@ html[data-theme="light"] .bq-how{background:#F0FDFA}html[data-theme="light"] .bq
 
 /* tap targets: every widget button at least 44px tall */
 .bqw .mchip,.bqw button{min-height:44px}
+/* group questions after grading: each piece shows right or wrong, and a wrong one names its group */
+.bqw .gpc.ok,.bqw .gpc.no{color:#fff}
+.bqw .gpc.ok{background:#15803D!important;border-color:#4ADE80!important}
+.bqw .gpc.no{background:#9F1239!important;border-color:#FB7185!important}
+.gpc .gfix{font:800 12px var(--f-mono);font-style:normal;opacity:.95;margin-left:2px}

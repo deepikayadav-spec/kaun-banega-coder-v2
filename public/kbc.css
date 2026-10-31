@@ -2667,3 +2667,38 @@ html[data-theme="light"] .htag{color:#B45309}
 /* My path: no diyas (map, corner lamp) */
 .pworld .diya,.pworld .diwali,body:has(.pathv) .bigdiya{display:none!important}
 @media (min-width:701px){.pnext>b{flex:1 1 auto!important}.pnext .btn{margin-left:auto}}
+/* ===== Polish pass (Oct 2026): fixes found by screenshotting every screen ===== */
+/* code reads as typed: no "==" / "!=" / "<=" ligatures in questions, answers and solutions */
+#app,.modalx{font-variant-ligatures:no-contextual}
+/* solution dialog: the explanation sat in a second bordered box inside the dialog */
+body .solbox .panel.explain{border:0!important;box-shadow:none!important;background:transparent!important}
+/* results: actions follow the content, the card no longer stretches to the money board's height,
+   and the floating feedback button (which covered "Play again") steps aside: the card has its own rating */
+.res{align-items:start!important}
+.res .ractions{margin-top:4px}
+body.rscreen .fbbtn{display:none!important}
+/* hot seat: the answered row (verdict, next, leave, solution) fits on one line instead of running past the edge */
+.dockrow:has(.actions .banner) .banner{font-size:clamp(15px,1.35vw,19px)!important}
+.dockrow:has(.actions .banner) .actions .solbtn,.dockrow:has(.actions .banner) .actions .btn.quiet[data-act="stop"]{padding-left:6px!important;padding-right:6px!important}
+/* Fastest Finger: the success line was dark green on a dark card */
+html:not([data-theme="light"]) .verdict.good>div>b{color:#4ADE80!important}
+/* menu: show only the icon for the theme you switch to */
+#menu #themebtn .i-moon{display:none!important}
+html[data-theme="light"] #menu #themebtn .i-sun{display:none!important}
+html[data-theme="light"] #menu #themebtn .i-moon{display:block!important}
+@media (max-width:600px){
+ /* the menu is a dropdown now, not a toolbar: keep its labels readable and easy to tap */
+ #menu .tbtn{font-size:15px!important;padding:10px 12px!important}
+ #menu .tbtn .lbl{font-size:15px!important}
+ /* home: the live count gets its own line, so no separator dot is left hanging at a line end */
+ .home4 .hmeta3 .hlive{flex-basis:100%;display:flex;justify-content:center;align-items:center;gap:6px}
+ .home4 .hmeta3 .hlive+.hdot{display:none}
+ /* wallet: Pixel sits beside the total instead of under it */
+ .wtop{flex-wrap:nowrap;padding:18px 20px}
+ .wtop>:last-child{flex:none;width:84px;max-height:96px;overflow:visible}
+ .wtop>:last-child canvas,.wtop>:last-child img,.wtop>:last-child svg{max-width:84px;height:auto}
+}
+@media (max-width:1000px){
+ /* hot seat on a phone: actions sit left, clear of the floating "Money board" button */
+ body.qscreen .dockrow,body.qscreen .dockrow .actions{justify-content:flex-start}
+}

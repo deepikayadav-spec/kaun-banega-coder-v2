@@ -12,31 +12,37 @@ export const readContent = (name) => JSON.parse(fs.readFileSync(path.join(CONTEN
 const ENVELOPE = ['id', 'skill', 'level', 'type', 'difficulty', 'variant', 'task', 'payload'];
 const ID_RE = /^C\d+-G\d+-S\d+-L[1-4]-T\d+-R[1-3]-V\d+$/;
 
-// ---------- cache: the compiled graph and what the bank can serve. Reloaded after an upload, and every minute
-// so that other serverless instances pick up bank uploads too. The active graph version is checked every few seconds,
-// so a new skill graph reaches every instance (and every student's path) straight away.
-let cache = null;
-export function invalidate() { cache = null; ver = { at: 0, v: null }; }
-// The active graph version, looked up at most every 3 s per instance: a new graph still reaches every student within
-// seconds, without a database round trip on every request.
-let ver = { at: 0, v: null };
-const activeVersion = async () => {
-  if (Date.now() - ver.at < 3000) return ver.v;
-  ver = { at: Date.now(), v: await activeVersionNow() };
-  return ver.v;
+// ---------- cache: the compiled graph and what the bank can serve, per serverless instance.
+// Every few seconds one small query (the live graph version, and the count and last change of live questions) tells
+// whether anything changed; only then is the cache rebuilt, which reads every live question's address (tens of
+// thousands of rows). One rebuild at a time: concurrent requests wait for it, or keep using the old cache while it runs.
+// A new skill graph or question upload reaches every instance within seconds.
+let cache = null, building = null, checked = 0;
+export function invalidate() { cache = null; checked = 0; }
+const stamp = async () => {
+  const g = await one('SELECT version FROM skill_graph WHERE active = 1 ORDER BY created_at DESC LIMIT 1');
+  const q = await one("SELECT COUNT(*)::int AS n, COALESCE(MAX(updated_at), 0) AS t FROM questions WHERE status = 'live'");
+  return (g ? g.version : 'file') + '|' + q.n + '|' + q.t;
 };
-const activeVersionNow = async () => {
-  const r = await one('SELECT version FROM skill_graph WHERE active = 1 ORDER BY created_at DESC LIMIT 1');
-  return r ? r.version : 'file';
-};
-export async function content() {
-  if (cache && Date.now() - cache.at < 60_000 && cache.version === await activeVersion()) return cache;
+async function build(st) {
   const g = await one('SELECT version, data FROM skill_graph WHERE active = 1 ORDER BY created_at DESC LIMIT 1');
   const types = await all('SELECT key, data FROM question_types');
   const graph = normalizeGraph(g ? g.data : readContent('skill-graph.json'));
   const typesDoc = types.length ? { ...readContent('question-types.json'), types: sortTypes(types.map((t) => t.data)) } : readContent('question-types.json');
   const rows = await all("SELECT skill, level, type, difficulty, variant FROM questions WHERE status = 'live'");
-  cache = { at: Date.now(), version: g ? g.version : 'file', graph, typesDoc, G: compileGraph(graph, typesDoc), avail: buildAvail(rows), count: rows.length };
+  return { at: Date.now(), stamp: st, version: g ? g.version : 'file', graph, typesDoc, G: compileGraph(graph, typesDoc), avail: buildAvail(rows), count: rows.length };
+}
+export async function content() {
+  if (cache && Date.now() - checked < 3000) return cache;
+  if (!building) building = (async () => {
+    try {
+      const st = await stamp();
+      checked = Date.now();
+      if (!cache || cache.stamp !== st) cache = await build(st);
+    } finally { building = null; }
+  })();
+  if (cache) { building.catch(() => {}); return cache; }   // a rebuild is running: carry on with the current cache
+  await building;
   return cache;
 }
 const sortTypes = (list) => list.sort((a, b) => a.level - b.level || Number(a.T.slice(1)) - Number(b.T.slice(1)));

@@ -140,6 +140,25 @@ CREATE TABLE IF NOT EXISTS events (
 );
 CREATE INDEX IF NOT EXISTS events_roll ON events(roll_no, at);
 CREATE INDEX IF NOT EXISTS events_kind ON events(kind, at);
+CREATE TABLE IF NOT EXISTS student_logins (     -- one row per student login (analytics)
+  id          BIGSERIAL PRIMARY KEY,
+  roll_no     TEXT NOT NULL,
+  university  TEXT,
+  at          BIGINT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS student_logins_at ON student_logins(at);
+CREATE INDEX IF NOT EXISTS student_logins_roll ON student_logins(roll_no, at);
+CREATE TABLE IF NOT EXISTS activity (            -- visible time with the game open, per student per IST day (analytics)
+  roll_no     TEXT NOT NULL,
+  day         TEXT NOT NULL,
+  ms          BIGINT NOT NULL DEFAULT 0,
+  pings       INTEGER NOT NULL DEFAULT 0,
+  first_at    BIGINT NOT NULL,
+  last_at     BIGINT NOT NULL,
+  PRIMARY KEY (roll_no, day)
+);
+CREATE INDEX IF NOT EXISTS activity_day ON activity(day);
+CREATE INDEX IF NOT EXISTS attempts_at ON attempts(at);
 CREATE TABLE IF NOT EXISTS app_settings (       -- small key/value switches, e.g. progress_epoch (the last "fresh start")
   key         TEXT PRIMARY KEY,
   value       TEXT NOT NULL

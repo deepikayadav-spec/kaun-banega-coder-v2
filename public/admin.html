@@ -41,6 +41,13 @@ pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);border:1px s
 .sk .done{border-color:var(--ok)}.sk .open{border-color:var(--acc)}
 .b,button.b,select,input:not([type=checkbox]):not([type=radio]){min-height:44px}
 input[type=checkbox]{width:18px;height:18px}
+.an-head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}.seg .b.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.an-group h3{margin:18px 0 8px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kpi .of{display:block;color:var(--muted);font-size:12px;margin-top:2px}.kpi .def{display:block;color:var(--muted);font-size:11.5px;line-height:1.35;margin-top:6px}
+.bar.q2 i{background:var(--ok)}
+.an-st td{vertical-align:top}.an-st tr.sel{background:var(--acc-2)}.an-det>td{background:var(--bg);padding:14px}.an-d h3{margin:12px 0 6px;font-size:14px}
+#an-q{min-width:220px}
 </style></head>
 <body>
 <div id="root"></div>
@@ -55,13 +62,13 @@ let A=null,TAB="overview",UNI="",UNIS=[];
 const isSuper=()=>A&&A.role==="super_admin";
 function draw(){if(!A){$("#root").innerHTML=`<div class="card login"><h2>KBC admin</h2><form id="lf"><label>Email<input id="em" type="email" autocomplete="username" required></label><label>Password<input id="pw" type="password" autocomplete="current-password" required></label><button class="b">Log in</button><p class="err" id="le"></p></form></div>`;
   $("#lf").onsubmit=async e=>{e.preventDefault();try{const r=await api("POST","/api/admin/login",{email:$("#em").value,password:$("#pw").value});await me();if(r.mustChange){TAB="account"}draw()}catch(x){$("#le").textContent=x.message}};return}
- const tabs=[["overview","Overview"],["students","Students"],["content","Question bank"],["feedback","Feedback"],...(isSuper()?[["admins","Admins"]]:[]),["account","Account"]];
+ const tabs=[["overview","Overview"],["analytics","Analytics"],["students","Students"],["content","Question bank"],["feedback","Feedback"],...(isSuper()?[["admins","Admins"]]:[]),["account","Account"]];
  $("#root").innerHTML=`<header><h1>Kaun Banega <span>Coder</span> · admin</h1><nav>${tabs.map(([k,n])=>`<button data-tab="${k}" class="${TAB===k?"on":""}">${n}</button>`).join("")}</nav>
  <div class="who">${A.university?`<span class="pill">${esc(A.university)}</span>`:`<select id="uni" aria-label="University shown"><option value="">All universities</option>${UNIS.map(u=>`<option ${u===UNI?"selected":""}>${esc(u)}</option>`).join("")}</select>`}<span>${esc(A.email)} · ${A.role==="super_admin"?"super admin":"admin"}</span><button class="b q" id="lo">Log out</button></div></header><main id="m"><p class="muted">Loading…</p></main>`;
  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{TAB=b.dataset.tab;draw()});
  $("#lo").onclick=()=>api("POST","/api/admin/logout").finally(()=>{A=null;draw()});
  const u=$("#uni");if(u)u.onchange=()=>{UNI=u.value;draw()};
- ({overview,students,content,feedback,admins,account})[TAB]().catch(e=>{$("#m").innerHTML=`<p class="bad">${esc(e.message)}</p>`})}
+ ({overview,analytics,students,content,feedback,admins,account})[TAB]().catch(e=>{$("#m").innerHTML=`<p class="bad">${esc(e.message)}</p>`})}
 const uq=()=>UNI?"university="+encodeURIComponent(UNI):"";
 async function me(){A=(await api("GET","/api/admin/me")).admin;const u=await api("GET","/api/admin/universities");UNIS=u.rows.map(r=>r.university).filter(Boolean)}
 
@@ -73,6 +80,51 @@ async function overview(){const d=await api("GET","/api/admin/analytics?"+uq()),
  <div class="card"><h2>Accuracy by question type</h2><div class="tw"><table><tr><th>Level</th><th>Type</th><th>Answers</th><th>Right</th></tr>${d.byType.map(x=>`<tr><td>L${x.level}</td><td>${esc(x.type)}</td><td>${x.n}</td><td>${pct(x.right,x.n)}</td></tr>`).join("")||'<tr><td colspan=4 class="muted">No answers yet.</td></tr>'}</table></div></div></div>
  ${d.byUni.length?`<div class="card"><h2>By university</h2><div class="tw"><table><tr><th>University</th><th>Students</th><th>Logged in</th><th>Players</th><th>Answers</th><th>Accuracy</th></tr>${u.rows.map(r=>{const x=d.byUni.find(b=>b.university===r.university)||{};return `<tr><td>${esc(r.university||"(none)")}</td><td>${r.active}</td><td>${r.logged_in}</td><td>${x.players||0}</td><td>${x.n||0}</td><td>${pct(x.right||0,x.n||0)}</td></tr>`}).join("")}</table></div></div>`:""}
  <div class="card"><h2>Skill progress</h2><p class="muted">How many students have each skill open (by current level) or done.</p><div class="tw"><table><tr><th>Skill</th><th>Group</th><th>Open: L1</th><th>L2</th><th>L3</th><th>L4</th><th>Done</th></tr>${d.skills.filter(s=>s.open||s.done).map(s=>`<tr><td>${s.id} ${esc(s.name)}</td><td>${s.group}</td>${s.levels.map(n=>`<td>${n}</td>`).join("")}<td class="ok">${s.done}</td></tr>`).join("")||'<tr><td colspan=7 class="muted">No progress yet.</td></tr>'}</table></div></div>`}
+
+
+/* ================= Analytics tab: business metrics, then one row per student (like Saturday Sprint) ================= */
+let AP={days:30,sort:"recent",q:"",open:null};
+const fmtMs=ms=>{if(ms==null)return "—";ms=+ms;if(ms<1000)return Math.round(ms)+" ms";const s=Math.round(ms/1000);if(s<60)return s+" s";const m=Math.round(s/60);if(m<60)return m+" min";const h=Math.floor(m/60);return h+" h "+(m%60)+" min"};
+const fmtV=m=>m.value==null?'<span class="muted">—</span>':m.unit==="pct"?m.value+"%":m.unit==="ms"?fmtMs(m.value):m.unit==="stars"?m.value+" ★":typeof m.value==="number"?m.value.toLocaleString("en-IN"):esc(m.value);
+const ofTxt=m=>m.of!=null&&m.value!=null&&typeof m.value==="number"?`<small class="of">${pct(m.value,m.of)} of ${m.of.toLocaleString("en-IN")}</small>`:m.basis!=null?`<small class="of">based on ${m.basis}</small>`:"";
+async function analytics(){
+ $("#m").innerHTML='<p class="muted">Loading analytics…</p>';
+ const qs=`days=${AP.days}&${uq()}`,d=await api("GET","/api/admin/stats/overview?"+qs);
+ const per=[[1,"Today"],[7,"7 days"],[30,"30 days"],[90,"90 days"],[3650,"All time"]];
+ const maxA=Math.max(1,...d.daily.map(x=>x.active)),maxQ=Math.max(1,...d.daily.map(x=>x.answers));
+ $("#m").innerHTML=`<div class="card an-head"><div><h2 style="margin:0">Student analytics</h2><p class="muted" style="margin:4px 0 0">${esc(d.university||"All universities")} · ${d.from} to ${d.today} (IST) · TEST accounts excluded</p></div>
+  <div class="seg" role="group" aria-label="Period">${per.map(([n,l])=>`<button class="b q ${AP.days===n?"on":""}" data-days="${n}">${l}</button>`).join("")}</div></div>
+ ${d.groups.map(g=>`<section class="an-group"><h3>${g.name}</h3><div class="kpis">${g.metrics.map(m=>`<div class="kpi" title="${esc(m.def)}"><small>${esc(m.label)}</small><b>${fmtV(m)}</b>${ofTxt(m)}<span class="def">${esc(m.def)}</span></div>`).join("")}</div></section>`).join("")}
+ <div class="card"><h2>Daily activity</h2><p class="muted">Students active each day, and questions answered.</p>
+  <div class="tw"><table class="an-daily"><tr><th>Day</th><th>Active students</th><th></th><th>Questions</th><th></th><th>Time on portal</th></tr>${d.daily.slice().reverse().map(x=>`<tr><td>${x.day}</td><td>${x.active}</td><td style="width:22%"><div class="bar"><i style="width:${x.active/maxA*100}%"></i></div></td><td>${x.answers}</td><td style="width:22%"><div class="bar q2"><i style="width:${x.answers/maxQ*100}%"></i></div></td><td>${fmtMs(x.ms)}</td></tr>`).join("")}</table></div></div>
+ <div class="grid2">
+  <div class="card"><h2>Where students are now</h2><p class="muted">Each student's current topic and level.</p><div class="tw"><table><tr><th>Topic</th><th>Students</th><th>L1</th><th>L2</th><th>L3</th><th>L4</th></tr>${d.nowAt.map(s=>`<tr><td>${s.id} ${esc(s.name)}</td><td><b>${s.students}</b></td>${s.levels.map(n=>`<td>${n||'<span class="muted">0</span>'}</td>`).join("")}</tr>`).join("")||'<tr><td colspan=6 class="muted">No students have started yet.</td></tr>'}</table></div></div>
+  <div class="card"><h2>Prizes won</h2><p class="muted">Students by number of skill groups cleared (prizes).</p><div class="tw"><table><tr><th>Prizes</th><th>Students</th></tr>${d.prizes.map(p=>`<tr><td>${p.prizes}</td><td>${p.students}</td></tr>`).join("")||'<tr><td colspan=2 class="muted">No games yet.</td></tr>'}</table></div></div>
+  <div class="card"><h2>Hardest topics</h2><p class="muted">Lowest accuracy first (topics with 10+ answers in the period).</p><div class="tw"><table><tr><th>Topic</th><th>Answers</th><th>Students</th><th>Accuracy</th></tr>${d.skills.slice(0,12).map(s=>`<tr><td>${s.id} ${esc(s.name)}</td><td>${s.n}</td><td>${s.students}</td><td>${s.acc}%</td></tr>`).join("")||'<tr><td colspan=4 class="muted">Not enough answers yet.</td></tr>'}</table></div></div>
+  <div class="card"><h2>Question types</h2><p class="muted">Accuracy and median answer time (types with 10+ answers).</p><div class="tw"><table><tr><th>Level · type</th><th>Answers</th><th>Accuracy</th><th>Median time</th></tr>${d.types.map(t=>`<tr><td>${esc(t.key)}</td><td>${t.n}</td><td>${t.acc}%</td><td>${fmtMs(t.medianMs)}</td></tr>`).join("")||'<tr><td colspan=4 class="muted">Not enough answers yet.</td></tr>'}</table></div></div>
+ </div>
+ <div class="card" id="an-st"><p class="muted">Loading students…</p></div>`;
+ document.querySelectorAll("[data-days]").forEach(b=>b.onclick=()=>{AP.days=+b.dataset.days;AP.open=null;analytics()});
+ await anStudents()}
+async function anStudents(){const box=$("#an-st");if(!box)return;
+ const d=await api("GET",`/api/admin/stats/students?days=${AP.days}&sort=${AP.sort}&q=${encodeURIComponent(AP.q)}&${uq()}`);
+ const S=[["recent","Most recent"],["least","Least recent"],["time","Most time"],["answers","Most questions"],["accuracy","Best accuracy"],["skills","Most skills"],["name","Name"]];
+ box.innerHTML=`<div class="an-head"><div><h2 style="margin:0">Students</h2><p class="muted" style="margin:4px 0 0">${d.total.toLocaleString("en-IN")} students · time, logins and questions are for the period; skills, prizes and games are totals</p></div>
+  <div class="row"><input id="an-q" aria-label="Search students" placeholder="Search NIAT ID or name" value="${esc(AP.q)}"><select id="an-sort" aria-label="Sort students">${S.map(([k,l])=>`<option value="${k}" ${AP.sort===k?"selected":""}>${l}</option>`).join("")}</select><a class="b q" style="text-decoration:none" href="/api/admin/stats/students.csv?days=${AP.days}&sort=${AP.sort}&${uq()}">Download CSV</a></div></div>
+ <div class="tw"><table class="an-st"><tr><th>Student</th><th>University</th><th>Last active</th><th>Days active</th><th>Time</th><th>Logins</th><th>Questions</th><th>Accuracy</th><th>Skills cleared</th><th>Now at</th><th>Prizes</th><th>Games</th></tr>
+ ${d.rows.slice(0,500).map(r=>`<tr class="click ${AP.open===r.roll_no?"sel":""}" data-roll="${esc(r.roll_no)}"><td><b>${esc(r.name||"—")}</b><br><small class="muted">${esc(r.roll_no)}</small></td><td class="muted">${esc(r.university)}</td><td>${dt(r.lastActive)}</td><td>${r.daysActive}</td><td>${r.ms?fmtMs(r.ms):'<span class="muted">—</span>'}</td><td>${r.logins}</td><td>${r.answers}</td><td>${r.accuracy==null?'<span class="muted">—</span>':r.accuracy+"%"}</td><td>${r.skillsDone}</td><td>${r.nowAt?`${r.nowAt.id} · L${r.nowAt.level}`:'<span class="muted">—</span>'}</td><td>${r.prizes}</td><td>${r.games}</td></tr>${AP.open===r.roll_no?`<tr class="an-det"><td colspan="12" id="an-det">Loading…</td></tr>`:""}`).join("")}
+ </table></div>${d.rows.length>500?`<p class="muted">Showing the first 500. Search, or download the CSV for all ${d.rows.length}.</p>`:""}`;
+ let t=0;$("#an-q").oninput=e=>{clearTimeout(t);t=setTimeout(()=>{AP.q=e.target.value.trim();anStudents().then(()=>{const i=$("#an-q");i.focus();i.setSelectionRange(i.value.length,i.value.length)})},350)};
+ $("#an-sort").onchange=e=>{AP.sort=e.target.value;anStudents()};
+ box.querySelectorAll("tr[data-roll]").forEach(tr=>tr.onclick=()=>{AP.open=AP.open===tr.dataset.roll?null:tr.dataset.roll;anStudents()});
+ if(AP.open)anDetail(AP.open)}
+async function anDetail(roll){const cell=$("#an-det");if(!cell)return;
+ const d=await api("GET",`/api/admin/stats/student/${encodeURIComponent(roll)}?days=${AP.days}`),mx=Math.max(1,...d.daily.map(x=>x.answers));
+ cell.innerHTML=`<div class="grid2 an-d"><div><h3>Day by day</h3><table><tr><th>Day</th><th>Time</th><th>Questions</th><th></th><th>Right</th></tr>${d.daily.slice().reverse().map(x=>`<tr><td>${x.day}</td><td>${fmtMs(x.ms)}</td><td>${x.answers}</td><td style="width:30%"><div class="bar"><i style="width:${x.answers/mx*100}%"></i></div></td><td>${pct(x.right,x.answers)}</td></tr>`).join("")||'<tr><td colspan=5 class="muted">No activity in the period.</td></tr>'}</table>
+  <h3>Topics</h3><table><tr><th>Topic</th><th>Answers</th><th>Accuracy</th></tr>${d.skills.map(s=>`<tr><td>${s.id} ${esc(s.name)}</td><td>${s.n}</td><td>${s.acc}%</td></tr>`).join("")||'<tr><td colspan=3 class="muted">No answers yet.</td></tr>'}</table></div>
+ <div><h3>Progress steps</h3><table><tr><th>When</th><th>Step</th><th>Topic</th></tr>${d.steps.map(s=>`<tr><td>${dt(s.at)}</td><td>${{level_up:"Level up",skill_done:"Topic cleared ✓",unlock:"Topic unlocked"}[s.kind]||s.kind}</td><td>${s.skill} ${esc(s.name)}</td></tr>`).join("")||'<tr><td colspan=3 class="muted">None yet.</td></tr>'}</table>
+  <h3>Last answers</h3><table><tr><th>When</th><th>Topic</th><th>Question</th><th>Result</th><th>Time</th></tr>${d.recent.map(a=>`<tr><td>${dt(a.at)}</td><td>${a.skill}</td><td class="muted">L${a.level} ${esc(a.type)} R${a.r} V${a.variant}${a.mode==="practice"?" · practice":""}</td><td>${a.timeout?'<span class="warn">Time out</span>':a.correct?'<span class="ok">Right</span>':'<span class="bad">Wrong</span>'}</td><td>${fmtMs(a.ms)}</td></tr>`).join("")||'<tr><td colspan=5 class="muted">No answers yet.</td></tr>'}</table>
+  <p class="muted">Logins (latest 50): ${d.logins.length?d.logins.slice(0,10).map(dt).join(" · ")+(d.logins.length>10?" …":""):"none recorded"}</p></div></div>`}
 
 async function students(){const q=new URLSearchParams(location.hash.slice(1));
  $("#m").innerHTML=`<div class="card"><div class="row"><input id="sq" aria-label="Search students by NIAT ID or name" placeholder="Search NIAT ID or name" style="flex:1;min-width:200px"><button class="b q" id="sgo">Search</button></div></div>

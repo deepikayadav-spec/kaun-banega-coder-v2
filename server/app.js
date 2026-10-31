@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import { ready, one, all, run, tx, json, dbKind, audit } from './db.js';
 import { extractCtData, ctToGraph } from './ctgraph.js';
+import * as stats from './analytics.js';
 import { content, loadQuestion, questionById, uploadBank, uploadGraph, activateGraph, graphHistory, seedIfEmpty } from './bank.js';
 import { newState, upgradeState, activeSkill, address, applyAnswer, view as engineView, ladderFor, VARIANTS } from './engine.js';
 import { present, grade, fifty } from './grade.js';
@@ -88,6 +89,7 @@ app.post('/api/auth/login', jsonBody, wrap(async (req, res) => {
   }
   clearFails(roll);
   await run('UPDATE students_master SET last_login_at = ? WHERE roll_no = ?', Date.now(), roll);
+  await stats.recordLogin(run, roll, st.university || universityOf(roll));
   await createSession(res, 'student', roll);
   res.json({ ok: true });
 }));
@@ -278,6 +280,7 @@ async function liveCount() {
 app.post('/api/live', requireStudent, wrap(async (req, res) => {
   const was = await one('SELECT last_seen FROM presence WHERE roll_no = ?', req.student.roll_no);
   await run('INSERT INTO presence (roll_no, last_seen) VALUES (?, ?) ON CONFLICT (roll_no) DO UPDATE SET last_seen = excluded.last_seen', req.student.roll_no, Date.now());
+  await stats.recordPing(run, one, req.student.roll_no);
   if (!was || was.last_seen <= Date.now() - LIVE_MS) liveCache.at = 0; // a newly live player shows up at once
   res.json({ live: await liveCount() });
 }));
@@ -529,6 +532,28 @@ admin.get('/analytics', wrap(async (req, res) => {
     return { id: S.id, name: S.name, group: S.group, open, done, levels };
   });
   res.json({ university: uni, totals, students, byType, byDay, byUni, skills });
+}));
+
+// ---------- student analytics (Analytics tab)
+admin.get('/stats/overview', wrap(async (req, res) => {
+  const c = await content();
+  res.json(await stats.overview({ uni: scope(req), days: req.query.days, G: c.G }));
+}));
+admin.get('/stats/students', wrap(async (req, res) => {
+  const c = await content();
+  res.json(await stats.studentRows({ uni: scope(req), days: req.query.days, q: String(req.query.q || '').trim().slice(0, 60), sort: String(req.query.sort || 'recent'), G: c.G }));
+}));
+admin.get('/stats/students.csv', wrap(async (req, res) => {
+  const c = await content(), d = await stats.studentRows({ uni: scope(req), days: req.query.days, sort: String(req.query.sort || 'recent'), G: c.G });
+  const rows = d.rows.map((r) => ({ ...r, minutes: Math.round(r.ms / 60000), total_minutes: Math.round(r.totalMs / 60000), now_at: r.nowAt ? `${r.nowAt.id} ${r.nowAt.name} L${r.nowAt.level}` : '',
+    last_active_ist: r.lastActive ? new Date(r.lastActive + 5.5 * 36e5).toISOString().slice(0, 16).replace('T', ' ') : '' }));
+  res.type('text/csv').attachment(`kbc-student-analytics-${d.days}d.csv`).send(csv(rows, ['roll_no', 'name', 'university', 'last_active_ist', 'daysActive', 'minutes', 'logins', 'answers', 'accuracy', 'hot', 'skillsDone', 'now_at', 'prizes', 'coins', 'games', 'total_minutes']));
+}));
+admin.get('/stats/student/:roll', wrap(async (req, res) => {
+  const roll = normRoll(req.params.roll), c = await content();
+  const m = await one('SELECT roll_no, university FROM students_master WHERE roll_no = ?', roll);
+  if (!m || (req.admin.university && m.university !== req.admin.university)) return res.status(404).json({ error: 'Not found' });
+  res.json(await stats.studentDetail(roll, { days: req.query.days, G: c.G }));
 }));
 
 // ---------- CSV exports

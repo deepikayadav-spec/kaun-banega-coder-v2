@@ -261,3 +261,29 @@ test('a CT Skill Graph HTML export uploads as a graph; starter skills are done; 
   assert.equal((await call('a', 'POST', '/api/admin/progress/reset', { confirm: 'RESET' })).status, 200);
   await call('a', 'POST', '/api/admin/graph/activate', { version: live.version });
 });
+
+test('student analytics: overview, student rows and detail; logins and live pings are recorded', async () => {
+  await call('s', 'POST', '/api/live'); await call('s', 'POST', '/api/live');
+  const o = await call('a', 'GET', '/api/admin/stats/overview?days=30');
+  assert.equal(o.status, 200, JSON.stringify(o.body));
+  const names = o.body.groups.map((g) => g.name);
+  assert.deepEqual(names, ['Reach', 'Activity', 'Gameplay', 'Progress', 'Retention', 'Feedback']);
+  const m = Object.fromEntries(o.body.groups.flatMap((g) => g.metrics).map((x) => [x.label, x.value]));
+  assert.ok(m['Questions answered'] > 0, 'answers counted');
+  assert.ok(m['Logins'] >= 1, 'logins recorded');
+  assert.ok(m['DAU (today)'] >= 1);
+  assert.equal(o.body.daily.length, 30);
+  const s = await call('a', 'GET', '/api/admin/stats/students?days=30&sort=answers');
+  assert.equal(s.status, 200);
+  const asha = s.body.rows.find((r) => r.roll_no === 'N26P02A0001');
+  assert.ok(asha && asha.answers > 0 && asha.logins >= 1 && asha.ms > 0, JSON.stringify(asha));
+  const d = await call('a', 'GET', '/api/admin/stats/student/N26P02A0001?days=30');
+  assert.equal(d.status, 200);
+  assert.ok(d.body.recent.length > 0 && d.body.daily.length >= 1);
+  const csvR = await call('a', 'GET', '/api/admin/stats/students.csv?days=30');
+  assert.match(csvR.body, /^roll_no,name,university,last_active_ist/);
+  // a university-scoped admin only sees that university
+  const mr = await call('m', 'GET', '/api/admin/stats/students?days=30');
+  assert.ok(mr.body.rows.every((r) => r.university === 'Malla Reddy University - Hyderabad'));
+  assert.equal((await call('m', 'GET', '/api/admin/stats/student/N26P02A0001')).status, 404);
+});

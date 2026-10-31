@@ -2664,3 +2664,6 @@ html[data-theme="light"] .htag{color:#B45309}
 @keyframes pxRing{0%{opacity:1;transform:scale(.4)}100%{opacity:0;transform:scale(4)}}
 .mcol .say.nudge{border-color:#FDE68A!important;box-shadow:0 0 0 3px rgba(253,230,138,.25),0 0 24px rgba(253,230,138,.35)!important}
 .play .mcol:has(.mascot.roam){z-index:80}
+/* My path: no diyas (map, corner lamp) */
+.pworld .diya,.pworld .diwali,body:has(.pathv) .bigdiya{display:none!important}
+@media (min-width:701px){.pnext>b{flex:1 1 auto!important}.pnext .btn{margin-left:auto}}

@@ -1379,7 +1379,7 @@ const RF_Q={
  5:{head:"What hit? Tap any.",prompt:"Anything to add?",hint:"Optional.",tags:["loved this one","learned something new","perfect difficulty","fun to solve"]}};
 const rfBlank=()=>({stars:0,tags:[],text:""});
 const RF={m:rfBlank(),q:rfBlank(),g:rfBlank()};
-const RF_CFG={m:{title:"How is KBC so far?",sub:"Tap a star to continue. Tags and words are optional.",set:RF_GAME,send:"Send feedback"},
+const RF_CFG={m:{title:"How is KBC so far?",sub:"Tap a star. Tags and words are optional.",set:RF_GAME,send:"Send feedback"},
  q:{title:"Rate this question",sub:"",set:RF_Q,send:""},
  g:{title:"How was this game?",sub:"Takes 10 seconds.",set:RF_GAME,send:"Send"}};
 const STAR_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>';
@@ -1400,7 +1400,7 @@ function qfbGate(a){if(!(S.screen==="play"&&S.phase==="reveal"&&S.qfbAsk&&!S.qfb
  const q=S.q;rfPost("q",{kind:"question",qid:q&&q.id,sk:q&&q.sk,type:q&&q.ty,correct:!!S.ok,practice:!!S.practice,trigger:"question "+((P.qfbN||0)+1)+" of 10"});
  S.qfbSent=true;P.qfbN=(P.qfbN||0)+1;saveP();return true}
 function fbHTML(sent){if(sent)return `<div class="fbbox" role="dialog" aria-modal="true" aria-label="Feedback"><div class="fbdone">${mascot("dance",120)}<h3>Thank you!</h3><p>Your feedback reached the KBC team.</p><button class="btn gold" data-act="fb-close">Close</button></div></div>`;
- return `<div class="fbbox" role="dialog" aria-modal="true" aria-labelledby="rf-m-h">${rfHTML("m")}</div>`}
+ return `<div class="fbbox" role="dialog" aria-modal="true" aria-labelledby="rf-m-h"><button class="mx fbx" data-act="fb-close" aria-label="Close">✕</button>${rfHTML("m")}</div>`}
 let FB={trigger:""};
 /* Time on the platform counts only while the page is visible, and is saved with the student's progress, so it carries
    across sessions and devices. Each reminder shows once; it waits until no question or puzzle is running. */
@@ -1427,7 +1427,7 @@ new MutationObserver(fitSoon).observe(document.getElementById("app"),{childList:
 let fitW=innerWidth;addEventListener("resize",()=>{if(phoneLike()&&innerWidth===fitW)return;fitW=innerWidth;fitSoon()},SIG);
 function fbOpen(){const m=$("#fbm");m.hidden=false;m.innerHTML=fbHTML();setTimeout(()=>{const t=m.querySelector(".rf-s");t&&t.focus()},50)}
 
-document.addEventListener("keydown",e=>{const m=$("#fbm");if(m&&!m.hidden&&e.key==="Escape"){e.preventDefault();e.stopPropagation()}},true);
+document.addEventListener("keydown",e=>{const m=$("#fbm");if(m&&!m.hidden&&e.key==="Escape"){e.preventDefault();e.stopPropagation();m.hidden=true}},true);
 function diwaliDecor(){cosmos();const t=$(".toran");if(t&&(!t.childElementCount||Math.abs((+t.dataset.w||0)-innerWidth)>40))buildToran();
  const k=$(".kandil");if(k&&!k.childElementCount)k.innerHTML=KANDIL;const d=$(".bigdiya");if(d&&!d.childElementCount)d.innerHTML=BIGDIYA;
  document.body.classList.toggle("onhome",S.screen==="home")}

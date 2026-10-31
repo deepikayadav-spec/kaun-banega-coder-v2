@@ -307,10 +307,10 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
    const scr=new T.Shape(),sw=.62,shh=.44,sr=.18;scr.moveTo(-sw+sr,-shh);scr.lineTo(sw-sr,-shh);scr.quadraticCurveTo(sw,-shh,sw,-shh+sr);scr.lineTo(sw,shh-sr);scr.quadraticCurveTo(sw,shh,sw-sr,shh);scr.lineTo(-sw+sr,shh);scr.quadraticCurveTo(-sw,shh,-sw,shh-sr);scr.lineTo(-sw,-shh+sr);scr.quadraticCurveTo(-sw,-shh,-sw+sr,-shh);
    const bez=new T.ExtrudeGeometry(scr,{depth:.02,bevelEnabled:true,bevelThickness:.03,bevelSize:.05,bevelSegments:6,curveSegments:20});bez.translate(0,0,.43);
    head.add(new T.Mesh(bez,PX.gph));                                                                 /* bezel */
-   const sm=new T.Mesh(new T.ShapeGeometry(scr,20),new T.MeshPhysicalMaterial({color:0x05070F,roughness:.5,metalness:0}));sm.position.z=.482;head.add(sm);
+   const sm=new T.Mesh(new T.ShapeGeometry(scr,20),new T.MeshBasicMaterial({color:0x000000}));sm.position.z=.482;head.add(sm);
    const gl=new T.ExtrudeGeometry(scr,{depth:.005,bevelEnabled:true,bevelThickness:.04,bevelSize:.0,bevelSegments:8,curveSegments:20});gl.translate(0,0,.5);
-   head.add(new T.Mesh(gl,new T.MeshPhysicalMaterial({color:0xFFFFFF,transparent:true,opacity:.05,roughness:.02,metalness:0,clearcoat:1,clearcoatRoughness:0,depthWrite:false})));  /* glass */
-   head.add(M(new T.PlaneGeometry(.16,.86),new T.MeshBasicMaterial({color:0xFFFFFF,transparent:true,opacity:.07,depthWrite:false}),[-.3,.04,.545],[1,1,1],[0,0,-.6]));   /* glare streak */
+   head.add(new T.Mesh(gl,new T.MeshPhysicalMaterial({color:0xFFFFFF,transparent:true,opacity:.02,roughness:.1,metalness:0,clearcoat:.2,clearcoatRoughness:.2,depthWrite:false})));  /* glass */
+   head.add(M(new T.PlaneGeometry(.16,.86),new T.MeshBasicMaterial({color:0xFFFFFF,transparent:true,opacity:.035,depthWrite:false}),[-.3,.04,.545],[1,1,1],[0,0,-.6]));   /* glare streak */
    [-1,1].forEach(sd=>{
     head.add(M(cyl(.19,.19,.08),PX.satin,[sd*.9,0,0],[1,1,1],[0,0,Math.PI/2]));head.add(M(new T.TorusGeometry(.17,.025,10,48),PX.chrome,[sd*.945,0,0],[1,1,1],[0,Math.PI/2,0]));
     head.add(M(cyl(.1,.1,.03),PX.gph,[sd*.955,0,0],[1,1,1],[0,0,Math.PI/2]));head.add(M(sph,PX.gold,[sd*.97,0,0],[.035,.05,.05]));        /* ear pods */
@@ -319,8 +319,8 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
   else head.add(M(sph,mat(P.head),[0,0,0],[.84,.76,.74]));
   if(P.face)head.add(M(sph,mat(P.face,{clearcoat:.2}),[0,-.12,.34],[.56,.42,.4]));
   const ez=id==="pixel"?.5:P.face?.76:.7,ey=.04;
-  const eye=x=>{const g=new T.Group();g.position.set(x,ey,ez);head.add(g);
-   if(id==="pixel"){const em=new T.MeshBasicMaterial({color:0xF2F8FF}),px=(a,b,w=.075,h=.075)=>g.add(M(new T.BoxGeometry(w,h,.02),em,[a,b,0]));
+  const eye=x=>{const g=new T.Group();g.position.set(x,ey,ez);head.add(g);if(id==="pixel")g.scale.setScalar(1.3);
+   if(id==="pixel"){const em=new T.MeshBasicMaterial({color:0xFFFFFF}),px=(a,b,w=.075,h=.075)=>g.add(M(new T.BoxGeometry(w,h,.02),em,[a,b,0]));
     if(kind==="happy"){px(-.1,-.03);px(-.05,.03);px(0,.07);px(.05,.03);px(.1,-.03);return}
     if(kind==="closed"||kind==="sleepy"){px(0,-.02,.26,.06);return}
     if(kind==="x"){[-.08,-.04,0,.04,.08].forEach(k=>{px(k,k,.06,.06);px(k,-k,.06,.06)});return}
@@ -339,7 +339,7 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
    if(kind==="sleepy")g.add(M(sph,mat(P.head),[0,.11,.04],[.23,.14,.1]))};
   eye(-.3);eye(.3);
   /* mouth */
-  if(id==="pixel"){const mm=new T.MeshBasicMaterial({color:0xF2F8FF});const smile=["dance","trophy","finish","chai","happy","vibe","streak","missed","warm","stretch","drink"].includes(pose);if(smile){[-.12,-.06,0,.06,.12].forEach((k,j)=>head.add(M(new T.BoxGeometry(.06,.05,.03),mm,[k,-.3+(j===0||j===4?.04:0),.5])))}else if(pose==="bonk")head.add(M(new T.BoxGeometry(.2,.05,.03),mm,[0,-.32,.5]));else head.add(M(new T.BoxGeometry(.12,.05,.03),mm,[0,-.3,.5]))}
+  if(id==="pixel"){const mm=new T.MeshBasicMaterial({color:0xFFFFFF});const smile=["dance","trophy","finish","chai","happy","vibe","streak","missed","warm","stretch","drink"].includes(pose);if(smile){[-.12,-.06,0,.06,.12].forEach((k,j)=>head.add(M(new T.BoxGeometry(.075,.065,.03),mm,[k*1.15,-.3+(j===0||j===4?.05:0),.5])))}else if(pose==="bonk")head.add(M(new T.BoxGeometry(.26,.065,.03),mm,[0,-.32,.5]));else head.add(M(new T.BoxGeometry(.16,.065,.03),mm,[0,-.3,.5]))}
   else if(["dance","trophy","finish","chai"].includes(pose))head.add(M(new T.TorusGeometry(.09,.025,8,20,Math.PI),dark,[0,-.3,.73],[1,1,1],[0,0,Math.PI]));
   else if(pose==="bonk")head.add(M(new T.TorusGeometry(.08,.022,8,20,Math.PI),dark,[0,-.36,.73]));
   else head.add(M(sph,dark,[0,-.32,.73],[.05,.04,.03]));
@@ -799,13 +799,13 @@ function energyTick(ok){const R=S.run,b=R.en;if(ok){R.cs=(R.cs||0)+1;if(R.cs%3==
  logEv({kind:"energy",en:R.en,ok})}
 function energyHTML(){if(S.practice||!S.run)return "";const e=S.run.en,c=e>50?"hi":e>20?"mid":"lo",d=S.phase==="reveal"?(S.enLoss?`<em class="eloss">−${S.enLoss}%</em>`:S.enGain?`<em class="egain">+${S.enGain}%</em>`:""):"";
  return `<div class="energy ${c}" role="meter" aria-label="Energy ${e} percent" aria-valuenow="${e}" aria-valuemin="0" aria-valuemax="100"><span class="ebolt">⚡</span><span class="ebat"><i style="width:${e}%"></i></span><b>${e}%</b>${d}${S.run.cs%3===2&&e<100?"<small>1 more right = +10%</small>":""}</div>`}
-function dockHTML(mood,cls){const I=S.info,q=S.q;let say;
+function dockHTML(mood,cls,extra){const I=S.info,q=S.q;let say;
  if(!q)say=S.phase==="loading"?"Picking your next question…":S.phase==="error"?"Hmm, the line dropped. Try again?":"Nice work! More levels are coming.";
  else if(S.phase==="locked")say="Locked in… fingers crossed!";
  else if(S.phase==="reveal")say=S.ok?(I&&I.rungUp?`You won ${fmtR(amountOf(I.after))}! Next question.`:CHEER[hashStr(q.id)%CHEER.length]):(S.practice?(S.timeout?"Time ran out. Read why, then try the next one.":"Not quite. Read why, then try the next one."):(S.timeout?"Too slow! Read why, then try a fresh variant.":"Not quite. Read why, then try a fresh variant."));
  else say=!S.practice&&S.run.en<=20?"Low battery! One more miss and we power down.":S.hint?"Hint's up there. You've got this.":S.run.answered===0?"First question! Read the code line by line.":CALM[hashStr(q.id)%CALM.length];
  const r=rungOf(),stake=r<OPEN?LADDER[r]:0;
- if(cls==="col")return `<aside class="mcol" aria-label="${esc(buddyName())}, your KBC buddy"><p class="say">${esc(say)}</p>${mascot(mood,176)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span></aside>`;
+ if(cls==="col")return `<aside class="mcol" aria-label="${esc(buddyName())}, your KBC buddy"><p class="say">${esc(say)}</p>${mascot(mood,176)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span>${extra||""}</aside>`;
  return `<div class="coach">${mascot(mood,64)}<p class="say">${esc(say)}</p></div>`}
 
 /* ================= Sound ================= */
@@ -1100,7 +1100,7 @@ function fixHTML(){if(S.phase!=="reveal"||S.ok||!S.res||!S.q)return "";const q=S
  return `<div class="fixcard card" role="region" aria-label="Quick fix">
 ${S.timeout?`<div class="fx-sec"><span class="fx-k miss">Time ran out</span><p>No problem. Here is the idea in 30 seconds.</p></div>`:mix?`<div class="fx-sec"><span class="fx-k miss">Why you picked it</span><p>${esc(mix)}</p></div>`:""}
 ${fix?`<div class="fx-sec"><span class="fx-k fix">The 30-second fix <i class="fx-t" aria-hidden="true">⏱ 30s</i></span><p>${esc(fix)}</p></div>`:""}
-<div class="fx-foot">${sk?`<span class="fx-topic">Topic: ${esc(sk.short||sk.name)}</span>`:""}<button class="btn quiet sm" data-act="sol">Show step by step</button></div></div>`}
+</div>`}
 /* "Reveal solution": the full working opens in a sheet over the hot seat, so the question screen never needs scrolling */
 function solOpen(){if(!S.q||S.phase!=="reveal")return;let m=$("#solm");if(!m){m=document.createElement("div");m.id="solm";m.className="modalx";document.body.appendChild(m)}
  m.innerHTML=`<div class="mbox solbox" role="dialog" aria-modal="true" aria-label="Solution"><button class="mx" data-act="sol-close" aria-label="Close">✕</button>${explainHTML(S.q,S.ok)}<div class="mbtns"><button class="btn gold" data-act="sol-close">Got it</button></div></div>`;
@@ -1117,9 +1117,9 @@ function vNoQ(){const r=S.noQ||{},soon=(r.comingSoon||[]).map(id=>SK[id]).filter
 function vPlay(){if(!S.q)return vNoQ();const q=S.q,r=rungOf(),st=rowSteps(Math.min(r,ROWS.length-1)),stake=r<OPEN?LADDER[r]:LADDER[OPEN-1];
  const pips="";
  const mood=S.phase==="reveal"?(S.ok?(S.info&&S.info.ck?"trophy":"dance"):S.timeout?"tired":"bonk"):S.phase==="locked"?"think":(!S.practice&&S.run.en<=20?"tired":S.practice&&S.run.answered===0?"type":S.thinkLong?"think":(S.pick!=null||S.fill||(S.ord&&S.ord.length)?"pointa":"pointq"));
- return `<div class="play">${dockHTML(mood,"col")}<div class="left"><div class="hud"><div class="lls">${energyHTML()}</div>
+ return `<div class="play ${S.phase==="reveal"?"rev":""}">${dockHTML(mood,"col",qfbHere(true)?rfHTML("q"):"")}<div class="left"><div class="hud"><div class="lls">${energyHTML()}</div>
 <div class="clock ${S.time<=10?"low":""}" id="clock" style="--p:${S.time/(S.secsMax||CFG.secs)}" role="timer" aria-label="Seconds left"><span>${S.time}</span></div>
-<div class="stake"><small>${S.practice?"Practice round":"Playing for"}</small><b>${S.practice?"No stakes":fmtR(stake)}</b>${S.practice?"":noteThumb(stake)}<small>Banked ${fmtR(amountOf(r))}</small></div></div>
+<div class="stake"><small>${S.practice?"Practice round":"Playing for"}</small><b>${S.practice?"No stakes":fmtR(stake)}</b>${S.practice?"":noteThumb(stake)}<small>Banked ${fmtR(amountOf(r))}</small>${!S.practice&&boardMin()?`<button class="bmax" data-act="board-min" aria-label="Show the money board">Money board <b aria-hidden="true">＋</b></button>`:""}</div></div>
 ${stripHTML(r)}<button class="mbtoggle" data-act="board" aria-label="Show the money board">Money board</button>
 <section class="mainc" id="mainc">
 <div class="qcard card"><div class="qtop"><span class="chip gold">${S.practice?"Practice":`Question ${S.run.answered+(S.phase==="reveal"?0:1)} · for ${fmtR(S.phase==="reveal"&&S.info?LADDER[Math.min(S.info.before,LADDER.length-1)]:stake)}`}</span>${pips?`<span class="rowprog">To the next prize <span class="pips" aria-label="${st.done} of ${st.total}">${pips}</span></span>`:""}</div>
@@ -1128,7 +1128,7 @@ ${q.code?codeHTML(q.code):""}
 ${q.ai!=null?`<div class="ai"><i>AI</i><span>The AI says this prints <b>${esc(q.ai)}</b></span></div>`:""}
 ${S.hint?`<div class="panel card"><h3>${ICON.hint}${esc(COSTUMES[CHAR].name)}'s hint</h3><p>${esc(S.hintText||"Thinking…")}</p></div>`:""}
 </div>
-${answerHTML()}${fixHTML()}${S.phase==="reveal"&&S.qfbAsk&&!S.qfbSent?rfHTML("q"):""}
+${answerHTML()}${fixHTML()}${qfbHere(false)?rfHTML("q"):""}
 <div class="dockrow">${dockHTML(mood)}<div class="actions">${actHTML()}</div></div>
 ${feedbackHTML()}
 </section></div><div class="side">${boardHTML(r)}</div></div>`}
@@ -1386,7 +1386,7 @@ const RF_CFG={m:{title:"How is KBC so far?",sub:"Tap a star. Tags and words are 
  q:{title:"Rate this question",sub:"",set:RF_Q,send:""},
  g:{title:"How was this game?",sub:"Takes 10 seconds.",set:RF_GAME,send:"Send"}};
 const STAR_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>';
-function rfHTML(id){const F=RF[id],C=RF_CFG[id],L=F.stars?C.set[F.stars]:null,sub=id==="q"?`${Math.min(10,(P.qfbN||0)+1)} of 10`:C.sub;
+function rfHTML(id){const F=RF[id],C=RF_CFG[id],L=F.stars?C.set[F.stars]:null,sub=id==="q"?"Optional":C.sub;
  return `<div class="rf rf-${id}" id="rf-${id}"><div class="rf-h"><h3 id="rf-${id}-h">${C.title}</h3>${sub?`<p>${esc(sub)}</p>`:""}</div>
 <div class="rf-stars" role="radiogroup" aria-labelledby="rf-${id}-h">${[1,2,3,4,5].map(n=>`<button type="button" class="rf-s ${n<=F.stars?"on":""}" data-act="rf-star" data-f="${id}" data-n="${n}" role="radio" aria-checked="${n===F.stars}" aria-label="${n} star${n>1?"s":""}">${STAR_SVG}</button>`).join("")}<span class="rf-l">${RF_LABEL[F.stars]||"Tap a star"}</span></div>
 ${L?`<div class="rf-tags"><span class="rf-th">${esc(L.head)}</span><div class="rf-chips">${L.tags.map((t,i)=>`<button type="button" class="rf-c" data-act="rf-tag" data-f="${id}" data-i="${i}" aria-pressed="${F.tags.includes(t)}">${esc(t)}</button>`).join("")}</div></div>
@@ -1396,12 +1396,12 @@ function rfRedraw(id){const el=$("#rf-"+id);if(!el)return;el.outerHTML=rfHTML(id
 document.addEventListener("input",e=>{const f=e.target.dataset&&e.target.dataset.f;if(f&&RF[f]&&e.target.id==="rf-"+f+"-text")RF[f].text=e.target.value},SIG);
 function rfPost(id,ctx){const F=RF[id],text=(F.text||"").trim().slice(0,600);logEv({kind:"feedback",form:id,stars:F.stars,tags:F.tags,text});
  KBCQ.api("POST","/api/feedback",{text,ctx:Object.assign({stars:F.stars,tags:F.tags,screen:S.screen},ctx)}).catch(()=>{});RF[id]=rfBlank()}
-/* The question rating is required for a student's first 10 questions; it is sent when they move on */
+/* The question rating is optional (first 10 questions). If a star was picked it is sent when the student moves on. */
 const QFB_LEAVE=["next","second","stop","end","collect","practice-end"];
-function qfbGate(a){if(!(S.screen==="play"&&S.phase==="reveal"&&S.qfbAsk&&!S.qfbSent&&QFB_LEAVE.includes(a)))return true;
- if(!RF.q.stars){const el=$("#rf-q");if(el){el.classList.remove("nudge");void el.offsetWidth;el.classList.add("nudge");el.scrollIntoView({block:"center",behavior:reduceMotion?"auto":"smooth"})}fsToast("Rate this question to continue.");return false}
- const q=S.q;rfPost("q",{kind:"question",qid:q&&q.id,sk:q&&q.sk,type:q&&q.ty,correct:!!S.ok,practice:!!S.practice,trigger:"question "+((P.qfbN||0)+1)+" of 10"});
- S.qfbSent=true;P.qfbN=(P.qfbN||0)+1;saveP();return true}
+function qfbGate(a){if(S.screen==="play"&&S.phase==="reveal"&&S.qfbAsk&&!S.qfbSent&&RF.q.stars&&QFB_LEAVE.includes(a)){const q=S.q;
+  rfPost("q",{kind:"question",qid:q&&q.id,sk:q&&q.sk,type:q&&q.ty,correct:!!S.ok,practice:!!S.practice,trigger:"question "+((P.qfbN||0)+1)+" of 10"});S.qfbSent=true;P.qfbN=(P.qfbN||0)+1;saveP()}
+ return true}
+const qfbHere=wide=>S.phase==="reveal"&&S.qfbAsk&&!S.qfbSent&&(innerWidth>=1000)===wide;
 function fbHTML(sent){if(sent)return `<div class="fbbox" role="dialog" aria-modal="true" aria-label="Feedback"><div class="fbdone">${mascot("dance",120)}<h3>Thank you!</h3><p>Your feedback reached the KBC team.</p><button class="btn gold" data-act="fb-close">Close</button></div></div>`;
  return `<div class="fbbox" role="dialog" aria-modal="true" aria-labelledby="rf-m-h"><button class="mx fbx" data-act="fb-close" aria-label="Close">✕</button>${rfHTML("m")}</div>`}
 let FB={trigger:""};
@@ -1421,7 +1421,7 @@ function syncBuddy(){const off=!!store.get("kbc-hide-buddy",false),b=$("#buddybt
 syncBuddy();
 /* The hot seat and Fastest Finger shrink their question column to fit the window instead of scrolling */
 /* Phones scroll instead: zooming there changed the text size every time the address bar slid in or out while scrolling */
-const phoneLike=()=>innerWidth<760||matchMedia("(pointer:coarse)").matches;
+const phoneLike=()=>innerWidth<760;
 function fitScreen(){const m=$("#mainc")||$(".fffw");if(!m)return;if(phoneLike()){if(m.style.zoom)m.style.zoom="";return}if(!(S.screen==="play"||S.screen==="fff"||S.screen==="seat"))return;
  /* after answering, the explanation is what students read: it keeps full-size text and scrolls instead of shrinking */
  if(S.screen==="play"&&S.phase!=="ask"){m.style.zoom="";return}

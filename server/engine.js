@@ -11,7 +11,10 @@
 //   - the graph is skill-graph.json (stored rmax, skipped_types honoured);
 //   - a type is offered only if the bank has live questions for it at that skill and level;
 //   - hot seat serves only types whose modes include "hotseat" (practice-only types come up in Practice);
-//   - a skill with nothing to serve at its current level is "coming soon": it is not cleared, the next open skill is played.
+//   - a skill with nothing to serve at its current level is "coming soon": it is not cleared, the next open skill is played;
+//   - variety: after a right answer the level moves on to its next question type, and the type just answered right is
+//     never served again straight away (when the level has another type). After a wrong answer the same type comes
+//     back with a new variant, so "Try a similar question" really is similar.
 export const VARIANTS = 25;
 const LEVEL_NAMES = { 1: 'L1 Recognise', 2: 'L2 Reason', 3: 'L3 Repair', 4: 'L4 Create' };
 const R_NAMES = { 1: 'R1 Low', 2: 'R2 Medium', 3: 'R3 Hard' };
@@ -116,7 +119,10 @@ export function activeSkill(G, avail, st) {
 
 export function typeFor(G, avail, st, id, mode) {
   const S = G.skills[G.idx[id]], sk = st.skills[id], list = typesFor(G, avail, S, sk.level, mode);
-  return list.length ? list[sk.tIdx[sk.level] % list.length] : null;
+  if (!list.length) return null;
+  let i = sk.tIdx[sk.level] % list.length;
+  if (list.length > 1 && list[i] === st.lastType) i = (i + 1) % list.length;
+  return list[i];
 }
 
 export function nextV(st, id, type) {
@@ -155,7 +161,9 @@ export function applyAnswer(G, st, id, type, ok) {
   cell.attempts++; st.q++; sk.q++;
   if (ok) { st.right++; sk.right++; cell.cleared = true; } else cell.wrong++;
   let nl = l, nr = r, done = false, msg = '';
+  st.lastType = ok ? type : null;
   if (ok) {
+    sk.tIdx[l]++;
     sk.streak = { key: null, count: 0 };
     if (l === 1 && r < S.rmax) { nr = r + 1; msg = 'Up to ' + R_NAMES[nr] + '.'; tr.push({ kind: 'r_up', detail: { level: l, from: r, to: nr } }); }
     else if (!sk.rightStreak) { sk.rightStreak = 1; msg = 'One more right to ' + (l < 4 ? 'reach ' + LEVEL_NAMES[l + 1] : 'finish the skill') + '.'; }

@@ -114,7 +114,8 @@ app.get('/api/boot', requireStudent, wrap(async (req, res) => {
   const c = await content();
   const { st } = await loadState(req.student.roll_no, c.G);
   const gp = await one('SELECT data FROM game_progress WHERE roll_no = ?', req.student.roll_no);
-  const fb = await one('SELECT 1 AS x FROM feedback WHERE roll_no = ? LIMIT 1', req.student.roll_no);
+  // per-question ratings (ctx.kind "question") and end-of-game ratings don't count as the general feedback the reminders ask for
+  const fb = (await all('SELECT ctx FROM feedback WHERE roll_no = ?', req.student.roll_no)).some((r) => { let c = r.ctx; if (typeof c === 'string') { try { c = JSON.parse(c); } catch { c = null; } } return !c || !c.kind || c.kind === 'general'; });
   res.json({
     me: { roll: req.student.roll_no, name: req.student.name, university: req.student.university || universityOf(req.student.roll_no), feedbackGiven: !!fb },
     graph: graphForClient(c), engine: view(c, st), progress: gp ? gp.data : null, epoch: await progressEpoch()
@@ -293,8 +294,9 @@ app.get('/api/fame', requireStudent, wrap(async (req, res) => {
   res.json({ scope, university: uni || own, universities, rows: out, me: mine, live: await liveCount() });
 }));
 app.post('/api/feedback', requireStudent, jsonBody, wrap(async (req, res) => {
-  const text = String(req.body?.text || '').trim().slice(0, 4000);
-  if (!text) return res.status(400).json({ error: 'Write something first.' });
+  const text = String(req.body?.text || '').trim().slice(0, 4000), stars = Number(req.body?.ctx?.stars) || 0;
+  // a star rating on its own is valid feedback (quick tags and text are optional)
+  if (!text && !(stars >= 1 && stars <= 5)) return res.status(400).json({ error: 'Pick a rating or write something first.' });
   await run('INSERT INTO feedback (roll_no, text, ctx, at) VALUES (?, ?, ?, ?)', req.student.roll_no, text, json(req.body?.ctx || null), Date.now());
   res.json({ ok: true });
 }));

@@ -10,7 +10,7 @@ import { newState, upgradeState, activeSkill, address, applyAnswer, view as engi
 import { present, grade, fifty } from './grade.js';
 import { universityOf, normRoll } from './universities.js';
 import {
-  createSession, endSession, requireStudent, requireAdmin, requireSuper, namesMatch, tooManyFails, addFail, clearFails,
+  createSession, endSession, requireStudent, requireAdmin, requireSuper, namesMatch, firstName, isFirstNameOnly, tooManyFails, addFail, clearFails,
   checkPassword, hashPassword, tempPassword
 } from './auth.js';
 import { parseStudents } from './students.js';
@@ -59,19 +59,33 @@ async function freshStart(adminId) {
 }
 
 // ---------- student auth
+// The first name alone is enough when no other active student at the same university has that first name.
+async function firstNameUnique(st, typed) {
+  if (!isFirstNameOnly(st.name, typed)) return false;
+  const uni = st.university || universityOf(st.roll_no);
+  if (!uni) return false;
+  const fn = firstName(st.name);
+  const others = await all('SELECT roll_no, name FROM students_master WHERE university = ? AND active = 1 AND roll_no <> ?', uni, st.roll_no);
+  return !others.some((o) => firstName(o.name) === fn);
+}
 app.post('/api/auth/login', jsonBody, wrap(async (req, res) => {
   const roll = normRoll(req.body?.roll), name = String(req.body?.name || '').trim().slice(0, 80);
   if (!roll || !name) return res.status(400).json({ error: 'Enter your NIAT ID and your name.' });
   if (tooManyFails(roll)) return res.status(429).json({ error: 'Too many tries. Wait 15 minutes and try again.' });
-  let st = await one('SELECT roll_no, name, active FROM students_master WHERE roll_no = ?', roll);
+  let st = await one('SELECT roll_no, name, university, active FROM students_master WHERE roll_no = ?', roll);
   if (!st && config.allowTestLogin && roll.startsWith('TEST')) {
     const now = Date.now();
     await run("INSERT INTO students_master (roll_no, name, university, source, created_at, updated_at) VALUES (?, ?, 'Test', 'test', ?, ?) ON CONFLICT (roll_no) DO NOTHING", roll, name, now, now);
-    st = await one('SELECT roll_no, name, active FROM students_master WHERE roll_no = ?', roll);
+    st = await one('SELECT roll_no, name, university, active FROM students_master WHERE roll_no = ?', roll);
   }
   if (!st) return res.status(404).json({ error: 'This NIAT ID is not on the list. Check it, or ask your mentor to add you.' });
   if (!st.active) return res.status(403).json({ error: 'This NIAT ID is not active. Ask your mentor.' });
-  if (!namesMatch(st.name, name)) { addFail(roll); return res.status(401).json({ error: 'The name does not match our list for this NIAT ID. Type your full name.' }); }
+  if (!namesMatch(st.name, name) && !(await firstNameUnique(st, name))) {
+    addFail(roll);
+    return res.status(401).json({ error: isFirstNameOnly(st.name, name)
+      ? 'Another student at your university has the same first name. Type your full name.'
+      : 'The name does not match our list for this NIAT ID. Type your full name.' });
+  }
   clearFails(roll);
   await run('UPDATE students_master SET last_login_at = ? WHERE roll_no = ?', Date.now(), roll);
   await createSession(res, 'student', roll);

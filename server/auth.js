@@ -107,6 +107,11 @@ export function namesMatch(listed, typed) {
   return full >= 1 && b.length >= Math.min(2, a.length);
 }
 
+// A student's first name: the first word of their listed name that is more than an initial ("K RAHUL" -> "rahul").
+export const firstName = (name) => nameWords(name).find((w) => w.length > 1) || '';
+// The typed name is just that first name (spelled exactly; case and accents don't matter).
+export const isFirstNameOnly = (listed, typed) => { const b = nameWords(typed); return b.length === 1 && b[0].length > 1 && b[0] === firstName(listed); };
+
 // Simple in-memory brake on wrong-name guesses per NIAT ID (per instance; enough to slow down guessing).
 const fails = new Map();
 export function tooManyFails(roll) {

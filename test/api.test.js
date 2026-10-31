@@ -51,6 +51,17 @@ test('login: unknown id, wrong name, then the right name', async () => {
   assert.equal(b.body.engine.active, 'S1');
 });
 
+test('login with the first name alone works only when it is unique at the university', async () => {
+  const now = Date.now();
+  await run("INSERT INTO students_master (roll_no, name, university, created_at, updated_at) VALUES ('N26P02A0101', 'Kiran Mehta', 'ALARD - Pune', ?, ?), ('N26P02A0102', 'Kiran Joshi', 'ALARD - Pune', ?, ?), ('N26P02A0103', 'Zoya K Rahman', 'ALARD - Pune', ?, ?)", now, now, now, now, now, now);
+  assert.equal((await call('f1', 'POST', '/api/auth/login', { roll: 'N26P02A0103', name: 'zoya' })).status, 200, 'unique first name');
+  const dup = await call('f2', 'POST', '/api/auth/login', { roll: 'N26P02A0101', name: 'Kiran' });
+  assert.equal(dup.status, 401, 'two Kirans at ALARD');
+  assert.match(dup.body.error, /same first name/);
+  assert.equal((await call('f2', 'POST', '/api/auth/login', { roll: 'N26P02A0101', name: 'Kiran Mehta' })).status, 200);
+  assert.equal((await call('f3', 'POST', '/api/auth/login', { roll: 'N26P02A0103', name: 'Rahman' })).status, 401, 'only the first name counts');
+});
+
 test('play: next is stable until answered; answers are graded and stored; S1 can be finished', async () => {
   const n1 = await call('s', 'GET', '/api/play/next?mode=hotseat');
   const n2 = await call('s', 'GET', '/api/play/next?mode=hotseat');

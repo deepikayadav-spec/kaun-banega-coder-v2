@@ -98,7 +98,11 @@ function render(q,S){const b=init(q,S),p=q.p,t=q.type,dis=S.phase!=="ask",rev=S.
    h=`${dis?"":`<ol class="bq-how"><li><b>1</b><span>Tap a <u>group name</u> below. It lights up.</span></li><li><b>2</b><span>Tap the <u>${size} pieces</u> that belong to that group. They take its colour and letter.</span></li><li><b>3</b><span>Do the same for every group. Tap a piece again to take it out.</span></li></ol>`}
    <div class="bq-tabs" role="group" aria-label="Groups">${G.map((g,gi)=>btn("gcur",`data-v="${esc(g)}" aria-pressed="${b.cur===g}"`,"hchip gtab g"+gi+(b.cur===g?" on":"")+(cnt(g)>=size?" full":""),`<i>${LT[gi]}</i>${esc(g)} <small>${cnt(g)}/${size}${cnt(g)>=size?" ✓":""}</small>`)).join("")}</div>
    ${dis?"":`<p class="bq-now">Now filling: <b class="g${ci}"><i>${LT[ci]}</i>${esc(b.cur)}</b>${b.msg?`<span class="bq-warn">${esc(b.msg)}</span>`:""}</p>`}
-   <div class="bq-grid">${p.pieces.map(pc=>{const g=b.assign[pc],gi=G.indexOf(g);return btn("grp",`data-v="${esc(pc)}"`,"mchip gpc"+(g?" g"+gi+" on":""),`${g?`<i>${LT[gi]}</i>`:""}${esc(pc)}`)}).join("")}</div>`;break}
+   <div class="bq-grid">${p.pieces.map(pc=>{const g=b.assign[pc],gi=G.indexOf(g),ans=rev&&det.answer;
+    /* after grading, mark each piece right or wrong, and for a wrong one name the group it belongs in */
+    const home=ans?G.find(n=>(ans[n]||[]).map(String).includes(String(pc))):null,mk=ans&&g?(home===g?" ok":" no"):"";
+    const fix=mk===" no"&&home?`<em class="gfix" aria-label="belongs in ${esc(home)}">→ ${LT[G.indexOf(home)]}</em>`:"";
+    return btn("grp",`data-v="${esc(pc)}"`,"mchip gpc"+(g?" g"+gi+" on":"")+mk,`${g?`<i>${LT[gi]}</i>`:""}${esc(pc)}${fix}`)}).join("")}</div>`;break}
   case "gap":{const ans=det.answer;
    h=`<table class="bq-gap"><thead><tr><th>Line</th><th>Variable</th><th>Kind</th></tr></thead><tbody>${p.rows.map(r=>`<tr><td><code>${hl(r.line)}</code></td><td><code>${esc(r.var)}</code></td><td>${r.given?`<b>${esc(r.kind)}</b>`:
     `<select data-bq-in="gap" data-k="${esc(r.var)}" class="${rev&&ans?(String(b.cells[r.var]||"")===ans[r.var]?"right":"wrong"):""}" ${D}><option value="">choose…</option>${p.kinds.map(k=>`<option ${b.cells[r.var]===k?"selected":""}>${esc(k)}</option>`).join("")}</select>${rev&&ans&&b.cells[r.var]!==ans[r.var]?` <small>→ ${esc(ans[r.var])}</small>`:""}`}</td></tr>`).join("")}</tbody></table>`;break}

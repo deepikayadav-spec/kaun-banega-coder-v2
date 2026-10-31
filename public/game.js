@@ -1016,7 +1016,7 @@ function countUpChip(a,b,d){const el=$("#wchip b"),ch=$("#wchip");if(!el)return;
 function boardHTML(r,compact){const rows=[];for(let i=LADDER.length-1;i>=0;i--){
   const soon=i>=OPEN,cls=["rung",CK[i]?"ck":"",i<r?"done":"",i===r&&!soon?"next":"",soon?"soon":""].join(" ");
   rows.push(`<div class="${cls}"><span class="no">${i+1}</span><span class="amtc">${boardNote(LADDER[i])}${fmtR(LADDER[i])}</span>${CK[i]?`<span class="tg">${stg(CK[i])}${TAG[i]?" · "+TAG[i]:""}</span>`:TAG[i]?`<span class="tg">${TAG[i]}</span>`:soon?"":"<span></span>"}</div>`)}
- const min=boardMin();return `<aside class="board card ${min?"min":""}" aria-label="Money board"><h2>Money board<button class="bmin" data-act="board-min" aria-pressed="${min}" aria-label="${min?"Show the whole money board":"Minimise the money board"}" title="${min?"Show all rungs":"Minimise"}">${min?"＋":"−"}</button></h2>${rows.join("")}</aside>`}
+ const min=boardMin();return `<aside class="board card ${min?"min":""}" aria-label="Money board"><h2>Money board<button class="bmin" data-act="board-min" aria-pressed="${min}" aria-label="${min?"Show the whole money board":"Minimise the money board"}" title="${min?"Show the whole money board":"Minimise"}">${min?"＋":"−"}</button></h2>${rows.join("")}</aside>`}
 /* the money board can be folded down to the rung being played; the choice is remembered on this device */
 const boardMin=()=>!!store.get("kbc-board-min",false);
 function stripHTML(r){return `<div class="strip" aria-hidden="true">${LADDER.map((v,i)=>`<i class="${i<r?"done":i===r?"next":""} ${i>=OPEN?"soon":""}"></i>`).join("")}</div>`}
@@ -1084,8 +1084,8 @@ function actHTML0(){const q=S.q;
  if(S.ok)return rungOf()>=OPEN&&!S.practice?`<span class="banner win">Correct answer!</span><button class="btn gold" data-act="collect">Collect ${fmtR(LADDER[OPEN-1])} →</button>`:`<span class="banner win">${S.retryWin?"You fixed it! ✓":"Correct answer!"}</span><button class="btn gold" data-act="next">Next question →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
  return `<span class="banner lose">${S.timeout?"Time's up":"Wrong answer"}</span><button class="btn gold" data-act="end">See my game →</button>`}
 function feedbackHTML(){const I=S.info;if(S.phase!=="reveal"||!I)return "";let h="";
- if(S.ok&&I.rungUp)h+=`<div class="rungup">${noteBig(amountOf(I.after),"won")||mascot("happy",72)}<b>You won ${fmtR(amountOf(I.after))}!</b><span>${I.ck?`${stg(I.ck)} locked in. A wrong answer can't take you below this.`:`Rung ${I.after} won. ${I.after<OPEN?`Next: ${fmtR(LADDER[I.after])}.`:""}`}</span></div>`;
- if(!S.ok&&I.drop)h+=`<div class="drop">${mascot("sad",44)}<span>${I.drop.lostRung?`Dropped from ${fmtR(I.drop.from)} to <b>${fmtR(I.drop.to)}</b> (${stg(I.drop.ck)}).`:`Back to your ${stg(I.drop.ck)} checkpoint: progress on this rung resets.`}</span></div>`;
+ if(S.ok&&I.rungUp)h+=`<div class="rungup">${noteBig(amountOf(I.after),"won")||mascot("happy",72)}<b>You won ${fmtR(amountOf(I.after))}!</b><span>${I.ck?`${stg(I.ck)} locked in. A wrong answer can't take you below this.`:`Prize ${I.after} of 15 won. ${I.after<OPEN?`Next: ${fmtR(LADDER[I.after])}.`:""}`}</span></div>`;
+ if(!S.ok&&I.drop)h+=`<div class="drop">${mascot("sad",44)}<span>${I.drop.lostRung?`Dropped from ${fmtR(I.drop.from)} to <b>${fmtR(I.drop.to)}</b> (${stg(I.drop.ck)}).`:`Back to your ${stg(I.drop.ck)} checkpoint: progress on this prize resets.`}</span></div>`;
  return h}
 /* Wrong answer: name the mix-up behind the option picked, give a 30-second fix, then offer a similar question.
    The option's own explanation (server "why") names the misconception; "ok" says why the right answer is right. */
@@ -1119,7 +1119,7 @@ function vPlay(){if(!S.q)return vNoQ();const q=S.q,r=rungOf(),st=rowSteps(Math.m
 <div class="stake"><small>${S.practice?"Practice round":"Playing for"}</small><b>${S.practice?"No stakes":fmtR(stake)}</b>${S.practice?"":noteThumb(stake)}<small>Banked ${fmtR(amountOf(r))}</small></div></div>
 ${stripHTML(r)}<button class="mbtoggle" data-act="board" aria-label="Show the money board">Money board</button>
 <section class="mainc" id="mainc">
-<div class="qcard card"><div class="qtop"><span class="chip gold">${S.practice?"Practice":`Question ${S.run.answered+(S.phase==="reveal"?0:1)} · for ${fmtR(S.phase==="reveal"&&S.info?LADDER[Math.min(S.info.before,LADDER.length-1)]:stake)}`}</span>${pips?`<span class="rowprog">To next rung <span class="pips" aria-label="${st.done} of ${st.total}">${pips}</span></span>`:""}</div>
+<div class="qcard card"><div class="qtop"><span class="chip gold">${S.practice?"Practice":`Question ${S.run.answered+(S.phase==="reveal"?0:1)} · for ${fmtR(S.phase==="reveal"&&S.info?LADDER[Math.min(S.info.before,LADDER.length-1)]:stake)}`}</span>${pips?`<span class="rowprog">To the next prize <span class="pips" aria-label="${st.done} of ${st.total}">${pips}</span></span>`:""}</div>
 <h2 class="qtext">${esc(q.prompt)}</h2>${KBCQ.above(q,S)}
 ${q.code?codeHTML(q.code):""}
 ${q.ai!=null?`<div class="ai"><i>AI</i><span>The AI says this prints <b>${esc(q.ai)}</b></span></div>`:""}
@@ -1136,9 +1136,9 @@ function vResult(){const R=S.res,rc=R.reached||0,pay=R.payout||0;
  return `<section class="res enter"><div class="res-card card">
 <div class="res-top"><div class="res-head">
 <div class="coach">${mascot(mood,84)}<p class="say">${esc(msg)}</p></div>
-<div class="muted">${esc(S.name||"Player")} takes home</div><div class="ramt">${fmtR(pay)}</div><div class="muted">Highest rung this game: ${rc?fmtR(amountOf(rc)):"none yet"}</div>
+<div class="muted">${esc(S.name||"Player")} takes home</div><div class="ramt">${fmtR(pay)}</div><div class="muted">Highest prize this game: ${rc?fmtR(amountOf(rc)):"none yet"}</div>
 </div>${NOTE[pay]?`<div class="res-bill">${noteBig(pay)}</div>`:""}</div>
-<dl class="res-line"><div><dt>Correct this game</dt><dd>${R.correct}/${R.answered}</dd></div><div><dt>Time played</dt><dd>${Math.floor(R.secs/60)}:${String(R.secs%60).padStart(2,"0")}</dd></div><div><dt>Highest rung</dt><dd>${rc}/15</dd></div><div><dt>Wallet</dt><dd>${fmtR(R.wallet)}</dd></div></dl>
+<dl class="res-line"><div><dt>Correct this game</dt><dd>${R.correct}/${R.answered}</dd></div><div><dt>Time played</dt><dd>${Math.floor(R.secs/60)}:${String(R.secs%60).padStart(2,"0")}</dd></div><div><dt>Highest prize</dt><dd>${rc}/15</dd></div><div><dt>Wallet</dt><dd>${fmtR(R.wallet)}</dd></div></dl>
 <div class="res-goal"><div class="res-goal-h"><b>Next game starts fresh at 10</b><span class="muted">Best ever: ${fmtR(amountOf(P.best))}</span></div><span class="muted">Win Fastest Finger First to take the hot seat again.</span></div>
 ${R.fbDone==="sent"?`<div class="rf rf-done"><b>Thanks!</b> Your rating reached the KBC team.</div>`:R.fbDone?"":rfHTML("g")}
 ${learn}
@@ -1340,15 +1340,15 @@ function vTeam(){if(!DASH.events)return `<section class="dash"><h2>Team dashboar
 <div class="kpi"><span>Answers logged</span><b>${A.length}</b><small>Accuracy <b>${acc}%</b></small></div>
 <div class="kpi"><span>Reached C1 (50+)</span><b>${rungs.filter(r=>r>=3).length}</b><small>C2 (500): <b>${rungs.filter(r=>r>=6).length}</b></small></div></div>
 <div class="two"><div class="card dsec chart"><h3>Daily active students · last 14 days</h3>${chart}</div>
-<div class="card dsec"><h3>Where players are on the board</h3><div class="tw"><table><thead><tr><th>Rung</th><th>Amount</th><th>Players</th></tr></thead><tbody>${dist.map((n,r)=>`<tr><td>${r}</td><td>${fmtR(amountOf(r))}</td><td>${n}</td></tr>`).join("")}</tbody></table></div></div></div>
+<div class="card dsec"><h3>Where players are on the board</h3><div class="tw"><table><thead><tr><th>Prize</th><th>Amount</th><th>Players</th></tr></thead><tbody>${dist.map((n,r)=>`<tr><td>${r}</td><td>${fmtR(amountOf(r))}</td><td>${n}</td></tr>`).join("")}</tbody></table></div></div></div>
 ${pathDash(E)}<div class="card dsec"><h3>Skills · C1–C2 graph</h3><div class="tw"><table><thead><tr><th>Skill</th><th>Name</th><th>Needs</th><th>Answers</th><th>Accuracy</th><th>Median time</th><th>Mastered by</th></tr></thead><tbody>${bySk.map(x=>`<tr><td class="code">${x.id}</td><td>${esc(x.s.name)}</td><td class="muted">${x.s.pre.join(", ")||"–"}</td><td>${x.n}</td><td>${accCell(x.acc)}</td><td>${x.n?x.med.toFixed(1)+" s":"–"}</td><td>${x.m}</td></tr>`).join("")}</tbody></table></div></div>
 <div class="two"><div class="card dsec"><h3>Question types</h3>${byTy.length?`<div class="tw"><table><thead><tr><th>Type</th><th>Format</th><th>Answers</th><th>Accuracy</th><th>Median</th></tr></thead><tbody>${byTy.map(x=>`<tr><td class="code">${x.t}</td><td>${esc(TYPES[x.t])}</td><td>${x.n}</td><td>${accCell(x.acc)}</td><td>${x.med.toFixed(1)} s</td></tr>`).join("")}</tbody></table></div>`:`<p class="note">No answers yet.</p>`}</div>
-<div class="card dsec"><h3>Skill graph (rows = rungs)</h3><div class="gmap">${ROWS.slice().reverse().map(r=>`<div class="grow"><b>${r.id} · ${r.c}</b><div class="gskills">${r.skills.map(s=>`<div class="gs"><b>${s.id} · ${s.types.join(" ")}</b>${esc(s.name)}<small>${s.pre.length?"after "+s.pre.join(", "):"start here"}</small></div>`).join("")}</div></div>`).join("")}</div></div></div>
+<div class="card dsec"><h3>Skill graph (one row per prize)</h3><div class="gmap">${ROWS.slice().reverse().map(r=>`<div class="grow"><b>${r.id} · ${r.c}</b><div class="gskills">${r.skills.map(s=>`<div class="gs"><b>${s.id} · ${s.types.join(" ")}</b>${esc(s.name)}<small>${s.pre.length?"after "+s.pre.join(", "):"start here"}</small></div>`).join("")}</div></div>`).join("")}</div></div></div>
 ${(()=>{const by={};A.forEach(e=>{const u=by[e.uid]=by[e.uid]||{n:e.n||"–",rows:{},t:0};if(e.n)u.n=e.n;u.t=Math.max(u.t,e.t);const row=SK[e.sk]?SK[e.sk].row:null;if(row==null)return;const c=u.rows[row]=u.rows[row]||{a:0,c:0};c.a++;if(e.ok)c.c++});
  const list=Object.values(by).sort((a,b)=>b.t-a.t).slice(0,60);
  const cell=c=>!c?'<td class="muted">–</td>':`<td><b>${c.c}/${c.a}</b> <span class="muted">${Math.round(c.c/c.a*100)}%</span></td>`;
  return `<div class="card dsec"><h3>Student skill progress <span class="muted" style="font-weight:500">· right / answered per row · admins only</span></h3>${list.length?`<div class="tw"><table><thead><tr><th>Student</th>${ROWS.map(r=>`<th>${r.id} · ${esc(r.name)}</th>`).join("")}</tr></thead><tbody>${list.map(u=>`<tr><td>${esc(u.n)}</td>${ROWS.map((r,i)=>cell(u.rows[i])).join("")}</tr>`).join("")}</tbody></table></div>`:'<p class="muted">No answers yet.</p>'}</div>`})()}
-<div class="card dsec"><h3>Latest answers</h3>${A.length?`<div class="tw"><table><thead><tr><th>When</th><th>Player</th><th>Question</th><th>Result</th><th>Time</th><th>Rung</th></tr></thead><tbody>${A.slice().sort((a,b)=>b.t-a.t).slice(0,15).map(e=>`<tr><td>${new Date(e.t).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</td><td>${esc(e.n||"–")}</td><td class="code">${esc(e.qid||"")}</td><td>${e.ok?`<span class="chip ok">Right</span>`:e.timeout?"Timed out":"Wrong"}</td><td>${((e.ms||0)/1000).toFixed(1)} s</td><td>${e.rung}</td></tr>`).join("")}</tbody></table></div>`:`<p class="note">Answers appear here as soon as someone plays.</p>`}</div>
+<div class="card dsec"><h3>Latest answers</h3>${A.length?`<div class="tw"><table><thead><tr><th>When</th><th>Player</th><th>Question</th><th>Result</th><th>Time</th><th>Prize</th></tr></thead><tbody>${A.slice().sort((a,b)=>b.t-a.t).slice(0,15).map(e=>`<tr><td>${new Date(e.t).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</td><td>${esc(e.n||"–")}</td><td class="code">${esc(e.qid||"")}</td><td>${e.ok?`<span class="chip ok">Right</span>`:e.timeout?"Timed out":"Wrong"}</td><td>${((e.ms||0)/1000).toFixed(1)} s</td><td>${e.rung}</td></tr>`).join("")}</tbody></table></div>`:`<p class="note">Answers appear here as soon as someone plays.</p>`}</div>
 <p class="note">Every answer is logged with its five tags (C, P, G, S, T) plus the variant, answer time and time spent reading feedback. Students never see skill or type names.</p>
 </section>`}
 
@@ -1411,7 +1411,7 @@ function fbTick(){if(document.hidden)return;P.tOn=(P.tOn||0)+10000;P.fbAt=P.fbAt
  if(P.fbSent||ME.feedbackGiven)return;   /* a student who has already sent feedback is never asked again */
  const due=FB_AT.filter(t=>P.tOn>=t*60000&&!P.fbAt.includes(t));if(!due.length||!fbSafe())return;
  P.fbAt.push(...due);saveP();FB.trigger=`after ${due[due.length-1]>=60?due[due.length-1]/60+" hour":due[due.length-1]+" min"} on the platform`;fbOpen();logEv({kind:"feedback_prompt",at:due[due.length-1]})}
-setInterval(fbTick,10000);
+/* timed feedback pop-ups are off: feedback is asked after each of the first 10 questions and on the results screen */
 /* Pixel can be hidden from the header; the hot seat then gives its space to the question */
 function syncBuddy(){const off=!!store.get("kbc-hide-buddy",false),b=$("#buddybtn");document.body.classList.toggle("nobuddy",off);
  if(b){const n=buddyName();b.setAttribute("aria-pressed",off);b.title=off?`Show ${n}`:`Hide ${n}`;b.setAttribute("aria-label",off?`Show ${n}, your KBC buddy`:`Hide ${n}, your KBC buddy`);const l=b.querySelector(".lbl");if(l)l.textContent=off?`Show ${n}`:`Hide ${n}`}}
@@ -1716,7 +1716,6 @@ const TOUR=[
  {sel:'header [data-act="fame"]',t:"Hall of Fame",d:"Top players overall and in your university."},
  {sel:"#livechip",t:"Live now",d:"How many students are playing right now."},
  {sel:'header [data-act="guide"]',t:"How to play",d:"The rules in pictures. Open it any time, even mid-game."},
- {sel:'header [data-act="fb-open"]',t:"Feedback",d:"Tell us what to improve. We read every message."},
  {sel:"#themebtn",t:"Light or dark",d:"Switch the look whenever you like."},
  {sel:'header [data-act="logout"]',t:"Log out",d:"Done for the day? Log out here. Your progress is saved."}];
 let TI=-1;
@@ -1788,8 +1787,8 @@ function vWallet(){const coins=P.coins||0,best=P.best||0,acc=P.answered?Math.rou
  const top=[...LADDER].reverse().find(v=>NOTE[v]&&v<=coins);
  return `<section class="wallet">
 <div class="wtop card"><div><span class="muted">Your wallet</span><div class="wamt">${fmtR(coins)}</div><span class="muted">Virtual coins from every game you've played.</span></div>${top?`<div class="wbill">${noteBig(top)}</div>`:mascot("chai",120)}</div>
-<div class="wstats"><div class="card"><span>Best rung</span><b>${best?fmtR(amountOf(best)):"—"}</b></div><div class="card"><span>Games</span><b>${P.runs||0}</b></div><div class="card"><span>Answers right</span><b>${P.correct||0}/${P.answered||0}</b></div><div class="card"><span>Accuracy</span><b>${acc}%</b></div></div>
-<div class="card wnotes"><h3>Notes collected <small class="muted">unlock each rung once</small></h3><div class="wgrid">${LADDER.map((v,i)=>`<div class="${i<best?"got":"lock"}">${boardNote(v)}<small>${fmtR(v)}</small></div>`).join("")}</div></div>
+<div class="wstats"><div class="card"><span>Best prize</span><b>${best?fmtR(amountOf(best)):"—"}</b></div><div class="card"><span>Games</span><b>${P.runs||0}</b></div><div class="card"><span>Answers right</span><b>${P.correct||0}/${P.answered||0}</b></div><div class="card"><span>Accuracy</span><b>${acc}%</b></div></div>
+<div class="card wnotes"><h3>Notes collected <small class="muted">unlock each prize once</small></h3><div class="wgrid">${LADDER.map((v,i)=>`<div class="${i<best?"got":"lock"}">${boardNote(v)}<small>${fmtR(v)}</small></div>`).join("")}</div></div>
 <div class="card wlog"><h3>Recent games</h3>${runs.length?`<ul>${runs.map(e=>`<li><span>${new Date(e.t).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</span><span class="muted">${why[e.reason]||"Game over"} · ${e.correct||0}/${e.answered||0} right</span><b>+${fmtR(e.payout||0)}</b></li>`).join("")}</ul>`:'<p class="muted">No games yet. Win Fastest Finger to start earning.</p>'}</div>
 ${quipHTML("wallet")}
 <div class="ractions"><button class="btn gold" data-act="play">Earn more →</button><button class="btn quiet" data-act="fame">Hall of Fame</button></div></section>`}

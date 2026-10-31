@@ -1160,7 +1160,7 @@ ${feedbackHTML()}
 function vResult(){const R=S.res,rc=R.reached||0,pay=R.payout||0;
  const msg=R.reason==="win"?`${fmtR(pay)} collected! You're a Crorepati Coder.`:R.reason==="stop"?`Smart move. You walked away with ${fmtR(pay)}.`:R.reason==="energy"?`Out of energy! Your path progress is saved${pay?` and ${fmtR(pay)} went to your wallet`:""}. Recharge with a new game.`:pay?`Game over, but you keep it all. ${fmtR(pay)} goes to your wallet.`:"Tough one. Nothing banked this time. Read why, then go again.";
  const mood=R.reason==="win"?"trophy":R.reason==="stop"?"chai":pay?"dance":R.reason==="timeout"?"tired":"bonk";
- const learn=R.last&&R.ok===false&&R.last.why?`<details class="res-learn"><summary>${ICON.book}Why the last answer was wrong</summary><ol class="ex-steps">${whySteps(R.last.why).map(t=>`<li>${stepHTML(t,R.last)}</li>`).join("")}</ol>${EXPLAIN[R.last.sk]?`<div class="ex-note idea"><b>Key idea</b><p>${esc(EXPLAIN[R.last.sk].idea)}</p></div>`:""}</details>`:"";
+ const learn=""; /* the results screen no longer repeats the last wrong answer's working (it was shown in the hot seat) */
  return `<section class="res enter"><div class="res-card card">
 <div class="res-top"><div class="res-head">
 <div class="coach">${mascot(mood,84)}<p class="say">${esc(msg)}</p></div>

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { compileGraph, buildAvail, newState, activeSkill, address, applyAnswer, view } from '../server/engine.js';
+import { compileGraph, buildAvail, typesFor, newState, activeSkill, address, applyAnswer, view } from '../server/engine.js';
 
 const graph = JSON.parse(fs.readFileSync('server/content/skill-graph.json', 'utf8'));
 const typesDoc = JSON.parse(fs.readFileSync('server/content/question-types.json', 'utf8'));
@@ -45,37 +45,41 @@ test('L1 climbs R before the streak counts (rmax 3)', () => {
   assert.equal(st.skills.S7.r, 3); assert.equal(r.transitions[0].kind, 'r_up');
 });
 
-test('wrong at L1 on starting R2 drops to R1; two misses on a cell switch type', () => {
+test('wrong at L1 on the starting R2 drops to R1; every answer moves on to the next type', () => {
   const A = fullAvail(), st = newState(G);
   st.skills.S1.status = 'done'; st.skills.S4.status = 'done'; st.skills.S10.status = 'done';
   st.skills.S2.status = 'open';
   assert.equal(activeSkill(G, A, st).id, 'S2');
   assert.equal(st.skills.S2.r, 2);
-  let a = address(G, A, st, 'S2', 'hotseat');
-  let r = applyAnswer(G, st, 'S2', a.type, false);
+  const a0 = address(G, A, st, 'S2', 'hotseat');
+  const r = applyAnswer(G, st, 'S2', a0.type, false);
   assert.equal(st.skills.S2.r, 1); assert.equal(r.transitions[0].kind, 'r_drop');
-  a = address(G, A, st, 'S2', 'hotseat'); const t0 = a.type;
-  applyAnswer(G, st, 'S2', a.type, false);
-  assert.equal(address(G, A, st, 'S2', 'hotseat').type, t0, 'one miss: same type, next variant');
-  assert.equal(address(G, A, st, 'S2', 'hotseat').variant, 2);
-  r = applyAnswer(G, st, 'S2', t0, false);
-  assert.equal(r.transitions[0].kind, 'type_switch');
-  assert.notEqual(address(G, A, st, 'S2', 'hotseat').type, t0);
+  const a1 = address(G, A, st, 'S2', 'hotseat');
+  assert.notEqual(a1.type, a0.type, 'a miss moves on to the next type');
+  applyAnswer(G, st, 'S2', a1.type, false);
+  assert.notEqual(address(G, A, st, 'S2', 'hotseat').type, a1.type);
 });
 
-test('variety: after a right answer the next question is a different type; after a wrong one the same type comes back', () => {
+test('each level starts at T1 V1, cycles the types, then repeats them with the next variant; two right in a row levels up', () => {
   const A = fullAvail(), st = newState(G);
   for (const s of Object.keys(st.skills)) st.skills[s].status = 'done';
-  st.skills.S7.status = 'open'; // rmax 3: two rights at L1 stay in L1 (R2 -> R3, then the streak)
-  let prev = null;
-  for (let i = 0; i < 3; i++) {
-    const a = address(G, A, st, 'S7', 'hotseat');
-    if (prev && a.level === prev.level) assert.notEqual(a.type, prev.type, 'question ' + (i + 1) + ' repeats the type');
-    applyAnswer(G, st, 'S7', a.type, true); prev = a;
+  st.skills.S5.status = 'open'; st.skills.S5.level = 2;   // L2 plays at rmax: no R climbing in the way
+  const types = typesFor(G, A, G.skills[G.idx.S5], 2, 'hotseat');
+  const seen = [];
+  for (let i = 0; i < types.length + 1; i++) {
+    const a = address(G, A, st, 'S5', 'hotseat');
+    seen.push(a.type + ' V' + a.variant);
+    applyAnswer(G, st, 'S5', a.type, false);   // wrong: stays on L2
   }
-  const w = address(G, A, st, 'S7', 'hotseat');
-  applyAnswer(G, st, 'S7', w.type, false);
-  assert.equal(address(G, A, st, 'S7', 'hotseat').type, w.type, 'a similar question follows a miss');
+  assert.deepEqual(seen.slice(0, types.length), types.map((t) => t + ' V1'), 'T1 V1, T2 V1, … in order');
+  assert.equal(seen[types.length], types[0] + ' V2', 'then T1 V2');
+  let a = address(G, A, st, 'S5', 'hotseat'); applyAnswer(G, st, 'S5', a.type, true);
+  a = address(G, A, st, 'S5', 'hotseat'); const r = applyAnswer(G, st, 'S5', a.type, true);
+  assert.equal(r.transitions[0].kind, 'level_up');
+  const n = address(G, A, st, 'S5', 'hotseat');
+  assert.equal(n.level, 3);
+  assert.equal(n.type, typesFor(G, A, G.skills[G.idx.S5], 3, 'hotseat')[0]);
+  assert.equal(n.variant, 1, 'the new level starts at T1 V1');
 });
 
 test('AND-of-OR unlock (S58 needs one of S56/S8 and one of S26/S32/S33/S28)', () => {

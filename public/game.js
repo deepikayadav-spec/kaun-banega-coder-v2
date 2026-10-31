@@ -1108,7 +1108,7 @@ function actHTML0(){const q=S.q;
  if(S.phase==="locked")return `<span class="ask pulse">Answer locked… let's see</span>`;
  if(S.practice)return `<span class="banner ${S.ok?"win":"lose"}">${S.ok?"Correct!":S.timeout?"Time's up":"Not quite"}</span><button class="btn gold" data-act="next">Next →</button><button class="btn quiet" data-act="practice-end">End practice</button>`;
  if(!S.ok&&S.run.en<=0)return `<span class="banner lose">Out of energy</span><button class="btn gold" data-act="end">See my game →</button>`;
- if(!S.ok)return `<span class="banner lose">${S.timeout?"Time's up":"Not this time"}</span><button class="btn gold" data-act="second">Try a similar question →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
+ if(!S.ok)return `<span class="banner lose">${S.timeout?"Time's up":"Not this time"}</span><button class="btn gold" data-act="second">Try a new question →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
  if(S.ok)return rungOf()>=OPEN&&!S.practice?`<span class="banner win">Correct answer!</span><button class="btn gold" data-act="collect">Collect ${fmtR(LADDER[OPEN-1])} →</button>`:`<span class="banner win">${S.retryWin?"You fixed it! ✓":"Correct answer!"}</span><button class="btn gold" data-act="next">Next →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
  return `<span class="banner lose">${S.timeout?"Time's up":"Wrong answer"}</span><button class="btn gold" data-act="end">See my game →</button>`}
 function feedbackHTML(){const I=S.info;if(S.phase!=="reveal"||!I)return "";let h="";
@@ -1925,7 +1925,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="quit-no"){S.quitAsk=false;syncAct();return}
  if(a==="quit"){endRun("stop");return}
  if(a==="next"){leaveReveal();newQ();render();scrollTo({top:0});return}
- if(a==="second"&&S.screen==="play"){logEv({kind:"retry",rung:rungOf(),sk:S.q&&S.q.sk});S.retryOf=S.q&&S.q.sk;leaveReveal();newQ();render();scrollTo({top:0});say("New variant of the same question.");return}
+ if(a==="second"&&S.screen==="play"){logEv({kind:"retry",rung:rungOf(),sk:S.q&&S.q.sk});S.retryOf=S.q&&S.q.sk;leaveReveal();newQ();render();scrollTo({top:0});say("A new question on the same topic.");return}
  if(a==="practice-end"&&S.practice){leaveReveal();logEv({kind:"practice_end",answered:S.run.answered,correct:S.run.correct});S={screen:"home",name:S.name};render();scrollTo({top:0});return}
  if(a==="board"){document.body.classList.toggle("boardopen");return}
  if(a==="stop"){endRun("stop");return}

@@ -202,8 +202,7 @@ app.post('/api/play/lifeline', requireStudent, jsonBody, wrap(async (req, res) =
     const ok = await tx(async () => {
       const { st, pending } = await loadState(roll, c.G, true);
       if (!pending || pending.qid !== qid || pending.lifelines.includes('flip')) return false;
-      const sk = st.skills[pending.skill], vk = sk.level + '-' + pending.type + '-' + sk.r;
-      sk.vars[vk] = Math.min(VARIANTS, (sk.vars[vk] || 0) + 1);
+      const sk = st.skills[pending.skill]; sk.vb ||= { 1: 0, 2: 0, 3: 0, 4: 0 }; sk.vb[sk.level] = (sk.vb[sk.level] || 0) + 1;   // Flip: same type, next variant
       await saveState(roll, st, null);
       return pending.mode;
     });

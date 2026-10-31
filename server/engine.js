@@ -2,11 +2,14 @@
 // Pure functions: no database, no clock. The server loads the graph and the bank's availability and stores the state.
 //
 // Address: C Checkpoint > G Skill group > S Skill > L Level > T Question type > R Difficulty > V Variant.
-// Rules (unchanged from the original):
-//   right: at L1 below rmax → R up one; otherwise first right arms a streak, second right in a row → next level at rmax
-//          (L4 → skill done, which opens every locked skill whose AND-of-OR prerequisites are now done).
-//   wrong: streak resets; at L1 on the starting R (>1) → drop to R1; otherwise next variant, and two misses on the
-//          same L-R cell switch to the next question type of that level.
+// Rules (KBC Progression Engine, 31 Oct):
+//   1. A skill opens once what it needs is done (AND-of-OR prerequisites). Each login resumes where the last ended.
+//   2. Each level starts at T1 V1. Every answer, right or wrong, moves on to the next question type of that level.
+//      Two right in a row moves up a level (L4 → skill done, which opens the skills that needed it).
+//   3. Once every question type at a level has been tried, the types repeat with the next variant: T1 V2, T2 V2, …
+//   4. R1 uses this skill only, R2 mixes in 1–2 earlier skills, R3 mixes in 3 or more. Difficulty moves as before:
+//      on L1 a right answer below the skill's rmax raises R by one, and a miss on the starting R drops to R1;
+//      L2–L4 play at rmax.
 // Changes for the real bank:
 //   - the graph is skill-graph.json (stored rmax, skipped_types honoured);
 //   - a type is offered only if the bank has live questions for it at that skill and level;
@@ -66,7 +69,8 @@ export function typesFor(G, avail, S, l, mode) {
 
 // Starter skills (starter: true in the graph) count as done from the start: "the starter skills are done".
 const blankSkill = (S) => ({ status: S.starter ? 'done' : S.req.length ? 'locked' : 'open', level: S.starter ? 4 : 1, r: Math.min(2, S.rmax), cells: {},
-  streak: { key: null, count: 0 }, rightStreak: 0, tIdx: { 1: 0, 2: 0, 3: 0, 4: 0 }, vars: {}, q: 0, right: 0 });
+  streak: { key: null, count: 0 }, rightStreak: 0, tIdx: { 1: 0, 2: 0, 3: 0, 4: 0 }, vars: {}, q: 0, right: 0,
+  pos: { 1: 0, 2: 0, 3: 0, 4: 0 }, vb: { 1: 0, 2: 0, 3: 0, 4: 0 } });
 
 export function newState(G) {
   const skills = {};
@@ -117,17 +121,18 @@ export function activeSkill(G, avail, st) {
   return p ? { id: p.id } : { id: null, comingSoon: open.map((S) => S.id) };
 }
 
+// The level's place in its cycle: question n (0, 1, 2, …) of a level with k types is type n mod k, variant ⌊n / k⌋ + 1.
+const posOf = (sk) => { sk.pos ||= { 1: 0, 2: 0, 3: 0, 4: 0 }; sk.vb ||= { 1: 0, 2: 0, 3: 0, 4: 0 }; return sk.pos[sk.level] || 0; };
 export function typeFor(G, avail, st, id, mode) {
   const S = G.skills[G.idx[id]], sk = st.skills[id], list = typesFor(G, avail, S, sk.level, mode);
   if (!list.length) return null;
-  let i = sk.tIdx[sk.level] % list.length;
-  if (list.length > 1 && list[i] === st.lastType) i = (i + 1) % list.length;
-  return list[i];
+  return list[posOf(sk) % list.length];
 }
 
-export function nextV(st, id, type) {
-  const sk = st.skills[id], k = sk.level + '-' + type + '-' + sk.r;
-  return Math.min(VARIANTS, (sk.vars[k] || 0) + 1);
+export function nextV(st, id, type, G, avail, mode) {
+  const sk = st.skills[id], n = posOf(sk);
+  const k = G ? Math.max(1, typesFor(G, avail, G.skills[G.idx[id]], sk.level, mode).length) : 1;
+  return ((Math.floor(n / k) + (sk.vb[sk.level] || 0)) % VARIANTS) + 1;
 }
 
 export function mixFor(G, id, r) {
@@ -140,7 +145,7 @@ export function mixFor(G, id, r) {
 export function address(G, avail, st, id, mode) {
   const S = G.skills[G.idx[id]], sk = st.skills[id], type = typeFor(G, avail, st, id, mode);
   if (!type) return null;
-  const want = nextV(st, id, type), byR = avail[id][sk.level][type];
+  const want = nextV(st, id, type, G, avail, mode), byR = avail[id][sk.level][type];
   const rs = Object.keys(byR).map(Number);
   const r = rs.includes(sk.r) ? sk.r : rs.sort((a, b) => Math.abs(a - sk.r) - Math.abs(b - sk.r) || a - b)[0];
   const vs = byR[r], variant = vs.includes(want) ? want : vs[(want - 1) % vs.length];
@@ -154,16 +159,13 @@ export function applyAnswer(G, st, id, type, ok) {
   const S = G.skills[G.idx[id]], sk = st.skills[id], tr = [];
   if (!S || !sk || sk.status !== 'open') return { transitions: tr, msg: '' };
   const l = sk.level, r = sk.r, start = Math.min(2, S.rmax);
-  const vk = l + '-' + type + '-' + r;
-  sk.vars[vk] = Math.min(VARIANTS, (sk.vars[vk] || 0) + 1);
+  posOf(sk); sk.pos[l] = (sk.pos[l] || 0) + 1;   // rule 2: every answer moves on to the next type
   st.used[type] = (st.used[type] || 0) + 1;
   const ck = l + '-' + r, cell = sk.cells[ck] || (sk.cells[ck] = { attempts: 0, wrong: 0, cleared: false });
   cell.attempts++; st.q++; sk.q++;
   if (ok) { st.right++; sk.right++; cell.cleared = true; } else cell.wrong++;
   let nl = l, nr = r, done = false, msg = '';
-  st.lastType = ok ? type : null;
   if (ok) {
-    sk.tIdx[l]++;
     sk.streak = { key: null, count: 0 };
     if (l === 1 && r < S.rmax) { nr = r + 1; msg = 'Up to ' + R_NAMES[nr] + '.'; tr.push({ kind: 'r_up', detail: { level: l, from: r, to: nr } }); }
     else if (!sk.rightStreak) { sk.rightStreak = 1; msg = 'One more right to ' + (l < 4 ? 'reach ' + LEVEL_NAMES[l + 1] : 'finish the skill') + '.'; }
@@ -176,15 +178,9 @@ export function applyAnswer(G, st, id, type, ok) {
     sk.rightStreak = 0;
     if (sk.streak.key === ck) sk.streak.count++; else sk.streak = { key: ck, count: 1 };
     if (l === 1 && r === start && r > 1) { nr = 1; st.drops++; msg = 'Down to R1 Low.'; tr.push({ kind: 'r_drop', detail: { level: l, from: r, to: 1 } }); }
-    else {
-      st.retries++;
-      if (sk.streak.count >= 2) {
-        sk.tIdx[l]++; sk.streak = { key: null, count: 0 };
-        msg = 'Two misses. Switching question type.';
-        tr.push({ kind: 'type_switch', detail: { level: l, from: type, tIdx: sk.tIdx[l] } });
-      } else msg = 'Next variant, V' + Math.min(VARIANTS, sk.vars[vk] + 1) + '.';
-    }
+    else { st.retries++; msg = 'On to the next question type.'; }
   }
+  if (nl !== l) { sk.pos[nl] = 0; sk.vb[nl] = 0; }   // each level starts at T1 V1
   sk.level = nl; sk.r = nr;
   if (done) {
     sk.status = 'done';

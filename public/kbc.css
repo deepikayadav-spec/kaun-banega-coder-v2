@@ -2536,3 +2536,55 @@ html[data-theme="light"] .bmax{color:#92400E;border-color:rgba(146,64,14,.4);bac
 .mcol .rf-q .rf-c{min-height:34px;padding:0 10px;font-size:12.5px}
 .mcol .rf-q .rf-more textarea{font-size:13px}
 .stake .bmax{margin-top:8px;flex:none;width:auto;min-height:36px;padding:0 12px;font-size:13px}
+
+/* ===== Hot seat round 2 (31 Oct) ===== */
+/* order questions: pieces on the left, the order being built on the right */
+.ordgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+.ordcol{display:flex;flex-direction:column;gap:8px;min-width:0}
+.ordh{font:700 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:#9AA6C0}
+.ordgrid .tiles{gap:6px!important}
+.ordgrid .tile{padding:8px 12px!important;min-height:44px;font-size:14.5px}
+.ordgrid .tile.picked{opacity:.45}
+.ordgrid .built{min-height:150px;margin:0!important;display:flex;flex-direction:column;gap:6px;padding:12px 14px!important}
+.ordgrid .built .ln2{display:flex;gap:10px;align-items:baseline}
+.ordgrid .built .ln2 i{font-style:normal;font:700 12px var(--f-mono);color:#E9C46A;min-width:14px}
+.ordbtns{display:flex;gap:8px;flex-wrap:wrap}
+@media (max-width:900px){.ordgrid{grid-template-columns:minmax(0,1fr)}}
+/* after answering, only the order (marked right or wrong) stays: the pieces list would repeat it */
+.play.rev .ordgrid{grid-template-columns:minmax(0,1fr)}.play.rev .ordgrid .ordcol:first-child{display:none}
+/* the stake in one block: note, what this question is worth, what is banked */
+.stake.one{flex-direction:row!important;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end;text-align:left;padding:8px 12px;border-radius:16px;background:rgba(9,12,22,.6);border:1px solid rgba(233,196,106,.22)}
+.stake.one .stk-t,.stake.one .stk-bank{display:flex;flex-direction:column;gap:0;line-height:1.1}
+.stake.one .stk-bank{padding-left:12px;border-left:1px solid rgba(233,196,106,.22)}
+.stake.one .stk-bank b{font-size:15px!important;color:#F5EEDC!important;-webkit-text-fill-color:#F5EEDC!important}
+.stake.one .nthumb{margin:0!important;width:52px!important}
+.stake.one .bmax{margin:0!important}
+.stk-note{display:inline-flex;transition:opacity .2s}.stk-note.wait{opacity:0}
+.stk-note.land{animation:noteLand .6s cubic-bezier(.2,.8,.2,1)}
+@keyframes noteLand{30%{transform:scale(1.35) rotate(4deg);filter:drop-shadow(0 0 14px rgba(253,230,138,.9))}}
+html[data-theme="light"] .stake.one{background:rgba(255,255,255,.85)}
+html[data-theme="light"] .stake.one .stk-bank b{color:#0F172A!important;-webkit-text-fill-color:#0F172A!important}
+/* the zooming banknote */
+.nzoom{position:fixed;inset:0;z-index:70;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle at 50% 50%,rgba(4,6,14,.55),rgba(4,6,14,.2) 60%,transparent);transition:background .4s}
+.nzoom.out{background:transparent}
+.nz-in{display:flex;flex-direction:column;align-items:center;gap:14px;width:min(420px,70vw);transform-origin:50% 50%}
+.nz-in svg{width:100%;height:auto;filter:drop-shadow(0 0 30px rgba(253,230,138,.7)) drop-shadow(0 20px 30px rgba(0,0,0,.6))}
+.nz-in b{font:800 clamp(20px,2.4vw,30px) var(--f-display);color:#FDE68A;text-shadow:0 0 18px rgba(245,158,11,.7)}
+.nzoom.out .nz-in b{opacity:0;transition:opacity .2s}
+/* results: everything arrives in turn, and the money board climbs to the prize reached */
+.res .res-card>*{animation:resIn .5s cubic-bezier(.2,.8,.2,1) backwards}
+.res .res-card>*:nth-child(2){animation-delay:.08s}.res .res-card>*:nth-child(3){animation-delay:.16s}.res .res-card>*:nth-child(4){animation-delay:.24s}.res .res-card>*:nth-child(5){animation-delay:.32s}.res .res-card>*:nth-child(n+6){animation-delay:.4s}
+.res .res-line>div{animation:resPop .45s cubic-bezier(.2,.8,.2,1) backwards}
+.res .res-line>div:nth-child(1){animation-delay:.25s}.res .res-line>div:nth-child(2){animation-delay:.35s}.res .res-line>div:nth-child(3){animation-delay:.45s}.res .res-line>div:nth-child(4){animation-delay:.55s}
+.res-side .board .rung{animation:rungIn .35s ease backwards}
+.res-side .board .rung:nth-child(2){animation-delay:0.90s}.res-side .board .rung:nth-child(3){animation-delay:0.84s}.res-side .board .rung:nth-child(4){animation-delay:0.78s}.res-side .board .rung:nth-child(5){animation-delay:0.72s}.res-side .board .rung:nth-child(6){animation-delay:0.66s}.res-side .board .rung:nth-child(7){animation-delay:0.60s}.res-side .board .rung:nth-child(8){animation-delay:0.54s}.res-side .board .rung:nth-child(9){animation-delay:0.48s}.res-side .board .rung:nth-child(10){animation-delay:0.42s}.res-side .board .rung:nth-child(11){animation-delay:0.36s}.res-side .board .rung:nth-child(12){animation-delay:0.30s}.res-side .board .rung:nth-child(13){animation-delay:0.24s}.res-side .board .rung:nth-child(14){animation-delay:0.18s}.res-side .board .rung:nth-child(15){animation-delay:0.12s}.res-side .board .rung:nth-child(16){animation-delay:0.06s}
+.res-side .board .rung.next{box-shadow:0 0 0 2px #E9C46A,0 0 26px rgba(233,196,106,.45)!important;animation:rungIn .35s ease backwards,rungGlow 1.8s 1.2s ease-in-out infinite}
+.res .ramt{display:inline-block;animation:resPop .6s .2s cubic-bezier(.2,.8,.2,1.4) backwards}
+@keyframes resIn{from{opacity:0;transform:translateY(14px)}}
+@keyframes resPop{from{opacity:0;transform:scale(.8)}}
+@keyframes rungIn{from{opacity:0;transform:translateX(18px)}}
+@keyframes rungGlow{50%{box-shadow:0 0 0 2px #FDE68A,0 0 40px rgba(253,230,138,.7)}}
+@media (prefers-reduced-motion:reduce){.res .res-card>*,.res .res-line>div,.res-side .board .rung,.res .ramt,.stk-note.land{animation:none!important}}
+.ordgrid .tile code,.ordgrid .built .ln2{white-space:normal!important;overflow-wrap:anywhere;overflow:visible!important}
+.ordgrid .tile{overflow:visible!important}
+.ordgrid .tile{white-space:normal!important;height:auto!important;line-height:1.35;overflow-wrap:anywhere}

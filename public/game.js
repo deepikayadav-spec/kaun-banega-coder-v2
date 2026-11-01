@@ -1014,7 +1014,9 @@ async function reveal(){if(S.phase==="reveal"||S.revealing)return;S.revealing=tr
   S.phase="ask";S.pendingRes=null;fsToast("Could not reach the server. Check your internet and lock your answer again.");render();return}
  if(S.q!==q||S.screen!=="play")return;
  const ok=!!res.correct;S.ok=ok;S.res=res;S.phase="reveal";S.revealAt=Date.now();KBCQ.reveal(q,res,S);
- S.qfbAsk=(P.qfbN||0)<10;S.qfbSent=false;RF.q=rfBlank();
+ /* each question type is rated once, the first time the student reaches it for the 3rd time (counted across games) */
+ if(q.ty){P.tySeen=P.tySeen||{};P.tySeen[q.ty]=(P.tySeen[q.ty]||0)+1;saveP()}
+ S.qfbAsk=!!q.ty&&P.tySeen[q.ty]>=3&&!(P.tyFb&&P.tyFb[q.ty]);S.qfbSent=false;RF.q=rfBlank();
  /* "Try a similar question": the follow-up is the same skill and type; getting it right is the moment worth counting */
  if(S.retryOf){if(ok&&q.sk===S.retryOf){S.retryWin=true;logEv({kind:"retry_correct",sk:q.sk})}S.retryOf=null}
  const info=apply(ok,res);S.info=info;if(!S.practice)energyTick(ok);S.run.peak=Math.max(S.run.peak||0,info.before,info.after);S.run.answered++;if(ok)S.run.correct++;
@@ -1407,10 +1409,10 @@ const rfBlank=()=>({stars:0,tags:[],text:""});
 const RF={m:rfBlank(),q:rfBlank(),g:rfBlank()};
 /* the general form (m) needs a star and a written comment; tags stay optional */
 const RF_CFG={m:{title:"How is KBC so far?",sub:"Tap a star and tell us why. Tags are optional.",set:RF_GAME,send:"Send feedback",needText:true},
- q:{title:"How was this question?",sub:"",set:RF_Q,send:"Next →"},
+ q:{title:"How do you like this question type?",sub:"",set:RF_Q,send:"Next →"},
  g:{title:"How was this game?",sub:"Tap a star to continue. Takes 10 seconds.",set:RF_GAME,send:"Send"}};
 const STAR_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>';
-function rfHTML(id){const F=RF[id],C=RF_CFG[id],L=F.stars?C.set[F.stars]:null,sub=id==="q"?`Question ${Math.min(10,(P.qfbN||0)+1)} of 10 · tap a star to continue`:C.sub;
+function rfHTML(id){const F=RF[id],C=RF_CFG[id],L=F.stars?C.set[F.stars]:null,sub=id==="q"?`${S.q?S.q.tname:"This type"} · you have seen it ${S.q&&P.tySeen?P.tySeen[S.q.ty]:3} times · tap a star to continue`:C.sub;
  return `<div class="rf rf-${id}" id="rf-${id}"><div class="rf-h"><h3 id="rf-${id}-h">${C.title}</h3>${sub?`<p>${esc(sub)}</p>`:""}</div>
 <div class="rf-stars" role="radiogroup" aria-labelledby="rf-${id}-h">${[1,2,3,4,5].map(n=>`<button type="button" class="rf-s ${n<=F.stars?"on":""}" data-act="rf-star" data-f="${id}" data-n="${n}" role="radio" aria-checked="${n===F.stars}" aria-label="${n} star${n>1?"s":""}">${STAR_SVG}</button>`).join("")}<span class="rf-l">${RF_LABEL[F.stars]||"Tap a star"}</span></div>
 ${L?`<div class="rf-tags"><span class="rf-th">${esc(L.head)}</span><div class="rf-chips">${L.tags.map((t,i)=>`<button type="button" class="rf-c" data-act="rf-tag" data-f="${id}" data-i="${i}" aria-pressed="${F.tags.includes(t)}">${esc(t)}</button>`).join("")}</div></div>
@@ -1421,15 +1423,15 @@ function rfRedraw(id){const el=$("#rf-"+id);if(!el)return;el.outerHTML=rfHTML(id
 document.addEventListener("input",e=>{const f=e.target.dataset&&e.target.dataset.f;if(f&&RF[f]&&e.target.id==="rf-"+f+"-text"){RF[f].text=e.target.value;const s=document.querySelector(`#rf-${f} [data-act="rf-send"]`);if(s)s.disabled=!rfReady(f)}},SIG);
 function rfPost(id,ctx){const F=RF[id],text=(F.text||"").trim().slice(0,600);logEv({kind:"feedback",form:id,stars:F.stars,tags:F.tags,text});
  KBCQ.api("POST","/api/feedback",{text,ctx:Object.assign({stars:F.stars,tags:F.tags,screen:S.screen},ctx)}).catch(()=>{});RF[id]=rfBlank()}
-/* Mandatory question rating for a student's first 10 questions: moving on from the answer (Next, stop, home…) opens
-   a rating window with no close button. Once a star is sent, the button the student pressed runs. */
+/* Mandatory question-type rating: once per type, after the student has seen that type 3 times. Moving on from the
+   answer (Next, stop, home…) opens a rating window with no close button. Once a star is sent, the button the student pressed runs. */
 const QFB_LEAVE=["next","second","stop","end","collect","practice-end","home","fame","play"];
 function qfbGate(a,b){if(!(S.screen==="play"&&S.phase==="reveal"&&S.qfbAsk&&!S.qfbSent&&QFB_LEAVE.includes(a)))return true;
  if(!(FB.must&&FB.form==="q"))fbMust("q",b);return false}
 /* the results rating opens by itself once the take-home amount has counted up, and has to be sent before leaving */
 function gfbMaybe(){if(S.screen!=="result"||!S.res||S.res.fbDone||FB.must)return;clearTimeout(gfbMaybe.t);
  gfbMaybe.t=setTimeout(()=>{if(S.screen==="result"&&S.res&&!S.res.fbDone&&!FB.must)fbMust("g")},1500)}
-function fbMust(form,after){FB.form=form;FB.must=true;FB.after=after||null;FB.trigger=form==="q"?"question "+((P.qfbN||0)+1)+" of 10":"after results";
+function fbMust(form,after){FB.form=form;FB.must=true;FB.after=after||null;FB.trigger=form==="q"?`type ${S.q&&S.q.ty} after ${S.q&&P.tySeen?P.tySeen[S.q.ty]:"?"} seen`:"after results";
  fbOpen();fbLock(true);logEv({kind:"feedback_prompt",form,mandatory:true})}
 function fbDone(){FB.must=false;FB.form="m";FB.after=null;fbLock(false)}
 function fbHTML(sent){if(sent)return `<div class="fbbox" role="dialog" aria-modal="true" aria-label="Feedback"><div class="fbdone">${mascot("dance",120)}<h3>Thank you!</h3><p>Your feedback reached the KBC team.</p><button class="btn gold" data-act="fb-close">Close</button></div></div>`;
@@ -1909,7 +1911,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="rf-send"){const f=b.dataset.f;if(!RF[f]||!rfReady(f))return;
   if(f==="m"){rfPost("m",{kind:"general",trigger:FB.trigger||"feedback button"});P.fbSent=true;saveP();if(FB.must)fbDone();$("#fbm").innerHTML=fbHTML(true);ROBO.happy();gfbMaybe();return}
   if(f==="q"){const q=S.q,go=FB.after;rfPost("q",{kind:"question",qid:q&&q.id,sk:q&&q.sk,type:q&&q.ty,correct:!!S.ok,practice:!!S.practice,trigger:FB.trigger});
-   S.qfbSent=true;P.qfbN=(P.qfbN||0)+1;saveP();fbDone();$("#fbm").hidden=true;if(go&&go.isConnected)go.click();return}
+   S.qfbSent=true;if(q&&q.ty){P.tyFb=P.tyFb||{};P.tyFb[q.ty]=true}saveP();fbDone();$("#fbm").hidden=true;if(go&&go.isConnected)go.click();return}
   if(f==="g"&&S.res){rfPost("g",{kind:"game",reason:S.res.reason,correct:S.res.correct,answered:S.res.answered,reached:S.res.reached,trigger:"after results"});S.res.fbDone="sent";fbDone();$("#fbm").innerHTML=fbHTML(true);ROBO.happy()}return}
   if(a==="theme"){setTheme(document.documentElement.dataset.theme==="light"?"dark":"light");return}
  if(a==="pathjump"){pathJump(true);return}

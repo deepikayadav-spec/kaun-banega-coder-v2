@@ -1066,7 +1066,7 @@ function homeLine(r,st){if(!P.answered)return `Hi! I'm ${buddyName()}, your KBC 
  return `Welcome back! Every game starts fresh at 10. Wallet: ${fmtR(P.coins||0)}.`}
 function vHome(){const best=P.best||0,coins=P.coins||0;
  const greet=esc(quipText("homebubble"));
- return `<div class="wishc" role="note"><b>Happy Diwali!</b><span>Wishes first, KBC next.</span></div><section class="home4 enter">
+ return `<div class="wishc" role="note"><b>Happy Diwali!</b></div><section class="home4 enter">
 <div class="h4-bot"><p class="say">${P.answered?greet:esc(`Hi! I'm ${buddyName()}, your KBC buddy. Win Fastest Finger First to take the hot seat!`)}</p>${mascot(ctxPose(),300)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span><button class="btn quiet sm" data-act="buddy">Change buddy</button></div>
 <div class="h-hero">
 <span class="emb hlogo" aria-hidden="true"><i class="er"></i><i class="er er2"></i><span class="ec">{ }</span></span>

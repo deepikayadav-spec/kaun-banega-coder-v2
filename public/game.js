@@ -1014,7 +1014,7 @@ async function reveal(){if(S.phase==="reveal"||S.revealing)return;S.revealing=tr
   S.phase="ask";S.pendingRes=null;fsToast("Could not reach the server. Check your internet and lock your answer again.");render();return}
  if(S.q!==q||S.screen!=="play")return;
  const ok=!!res.correct;S.ok=ok;S.res=res;S.phase="reveal";S.revealAt=Date.now();KBCQ.reveal(q,res,S);
- S.qfbAsk=(P.qfbN||0)<10;S.qfbSent=false;RF.q=rfBlank();
+ S.qfbAsk=qfbCount()<10;S.qfbSent=false;RF.q=rfBlank();
  /* "Try a similar question": the follow-up is the same skill and type; getting it right is the moment worth counting */
  if(S.retryOf){if(ok&&q.sk===S.retryOf){S.retryWin=true;logEv({kind:"retry_correct",sk:q.sk})}S.retryOf=null}
  const info=apply(ok,res);S.info=info;if(!S.practice)energyTick(ok);S.run.peak=Math.max(S.run.peak||0,info.before,info.after);S.run.answered++;if(ok)S.run.correct++;
@@ -1168,6 +1168,7 @@ function vResult(){const R=S.res,rc=R.reached||0,pay=R.payout||0;
 </div>${NOTE[pay]?`<div class="res-bill">${noteBig(pay)}</div>`:""}</div>
 <dl class="res-line"><div><dt>Correct this game</dt><dd>${R.correct}/${R.answered}</dd></div><div><dt>Time played</dt><dd>${Math.floor(R.secs/60)}:${String(R.secs%60).padStart(2,"0")}</dd></div><div><dt>Prizes won</dt><dd>${rc} of ${LADDER.length}</dd></div><div><dt>Wallet</dt><dd>${fmtR(R.wallet)}</dd></div></dl>
 <div class="res-goal"><div class="res-goal-h"><b>${P.best?`Next game: win Fastest Finger, then beat your best of ${fmtR(amountOf(P.best))}`:`Next game: win Fastest Finger, then play for your first prize of ${fmtR(amountOf(1))}`}</b><span class="muted">Best ever: ${fmtR(amountOf(P.best))}</span></div><span class="muted">Your path progress is always kept.</span></div>
+${R.fbDone==="sent"?`<div class="rf rf-done"><b>Thanks!</b> Your rating reached the KBC team.</div>`:R.fbDone||!gfbAsk()?"":rfHTML("g")}
 ${learn}
 <div class="ractions"><button class="btn gold" data-act="play">Play again →</button><button class="btn quiet" data-act="fame">Hall of Fame</button><button class="btn quiet" data-act="home">Home</button></div>
 </div>
@@ -1411,17 +1412,17 @@ const RF={m:rfBlank(),q:rfBlank(),g:rfBlank()};
 /* the general form (m) needs a star and a written comment; tags stay optional */
 const RF_CFG={m:{title:"How is KBC so far?",sub:"Tap a star and tell us why. Tags are optional.",set:RF_GAME,send:"Send feedback",needText:true,eleven:true},
  q:{title:"How was this question?",sub:"",set:RF_Q,send:"Next →"},
- g:{title:"How was this game?",sub:"Tap a star to continue. Takes 10 seconds.",set:RF_GAME,send:"Send"}};
+ g:{title:"How was this game?",sub:"Optional. Takes 10 seconds.",set:RF_GAME,send:"Send"}};
 const STAR_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>';
 function rfXHTML(id){const F=RF[id];if(!RF_CFG[id].eleven||F.stars!==5)return "";
  return `<div class="rf-x"><span class="rf-xh" id="rf-${id}-xh">Better than a 5? Keep going.</span><div class="rf-stars rf-xs" role="radiogroup" aria-labelledby="rf-${id}-xh">${[1,2,3,4,5,6].map(n=>`<button type="button" class="rf-s ${n<=F.bonus?"on":""}" data-act="rf-bonus" data-f="${id}" data-n="${n}" role="radio" aria-checked="${n===F.bonus}" aria-label="${5+n} stars: ${RF_XL[n]}">${STAR_SVG}<i aria-hidden="true">${5+n}</i></button>`).join("")}</div><span class="rf-xl">${F.bonus?`<b>${5+F.bonus}/5</b> · ${RF_XL[F.bonus]}`:"Optional. Only if KBC really earned it."}</span></div>`}
-function rfHTML(id){const F=RF[id],C=RF_CFG[id],sub=id==="q"?`Question ${Math.min(10,(P.qfbN||0)+1)} of 10 · tap a star to continue`:C.sub;let L=F.stars?C.set[F.stars]:null;
+function rfHTML(id){const F=RF[id],C=RF_CFG[id],sub=id==="q"?`Question ${Math.min(10,qfbCount()+1)} of 10 · tap a star to continue`:C.sub;let L=F.stars?C.set[F.stars]:null;
  if(L&&C.eleven&&F.stars===5)L=Object.assign({},L,{prompt:F.bonus?`What made it a ${5+F.bonus}? And what would make it an 11?`:"What would make KBC an 11-star experience?",hint:"Dream big. Think past fixes: what would make you tell everyone about KBC?"});
  return `<div class="rf rf-${id}" id="rf-${id}"><div class="rf-h"><h3 id="rf-${id}-h">${C.title}</h3>${sub?`<p>${esc(sub)}</p>`:""}</div>
 <div class="rf-stars" role="radiogroup" aria-labelledby="rf-${id}-h">${[1,2,3,4,5].map(n=>`<button type="button" class="rf-s ${n<=F.stars?"on":""}" data-act="rf-star" data-f="${id}" data-n="${n}" role="radio" aria-checked="${n===F.stars}" aria-label="${n} star${n>1?"s":""}">${STAR_SVG}</button>`).join("")}<span class="rf-l">${RF_LABEL[F.stars]||"Tap a star"}</span></div>${rfXHTML(id)}
 ${L?`<div class="rf-tags"><span class="rf-th">${esc(L.head)}</span><div class="rf-chips">${L.tags.map((t,i)=>`<button type="button" class="rf-c" data-act="rf-tag" data-f="${id}" data-i="${i}" aria-pressed="${F.tags.includes(t)}">${esc(t)}</button>`).join("")}</div></div>
 <div class="rf-more"><label for="rf-${id}-text">${esc(L.prompt)}${C.needText?' <span aria-hidden="true">*</span>':""}</label><span class="rf-hint">${esc(L.hint)}</span><textarea id="rf-${id}-text" data-f="${id}" rows="${id==="q"?1:2}" maxlength="600" placeholder="${C.needText?"Required":"Optional"}"${C.needText?" required":""}>${esc(F.text)}</textarea></div>`:""}
-${C.send?`<div class="rf-btns"><button type="button" class="btn gold" data-act="rf-send" data-f="${id}" ${rfReady(id)?"":"disabled"}>${C.send}</button></div>`:""}</div>`}
+${C.send?`<div class="rf-btns"><button type="button" class="btn gold" data-act="rf-send" data-f="${id}" ${rfReady(id)?"":"disabled"}>${C.send}</button>${id==="g"?`<button type="button" class="btn quiet" data-act="rf-skip" data-f="g">Skip</button>`:""}</div>`:""}</div>`}
 function rfReady(id){const F=RF[id];return !!F.stars&&(!RF_CFG[id].needText||!!(F.text||"").trim())}
 function rfRedraw(id){const el=$("#rf-"+id);if(!el)return;el.outerHTML=rfHTML(id)}
 document.addEventListener("input",e=>{const f=e.target.dataset&&e.target.dataset.f;if(f&&RF[f]&&e.target.id==="rf-"+f+"-text"){RF[f].text=e.target.value;const s=document.querySelector(`#rf-${f} [data-act="rf-send"]`);if(s)s.disabled=!rfReady(f)}},SIG);
@@ -1432,10 +1433,12 @@ function rfPost(id,ctx){const F=RF[id],text=(F.text||"").trim().slice(0,600);log
 const QFB_LEAVE=["next","second","stop","end","collect","practice-end","home","fame","play"];
 function qfbGate(a,b){if(!(S.screen==="play"&&S.phase==="reveal"&&S.qfbAsk&&!S.qfbSent&&QFB_LEAVE.includes(a)))return true;
  if(!(FB.must&&FB.form==="q"))fbMust("q",b);return false}
-/* the results rating opens by itself once the take-home amount has counted up, and has to be sent before leaving */
-function gfbMaybe(){if(S.screen!=="result"||!S.res||S.res.fbDone||FB.must)return;clearTimeout(gfbMaybe.t);
- gfbMaybe.t=setTimeout(()=>{if(S.screen==="result"&&S.res&&!S.res.fbDone&&!FB.must)fbMust("g")},1500)}
-function fbMust(form,after){FB.form=form;FB.must=true;FB.after=after||null;FB.trigger=form==="q"?"question "+((P.qfbN||0)+1)+" of 10":"after results";
+/* Each ask happens once per student, checked against what the server has (a fresh start wipes progress, not feedback):
+   10 question ratings in all, one game rating, one general feedback. */
+const qfbCount=()=>Math.max(P.qfbN||0,Number(ME.questionsRated)||0);
+/* the results rating is optional (Skip) and shows only until the student has rated a game once */
+const gfbAsk=()=>!(P.gfbSent||ME.gameRated);
+function fbMust(form,after){FB.form=form;FB.must=true;FB.after=after||null;FB.trigger=form==="q"?"question "+(qfbCount()+1)+" of 10":"after results";
  fbOpen();fbLock(true);logEv({kind:"feedback_prompt",form,mandatory:true})}
 function fbDone(){FB.must=false;FB.form="m";FB.after=null;fbLock(false)}
 function fbHTML(sent){if(sent)return `<div class="fbbox" role="dialog" aria-modal="true" aria-label="Feedback"><div class="fbdone">${mascot("dance",120)}${FB.score>5?`<div class="fbbig">${FB.score}/5</div>`:""}<h3>Thank you!</h3><p>Your feedback reached the KBC team.</p><button class="btn gold" data-act="fb-close">Close</button></div></div>`;
@@ -1493,7 +1496,7 @@ function noteZoomMaybe(){if(S.screen!=="play"||S.practice||!S.run||S.phase!=="as
   a.onfinish=()=>{o.remove();t.classList.remove("wait");t.classList.add("land");setTimeout(()=>t.classList.remove("land"),600)}},1500)}
 function resultCountUp(){if(S.screen!=="result"||!S.res||S.res.counted)return;S.res.counted=true;const el=$(".res .ramt"),to=S.res.payout||0;if(!el||!to||reduceMotion)return;
  const t0=performance.now(),d=1200,st=n=>{const k=Math.min(1,(n-t0)/d),e=1-Math.pow(1-k,3);el.textContent=fmtR(Math.round(to*e));if(k<1)requestAnimationFrame(st)};requestAnimationFrame(st)}
-function render(){const prev=render.scr;render.scr=S.screen;if(prev&&prev!==S.screen&&pingLive.at&&Date.now()-pingLive.at>8000)pingLive();const r=render0();screenH1();setTimeout(()=>{noteZoomMaybe();resultCountUp();gfbMaybe();if(prev!==S.screen)pxRest()},60);
+function render(){const prev=render.scr;render.scr=S.screen;if(prev&&prev!==S.screen&&pingLive.at&&Date.now()-pingLive.at>8000)pingLive();const r=render0();screenH1();setTimeout(()=>{noteZoomMaybe();resultCountUp();if(prev!==S.screen)pxRest()},60);
  if(prev!==S.screen){const app=$("#app");if(app&&prev){app.classList.remove("scr-in");void app.offsetWidth;app.classList.add("scr-in")}
   if(S.screen==="path")requestAnimationFrame(pauseOffscreen)}
  return r}
@@ -1914,10 +1917,11 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="rf-bonus"){const f=b.dataset.f,F=RF[f];if(!F||F.stars!==5)return;const n=+b.dataset.n;F.bonus=F.bonus===n?0:n;rfRedraw(f);SFX.pick();const x=document.querySelector(`#rf-${f} .rf-xs .rf-s[data-n="${n}"]`);x&&x.focus({preventScroll:true});return}
  if(a==="rf-tag"){const f=b.dataset.f,F=RF[f];if(!F||!F.stars)return;const t=RF_CFG[f].set[F.stars].tags[+b.dataset.i];F.tags=F.tags.includes(t)?F.tags.filter(x=>x!==t):F.tags.concat(t);b.setAttribute("aria-pressed",F.tags.includes(t));return}
  if(a==="rf-send"){const f=b.dataset.f;if(!RF[f]||!rfReady(f))return;
-  if(f==="m"){rfPost("m",{kind:"general",trigger:FB.trigger||"feedback button"});P.fbSent=true;saveP();if(FB.must)fbDone();$("#fbm").innerHTML=fbHTML(true);ROBO.happy();gfbMaybe();return}
+  if(f==="m"){rfPost("m",{kind:"general",trigger:FB.trigger||"feedback button"});P.fbSent=true;saveP();if(FB.must)fbDone();$("#fbm").innerHTML=fbHTML(true);ROBO.happy();return}
   if(f==="q"){const q=S.q,go=FB.after;rfPost("q",{kind:"question",qid:q&&q.id,sk:q&&q.sk,type:q&&q.ty,correct:!!S.ok,practice:!!S.practice,trigger:FB.trigger});
-   S.qfbSent=true;P.qfbN=(P.qfbN||0)+1;saveP();fbDone();$("#fbm").hidden=true;if(go&&go.isConnected)go.click();return}
-  if(f==="g"&&S.res){rfPost("g",{kind:"game",reason:S.res.reason,correct:S.res.correct,answered:S.res.answered,reached:S.res.reached,trigger:"after results"});S.res.fbDone="sent";fbDone();$("#fbm").innerHTML=fbHTML(true);ROBO.happy()}return}
+   S.qfbSent=true;P.qfbN=qfbCount()+1;saveP();fbDone();$("#fbm").hidden=true;if(go&&go.isConnected)go.click();return}
+  if(f==="g"&&S.res){rfPost("g",{kind:"game",reason:S.res.reason,correct:S.res.correct,answered:S.res.answered,reached:S.res.reached,trigger:"after results"});S.res.fbDone="sent";P.gfbSent=true;saveP();render();ROBO.happy()}return}
+ if(a==="rf-skip"){if(S.res){S.res.fbDone="skip";RF.g=rfBlank();logEv({kind:"feedback_skip",form:"g"});render()}return}
   if(a==="theme"){setTheme(document.documentElement.dataset.theme==="light"?"dark":"light");return}
  if(a==="pathjump"){pathJump(true);return}
  if(a==="pathsk"){if(b.classList.contains("lock"))return;const sk=b.dataset.sk,g=curGroup(),cur=curSkill(g);

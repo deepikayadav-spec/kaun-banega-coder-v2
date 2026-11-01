@@ -2438,8 +2438,20 @@ html[data-theme="light"] .rf-s{background:#F8FAFC;border-color:#CBD5E1}html[data
 html[data-theme="light"] .rf-s.on{background:#F5C542;border-color:#B45309}html[data-theme="light"] .rf-s.on svg{fill:#1A1405}
 html[data-theme="light"] .rf-c{color:#334155;border-color:#CBD5E1}html[data-theme="light"] .rf-c[aria-pressed="true"]{background:#FEF3C7;color:#92400E;border-color:#B45309}
 html[data-theme="light"] .rf-more textarea{background:#fff;color:#0F172A;border-color:#CBD5E1}
+/* 11/5: the extra stars beyond 5 (general feedback form) */
+.fbbig{font:800 44px/1 var(--f-display);background:linear-gradient(180deg,#EDE9FE,#A78BFA);-webkit-background-clip:text;background-clip:text;color:transparent}
+.rf-x{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:16px;background:rgba(139,92,246,.1);border:1px dashed rgba(167,139,250,.55);animation:rfIn .25s ease}
+.rf-xh{font:700 14px var(--f-body);color:#DDD6FE}
+.rf-xs{gap:6px}
+.rf-xs .rf-s{position:relative;width:40px;height:44px}
+.rf-xs .rf-s svg{width:18px;height:18px;margin-top:-6px}
+.rf-xs .rf-s i{position:absolute;bottom:3px;left:0;right:0;text-align:center;font:800 10px/1 var(--f-body);font-style:normal;color:#7C6FA8}
+.rf-xs .rf-s.on{background:linear-gradient(180deg,#A78BFA,#7C3AED);border-color:#C4B5FD}.rf-xs .rf-s.on svg{fill:#fff}.rf-xs .rf-s.on i{color:#EDE9FE}
+.rf-xl{font:500 13px var(--f-body);color:#A9A3C9}.rf-xl b{font:800 15px var(--f-display);color:#C4B5FD}
+html[data-theme="light"] .rf-x{background:#F5F3FF;border-color:#A78BFA}html[data-theme="light"] .rf-xh{color:#4C1D95}html[data-theme="light"] .rf-xl{color:#5B5675}html[data-theme="light"] .rf-xl b{color:#6D28D9}
+html[data-theme="light"] .rf-xs .rf-s.on{border-color:#6D28D9}
 @media (max-width:420px){.rf-s{width:42px;height:42px}}
-@media (prefers-reduced-motion:reduce){.rf-tags,.rf-more,.rf.nudge{animation:none}}
+@media (prefers-reduced-motion:reduce){.rf-tags,.rf-more,.rf-x,.rf.nudge{animation:none}}
 
 /* ===== Wrong answer: the mix-up, a 30-second fix, then a similar question ===== */
 .fixcard{margin-top:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px;border-radius:18px;border:1px solid #1F2B4A;background:rgba(13,20,40,.92)}

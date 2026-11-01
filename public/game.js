@@ -1403,24 +1403,30 @@ const RF_Q={
  3:{head:"What held it back? Tap any.",prompt:"What would make it better?",hint:"Optional.",tags:["a bit dull","too easy","explanation unclear","wanted a hint"]},
  4:{head:"What worked? Tap any.",prompt:"Anything to add?",hint:"Optional.",tags:["clear question","good challenge","explanation helped","want more like this"]},
  5:{head:"What hit? Tap any.",prompt:"Anything to add?",hint:"Optional.",tags:["loved this one","learned something new","perfect difficulty","fun to solve"]}};
-const rfBlank=()=>({stars:0,tags:[],text:""});
+const rfBlank=()=>({stars:0,tags:[],text:"",bonus:0});
+/* 11/5, after Airbnb's 11-star exercise: on the general form a 5 opens six optional extra stars (6 to 11), and the
+   question asks what would make KBC an 11 instead of what to fix. ctx.bonus (0-6) is what the admin Feedback tab shows. */
+const RF_XL=["","better than I expected","telling my friends","best way I have learned to code","I lost track of time","it changed how I study","legendary"];
 const RF={m:rfBlank(),q:rfBlank(),g:rfBlank()};
 /* the general form (m) needs a star and a written comment; tags stay optional */
-const RF_CFG={m:{title:"How is KBC so far?",sub:"Tap a star and tell us why. Tags are optional.",set:RF_GAME,send:"Send feedback",needText:true},
+const RF_CFG={m:{title:"How is KBC so far?",sub:"Tap a star and tell us why. Tags are optional.",set:RF_GAME,send:"Send feedback",needText:true,eleven:true},
  q:{title:"How was this question?",sub:"",set:RF_Q,send:"Next →"},
  g:{title:"How was this game?",sub:"Tap a star to continue. Takes 10 seconds.",set:RF_GAME,send:"Send"}};
 const STAR_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>';
-function rfHTML(id){const F=RF[id],C=RF_CFG[id],L=F.stars?C.set[F.stars]:null,sub=id==="q"?`Question ${Math.min(10,(P.qfbN||0)+1)} of 10 · tap a star to continue`:C.sub;
+function rfXHTML(id){const F=RF[id];if(!RF_CFG[id].eleven||F.stars!==5)return "";
+ return `<div class="rf-x"><span class="rf-xh" id="rf-${id}-xh">Better than a 5? Keep going.</span><div class="rf-stars rf-xs" role="radiogroup" aria-labelledby="rf-${id}-xh">${[1,2,3,4,5,6].map(n=>`<button type="button" class="rf-s ${n<=F.bonus?"on":""}" data-act="rf-bonus" data-f="${id}" data-n="${n}" role="radio" aria-checked="${n===F.bonus}" aria-label="${5+n} stars: ${RF_XL[n]}">${STAR_SVG}<i aria-hidden="true">${5+n}</i></button>`).join("")}</div><span class="rf-xl">${F.bonus?`<b>${5+F.bonus}/5</b> · ${RF_XL[F.bonus]}`:"Optional. Only if KBC really earned it."}</span></div>`}
+function rfHTML(id){const F=RF[id],C=RF_CFG[id],sub=id==="q"?`Question ${Math.min(10,(P.qfbN||0)+1)} of 10 · tap a star to continue`:C.sub;let L=F.stars?C.set[F.stars]:null;
+ if(L&&C.eleven&&F.stars===5)L=Object.assign({},L,{prompt:F.bonus?`What made it a ${5+F.bonus}? And what would make it an 11?`:"What would make KBC an 11-star experience?",hint:"Dream big. Think past fixes: what would make you tell everyone about KBC?"});
  return `<div class="rf rf-${id}" id="rf-${id}"><div class="rf-h"><h3 id="rf-${id}-h">${C.title}</h3>${sub?`<p>${esc(sub)}</p>`:""}</div>
-<div class="rf-stars" role="radiogroup" aria-labelledby="rf-${id}-h">${[1,2,3,4,5].map(n=>`<button type="button" class="rf-s ${n<=F.stars?"on":""}" data-act="rf-star" data-f="${id}" data-n="${n}" role="radio" aria-checked="${n===F.stars}" aria-label="${n} star${n>1?"s":""}">${STAR_SVG}</button>`).join("")}<span class="rf-l">${RF_LABEL[F.stars]||"Tap a star"}</span></div>
+<div class="rf-stars" role="radiogroup" aria-labelledby="rf-${id}-h">${[1,2,3,4,5].map(n=>`<button type="button" class="rf-s ${n<=F.stars?"on":""}" data-act="rf-star" data-f="${id}" data-n="${n}" role="radio" aria-checked="${n===F.stars}" aria-label="${n} star${n>1?"s":""}">${STAR_SVG}</button>`).join("")}<span class="rf-l">${RF_LABEL[F.stars]||"Tap a star"}</span></div>${rfXHTML(id)}
 ${L?`<div class="rf-tags"><span class="rf-th">${esc(L.head)}</span><div class="rf-chips">${L.tags.map((t,i)=>`<button type="button" class="rf-c" data-act="rf-tag" data-f="${id}" data-i="${i}" aria-pressed="${F.tags.includes(t)}">${esc(t)}</button>`).join("")}</div></div>
 <div class="rf-more"><label for="rf-${id}-text">${esc(L.prompt)}${C.needText?' <span aria-hidden="true">*</span>':""}</label><span class="rf-hint">${esc(L.hint)}</span><textarea id="rf-${id}-text" data-f="${id}" rows="${id==="q"?1:2}" maxlength="600" placeholder="${C.needText?"Required":"Optional"}"${C.needText?" required":""}>${esc(F.text)}</textarea></div>`:""}
 ${C.send?`<div class="rf-btns"><button type="button" class="btn gold" data-act="rf-send" data-f="${id}" ${rfReady(id)?"":"disabled"}>${C.send}</button></div>`:""}</div>`}
 function rfReady(id){const F=RF[id];return !!F.stars&&(!RF_CFG[id].needText||!!(F.text||"").trim())}
 function rfRedraw(id){const el=$("#rf-"+id);if(!el)return;el.outerHTML=rfHTML(id)}
 document.addEventListener("input",e=>{const f=e.target.dataset&&e.target.dataset.f;if(f&&RF[f]&&e.target.id==="rf-"+f+"-text"){RF[f].text=e.target.value;const s=document.querySelector(`#rf-${f} [data-act="rf-send"]`);if(s)s.disabled=!rfReady(f)}},SIG);
-function rfPost(id,ctx){const F=RF[id],text=(F.text||"").trim().slice(0,600);logEv({kind:"feedback",form:id,stars:F.stars,tags:F.tags,text});
- KBCQ.api("POST","/api/feedback",{text,ctx:Object.assign({stars:F.stars,tags:F.tags,screen:S.screen},ctx)}).catch(()=>{});RF[id]=rfBlank()}
+function rfPost(id,ctx){const F=RF[id],text=(F.text||"").trim().slice(0,600);logEv({kind:"feedback",form:id,stars:F.stars,bonus:F.bonus||0,tags:F.tags,text});FB.score=F.stars+(F.bonus||0);
+ KBCQ.api("POST","/api/feedback",{text,ctx:Object.assign({stars:F.stars,tags:F.tags,screen:S.screen},F.bonus?{bonus:F.bonus}:{},ctx)}).catch(()=>{});RF[id]=rfBlank()}
 /* Mandatory question rating for a student's first 10 questions: moving on from the answer (Next, stop, home…) opens
    a rating window with no close button. Once a star is sent, the button the student pressed runs. */
 const QFB_LEAVE=["next","second","stop","end","collect","practice-end","home","fame","play"];
@@ -1432,11 +1438,11 @@ function gfbMaybe(){if(S.screen!=="result"||!S.res||S.res.fbDone||FB.must)return
 function fbMust(form,after){FB.form=form;FB.must=true;FB.after=after||null;FB.trigger=form==="q"?"question "+((P.qfbN||0)+1)+" of 10":"after results";
  fbOpen();fbLock(true);logEv({kind:"feedback_prompt",form,mandatory:true})}
 function fbDone(){FB.must=false;FB.form="m";FB.after=null;fbLock(false)}
-function fbHTML(sent){if(sent)return `<div class="fbbox" role="dialog" aria-modal="true" aria-label="Feedback"><div class="fbdone">${mascot("dance",120)}<h3>Thank you!</h3><p>Your feedback reached the KBC team.</p><button class="btn gold" data-act="fb-close">Close</button></div></div>`;
+function fbHTML(sent){if(sent)return `<div class="fbbox" role="dialog" aria-modal="true" aria-label="Feedback"><div class="fbdone">${mascot("dance",120)}${FB.score>5?`<div class="fbbig">${FB.score}/5</div>`:""}<h3>Thank you!</h3><p>Your feedback reached the KBC team.</p><button class="btn gold" data-act="fb-close">Close</button></div></div>`;
  const f=FB.form||"m";return `<div class="fbbox fb-${f}" role="dialog" aria-modal="true" aria-labelledby="rf-${f}-h">${FB.must?"":`<button class="mx fbx" data-act="fb-close" aria-label="Close">✕</button>`}${f==="m"?"":mascot(f==="q"?"think":"dance",64)}${rfHTML(f)}</div>`}
 /* FB.must: the mandatory pop-up is up. It has no close button, ignores Escape, and the rest of the page is inert
    until the student sends a rating. */
-let FB={trigger:"",must:false,form:"m",after:null};
+let FB={trigger:"",must:false,form:"m",after:null,score:0};
 /* Time on the platform counts only while the page is visible, and is saved with the student's progress, so it carries
    across sessions and devices. After FB_MUST minutes the feedback pop-up becomes mandatory: it waits until no question
    or puzzle is running, then stays until the student sends feedback (and comes back after a reload until they do). */
@@ -1904,7 +1910,8 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="buddy-toggle"){store.set("kbc-hide-buddy",!store.get("kbc-hide-buddy",false));syncBuddy();const y=scrollY;render();scrollTo({top:y});return}
  if(a==="fb-open"){if(!FB.must){FB.trigger="";FB.form="m"}fbOpen();return}
  if(a==="fb-close"){if(FB.must)return;$("#fbm").hidden=true;return}
- if(a==="rf-star"){const f=b.dataset.f;if(!RF[f])return;RF[f].stars=+b.dataset.n;RF[f].tags=[];rfRedraw(f);SFX.pick();const n=document.querySelector(`#rf-${f} .rf-s[data-n="${b.dataset.n}"]`);n&&n.focus({preventScroll:true});return}
+ if(a==="rf-star"){const f=b.dataset.f;if(!RF[f])return;RF[f].stars=+b.dataset.n;RF[f].tags=[];RF[f].bonus=0;rfRedraw(f);SFX.pick();const n=document.querySelector(`#rf-${f} .rf-s[data-n="${b.dataset.n}"]`);n&&n.focus({preventScroll:true});return}
+ if(a==="rf-bonus"){const f=b.dataset.f,F=RF[f];if(!F||F.stars!==5)return;const n=+b.dataset.n;F.bonus=F.bonus===n?0:n;rfRedraw(f);SFX.pick();const x=document.querySelector(`#rf-${f} .rf-xs .rf-s[data-n="${n}"]`);x&&x.focus({preventScroll:true});return}
  if(a==="rf-tag"){const f=b.dataset.f,F=RF[f];if(!F||!F.stars)return;const t=RF_CFG[f].set[F.stars].tags[+b.dataset.i];F.tags=F.tags.includes(t)?F.tags.filter(x=>x!==t):F.tags.concat(t);b.setAttribute("aria-pressed",F.tags.includes(t));return}
  if(a==="rf-send"){const f=b.dataset.f;if(!RF[f]||!rfReady(f))return;
   if(f==="m"){rfPost("m",{kind:"general",trigger:FB.trigger||"feedback button"});P.fbSent=true;saveP();if(FB.must)fbDone();$("#fbm").innerHTML=fbHTML(true);ROBO.happy();gfbMaybe();return}

@@ -148,7 +148,7 @@ app.get('/api/boot', requireStudent, wrap(async (req, res) => {
   // passed the 13 minutes before the game tracked it in their progress
   const on = await one('SELECT COALESCE(SUM(ms), 0) AS ms FROM activity WHERE roll_no = ?', req.student.roll_no);
   res.json({
-    me: { roll: req.student.roll_no, name: req.student.name, university: req.student.university || universityOf(req.student.roll_no), feedbackGiven: fb, gameRated: kinds.includes('game'), questionsRated: kinds.filter((k) => k === 'question').length, timeOnMs: Number(on?.ms) || 0 },
+    me: { roll: req.student.roll_no, name: req.student.name, university: req.student.university || universityOf(req.student.roll_no), feedbackGiven: fb, gameRated: kinds.includes('game'), timeOnMs: Number(on?.ms) || 0 },
     graph: graphForClient(c), engine: view(c, st), progress: gp ? gp.data : null, epoch: await progressEpoch()
   });
 }));

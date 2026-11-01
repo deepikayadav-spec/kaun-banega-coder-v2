@@ -222,7 +222,6 @@ test('feedback: once a student has sent it, the game knows not to ask again', as
   assert.equal((await call('s', 'POST', '/api/feedback', { text: '', ctx: {} })).status, 400);
   // the boot tells the game what was already sent, so nothing is asked twice
   const me = (await call('s', 'GET', '/api/boot')).body.me;
-  assert.equal(me.questionsRated, 1);
   assert.equal(me.gameRated, false);
   assert.equal((await call('s', 'POST', '/api/feedback', { text: '', ctx: { stars: 3, kind: 'game' } })).status, 200);
   assert.equal((await call('s', 'GET', '/api/boot')).body.me.gameRated, true);

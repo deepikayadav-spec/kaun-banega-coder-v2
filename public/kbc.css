@@ -2426,7 +2426,6 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .rf-btns{display:flex;gap:10px;flex-wrap:wrap}
 .rf-btns .btn[disabled]{opacity:.45;cursor:not-allowed}
 .rf-done{flex-direction:row;align-items:center;gap:8px;color:#E8ECF5;font:500 14px var(--f-body)}.rf-done b{color:#F5C542}
-.rf-q{margin-top:12px}
 .rf.nudge{animation:rfNudge .5s ease;border-color:#F5C542}
 @keyframes rfIn{from{opacity:0;transform:translateY(-4px)}}
 @keyframes rfNudge{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
@@ -2472,9 +2471,6 @@ html[data-theme="light"] .fx-k.miss{color:#C2410C}html[data-theme="light"] .fx-k
 .actions .btn.quiet[data-act="stop"]:hover,.actions .solbtn:hover{color:#F1F5F9!important}
 html[data-theme="light"] .actions .btn.quiet[data-act="stop"],html[data-theme="light"] .actions .solbtn{color:#334155!important}
 /* the question rating is one compact row; tags and the comment box open under it once a star is picked */
-.rf.rf-q{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:8px 14px!important;margin:10px 0!important}
-.rf-q .rf-h{display:flex;align-items:baseline;gap:8px}.rf-q .rf-h h3{margin:0;font-size:14px}.rf-q .rf-h p{margin:0;font-size:12px;opacity:.8}
-.rf-q .rf-stars{gap:6px}.rf-q .rf-tags,.rf-q .rf-more,.rf-q .rf-btns{flex-basis:100%}
 /* phones: the floating Money board and feedback buttons no longer cover the last lines of a screen */
 @media (max-width:760px){.mainc,#mainc{padding-bottom:96px!important}.strip{display:none!important}}
 /* phones: the header shows the coin logo only, so the title is never cut off behind the wallet */
@@ -2542,11 +2538,6 @@ html[data-theme="light"] .bmax{color:#92400E;border-color:rgba(146,64,14,.4);bac
 @media (min-width:1000px){.fixcard{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:24px}}
 .fx-sec p{font-size:14.5px!important;line-height:1.45!important}
 /* the optional question rating under Pixel (wide screens) */
-.mcol .rf.rf-q{flex-direction:column!important;align-items:flex-start!important;width:100%;max-width:260px;margin:8px 0 0!important;padding:10px 12px!important}
-.mcol .rf-q .rf-s{width:36px!important;height:44px!important;border-radius:10px}.mcol .rf-q .rf-s svg{width:18px;height:18px}
-.mcol .rf-q .rf-stars{gap:4px;flex-wrap:wrap}.mcol .rf-q .rf-h{flex-wrap:wrap}.mcol .rf-q .rf-h h3{font-size:13.5px;white-space:nowrap}.mcol .rf-q .rf-l{min-width:0;flex-basis:100%;margin:2px 0 0}
-.mcol .rf-q .rf-c{min-height:34px;padding:0 10px;font-size:12.5px}
-.mcol .rf-q .rf-more textarea{font-size:13px}
 .stake .bmax{margin-top:8px;flex:none;width:auto;min-height:36px;padding:0 12px;font-size:13px}
 
 /* ===== Hot seat round 2 (31 Oct) ===== */
@@ -2645,9 +2636,6 @@ html[data-theme="light"] details.res-learn summary{color:#BE123C}
 @media (min-width:1001px) and (max-height:1000px){.res-side .board .rung{font-size:14px!important}}
 /* ===================== Hot seat polish (31 Oct) ===================== */
 /* question rating in the side column: five stars in one row, clear of the feedback button */
-.mcol .rf-q .rf-stars{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px!important;width:100%}
-.mcol .rf-q .rf-s{width:auto!important;min-width:0}
-.mcol .rf-q .rf-l{grid-column:1/-1}
 .play .mcol{padding-bottom:72px}
 /* money board: the minimise button never sits on the title */
 .board h2{position:relative;padding-right:56px}

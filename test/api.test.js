@@ -213,6 +213,8 @@ test('graphs with checkpoints as a list and group.checkpoint are understood', as
 
 test('feedback: once a student has sent it, the game knows not to ask again', async () => {
   assert.equal((await call('s', 'GET', '/api/boot')).body.me.feedbackGiven, false);
+  // boot reports the student's visible time on the portal (from the live pings) for the 13-minute feedback pop-up
+  assert.equal(typeof (await call('s', 'GET', '/api/boot')).body.me.timeOnMs, 'number');
   assert.equal((await call('s', 'POST', '/api/feedback', { text: 'Loved the maze puzzle', ctx: { stars: 5, trigger: 'after 5 min on the platform' } })).status, 200);
   assert.equal((await call('s', 'GET', '/api/boot')).body.me.feedbackGiven, true);
   // a star rating alone is accepted; a question rating does not count as the general feedback

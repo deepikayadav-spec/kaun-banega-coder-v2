@@ -142,8 +142,11 @@ app.get('/api/boot', requireStudent, wrap(async (req, res) => {
   const gp = await one('SELECT data FROM game_progress WHERE roll_no = ?', req.student.roll_no);
   // per-question ratings (ctx.kind "question") and end-of-game ratings don't count as the general feedback the reminders ask for
   const fb = (await all('SELECT ctx FROM feedback WHERE roll_no = ?', req.student.roll_no)).some((r) => { let c = r.ctx; if (typeof c === 'string') { try { c = JSON.parse(c); } catch { c = null; } } return !c || !c.kind || c.kind === 'general'; });
+  // visible time on the portal so far, from the 30 s live pings: lets the mandatory feedback pop-up reach students who
+  // passed the 13 minutes before the game tracked it in their progress
+  const on = await one('SELECT COALESCE(SUM(ms), 0) AS ms FROM activity WHERE roll_no = ?', req.student.roll_no);
   res.json({
-    me: { roll: req.student.roll_no, name: req.student.name, university: req.student.university || universityOf(req.student.roll_no), feedbackGiven: !!fb },
+    me: { roll: req.student.roll_no, name: req.student.name, university: req.student.university || universityOf(req.student.roll_no), feedbackGiven: !!fb, timeOnMs: Number(on?.ms) || 0 },
     graph: graphForClient(c), engine: view(c, st), progress: gp ? gp.data : null, epoch: await progressEpoch()
   });
 }));

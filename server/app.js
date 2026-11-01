@@ -363,7 +363,9 @@ app.use('/api/admin', admin);
 // University filter: a university-scoped admin always sees only their own.
 const scope = (req) => req.admin.university || (req.query.university ? String(req.query.university) : null);
 
-admin.get('/me', (req, res) => res.json({ admin: req.admin }));
+// skillPos: each skill's place on the student path (1 = first), so admin can show "#7 S60" — skill IDs are not in path order
+const skillPos = (G) => Object.fromEntries(G.groups.flatMap((g) => g.skills).map((id, i) => [id, i + 1]));
+admin.get('/me', wrap(async (req, res) => res.json({ admin: req.admin, skillPos: skillPos((await content()).G) })));
 admin.post('/password', jsonBody, wrap(async (req, res) => {
   const a = await one('SELECT password_hash FROM admins WHERE id = ?', req.admin.id);
   if (!checkPassword(String(req.body?.current || ''), a.password_hash)) return res.status(400).json({ error: 'Current password is wrong.' });
@@ -594,8 +596,8 @@ admin.get('/stats/students', wrap(async (req, res) => {
   res.json(await stats.studentRows(await filters(req), c.G, { q: String(req.query.q || '').trim().slice(0, 60), sort: String(req.query.sort || 'recent') }));
 }));
 admin.get('/stats/students.csv', wrap(async (req, res) => {
-  const c = await content(), d = await stats.studentRows(await filters(req), c.G, { sort: String(req.query.sort || 'recent') });
-  const rows = d.rows.map((r) => ({ ...r, minutes: Math.round(r.ms / 60000), total_minutes: Math.round(r.totalMs / 60000), now_at: r.nowAt ? `${r.nowAt.id} ${r.nowAt.name} L${r.nowAt.level}` : '',
+  const c = await content(), d = await stats.studentRows(await filters(req), c.G, { sort: String(req.query.sort || 'recent') }), pos = skillPos(c.G);
+  const rows = d.rows.map((r) => ({ ...r, minutes: Math.round(r.ms / 60000), total_minutes: Math.round(r.totalMs / 60000), now_at: r.nowAt ? `#${pos[r.nowAt.id] || '?'} ${r.nowAt.id} ${r.nowAt.name} L${r.nowAt.level}` : '',
     last_active_ist: r.lastActive ? new Date(r.lastActive + 5.5 * 36e5).toISOString().slice(0, 16).replace('T', ' ') : '' }));
   res.type('text/csv').attachment(`kbc-student-analytics-${d.from}-to-${d.to}.csv`).send(csv(rows, ['roll_no', 'name', 'university', 'last_active_ist', 'batch', 'daysActive', 'minutes', 'logins', 'answers', 'accuracy', 'hot', 'skillsDone', 'now_at', 'prizes', 'coins', 'games', 'total_minutes']));
 }));

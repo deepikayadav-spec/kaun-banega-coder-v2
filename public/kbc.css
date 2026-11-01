@@ -2702,3 +2702,11 @@ html[data-theme="light"] #menu #themebtn .i-moon{display:block!important}
  /* hot seat on a phone: actions sit left, clear of the floating "Money board" button */
  body.qscreen .dockrow,body.qscreen .dockrow .actions{justify-content:flex-start}
 }
+
+/* ===== Mandatory rating windows (question 1-10, results) ===== */
+.fbbox.fb-q,.fbbox.fb-g{display:flex;flex-direction:column;align-items:center;gap:6px;max-width:520px;width:100%}
+.fbbox.fb-q .mascot,.fbbox.fb-g .mascot{margin-bottom:-4px}
+.fbbox.fb-q .rf,.fbbox.fb-g .rf{width:100%;margin:0}
+.fbbox .rf-h{display:flex!important;flex-direction:column!important;align-items:center!important;text-align:center;gap:2px!important}.fbbox .rf-h p{margin:0!important}
+.fbbox .rf-stars{justify-content:center!important}
+.fbbox .rf-btns{justify-content:flex-end}

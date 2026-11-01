@@ -1142,7 +1142,7 @@ function vNoQ(){const r=S.noQ||{},soon=(r.comingSoon||[]).map(id=>SK[id]).filter
 function vPlay(){if(!S.q)return vNoQ();const q=S.q,r=rungOf(),st=rowSteps(Math.min(r,ROWS.length-1)),stake=r<OPEN?LADDER[r]:LADDER[OPEN-1];
  const pips="";
  const mood=S.phase==="reveal"?(S.ok?(S.info&&S.info.ck?"trophy":"dance"):S.timeout?"tired":"bonk"):S.phase==="locked"?"think":(!S.practice&&S.run.en<=20?"tired":S.practice&&S.run.answered===0?"type":S.thinkLong?"think":(S.pick!=null||S.fill||(S.ord&&S.ord.length)?"pointa":"pointq"));
- return `<div class="play ${S.phase==="reveal"?"rev":""}">${dockHTML(mood,"col",qfbHere(true)?rfHTML("q"):"")}<div class="left"><div class="hud"><div class="lls">${energyHTML()}</div>
+ return `<div class="play ${S.phase==="reveal"?"rev":""}">${dockHTML(mood,"col")}<div class="left"><div class="hud"><div class="lls">${energyHTML()}</div>
 <div class="clock ${S.time<=10?"low":""}" id="clock" style="--p:${S.time/(S.secsMax||CFG.secs)}" role="timer" aria-label="Seconds left"><span>${S.time}</span></div>
 <div class="stake one">${S.practice?"":`<span class="stk-note" id="stknote">${noteThumb(stake)}</span>`}<span class="stk-t"><small>${S.practice?"Practice round":"Playing for"}</small><b>${S.practice?"No stakes":fmtR(stake)}</b></span>${!S.practice&&boardMin()?`<button class="bmax" data-act="board-min" aria-label="Show the money board">Money board <b aria-hidden="true">＋</b></button>`:""}</div></div>
 ${stripHTML(r)}<button class="mbtoggle" data-act="board" aria-label="Show the money board">Money board</button>
@@ -1153,7 +1153,7 @@ ${q.code?codeHTML(q.code):""}
 ${q.ai!=null?`<div class="ai"><i>AI</i><span>The AI says this prints <b>${esc(q.ai)}</b></span></div>`:""}
 ${S.hint?`<div class="panel card"><h3>${ICON.hint}${esc(COSTUMES[CHAR].name)}'s hint</h3><p>${esc(S.hintText||"Thinking…")}</p></div>`:""}
 </div>
-${answerHTML()}${fixHTML()}${qfbHere(false)?rfHTML("q"):""}
+${answerHTML()}${fixHTML()}
 <div class="dockrow">${dockHTML(mood)}<div class="actions">${actHTML()}</div></div>
 ${feedbackHTML()}
 </section></div><div class="side">${boardHTML(r)}</div></div>`}
@@ -1168,7 +1168,6 @@ function vResult(){const R=S.res,rc=R.reached||0,pay=R.payout||0;
 </div>${NOTE[pay]?`<div class="res-bill">${noteBig(pay)}</div>`:""}</div>
 <dl class="res-line"><div><dt>Correct this game</dt><dd>${R.correct}/${R.answered}</dd></div><div><dt>Time played</dt><dd>${Math.floor(R.secs/60)}:${String(R.secs%60).padStart(2,"0")}</dd></div><div><dt>Prizes won</dt><dd>${rc} of ${LADDER.length}</dd></div><div><dt>Wallet</dt><dd>${fmtR(R.wallet)}</dd></div></dl>
 <div class="res-goal"><div class="res-goal-h"><b>${P.best?`Next game: win Fastest Finger, then beat your best of ${fmtR(amountOf(P.best))}`:`Next game: win Fastest Finger, then play for your first prize of ${fmtR(amountOf(1))}`}</b><span class="muted">Best ever: ${fmtR(amountOf(P.best))}</span></div><span class="muted">Your path progress is always kept.</span></div>
-${R.fbDone==="sent"?`<div class="rf rf-done"><b>Thanks!</b> Your rating reached the KBC team.</div>`:R.fbDone?"":rfHTML("g")}
 ${learn}
 <div class="ractions"><button class="btn gold" data-act="play">Play again →</button><button class="btn quiet" data-act="fame">Hall of Fame</button><button class="btn quiet" data-act="home">Home</button></div>
 </div>
@@ -1408,31 +1407,36 @@ const rfBlank=()=>({stars:0,tags:[],text:""});
 const RF={m:rfBlank(),q:rfBlank(),g:rfBlank()};
 /* the general form (m) needs a star and a written comment; tags stay optional */
 const RF_CFG={m:{title:"How is KBC so far?",sub:"Tap a star and tell us why. Tags are optional.",set:RF_GAME,send:"Send feedback",needText:true},
- q:{title:"Rate this question",sub:"",set:RF_Q,send:""},
- g:{title:"How was this game?",sub:"Takes 10 seconds.",set:RF_GAME,send:"Send"}};
+ q:{title:"How was this question?",sub:"",set:RF_Q,send:"Next →"},
+ g:{title:"How was this game?",sub:"Tap a star to continue. Takes 10 seconds.",set:RF_GAME,send:"Send"}};
 const STAR_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>';
-function rfHTML(id){const F=RF[id],C=RF_CFG[id],L=F.stars?C.set[F.stars]:null,sub=id==="q"?"Optional":C.sub;
+function rfHTML(id){const F=RF[id],C=RF_CFG[id],L=F.stars?C.set[F.stars]:null,sub=id==="q"?`Question ${Math.min(10,(P.qfbN||0)+1)} of 10 · tap a star to continue`:C.sub;
  return `<div class="rf rf-${id}" id="rf-${id}"><div class="rf-h"><h3 id="rf-${id}-h">${C.title}</h3>${sub?`<p>${esc(sub)}</p>`:""}</div>
 <div class="rf-stars" role="radiogroup" aria-labelledby="rf-${id}-h">${[1,2,3,4,5].map(n=>`<button type="button" class="rf-s ${n<=F.stars?"on":""}" data-act="rf-star" data-f="${id}" data-n="${n}" role="radio" aria-checked="${n===F.stars}" aria-label="${n} star${n>1?"s":""}">${STAR_SVG}</button>`).join("")}<span class="rf-l">${RF_LABEL[F.stars]||"Tap a star"}</span></div>
 ${L?`<div class="rf-tags"><span class="rf-th">${esc(L.head)}</span><div class="rf-chips">${L.tags.map((t,i)=>`<button type="button" class="rf-c" data-act="rf-tag" data-f="${id}" data-i="${i}" aria-pressed="${F.tags.includes(t)}">${esc(t)}</button>`).join("")}</div></div>
 <div class="rf-more"><label for="rf-${id}-text">${esc(L.prompt)}${C.needText?' <span aria-hidden="true">*</span>':""}</label><span class="rf-hint">${esc(L.hint)}</span><textarea id="rf-${id}-text" data-f="${id}" rows="${id==="q"?1:2}" maxlength="600" placeholder="${C.needText?"Required":"Optional"}"${C.needText?" required":""}>${esc(F.text)}</textarea></div>`:""}
-${C.send?`<div class="rf-btns"><button type="button" class="btn gold" data-act="rf-send" data-f="${id}" ${rfReady(id)?"":"disabled"}>${C.send}</button>${id==="g"?`<button type="button" class="btn quiet" data-act="rf-skip" data-f="g">Skip</button>`:""}</div>`:""}</div>`}
+${C.send?`<div class="rf-btns"><button type="button" class="btn gold" data-act="rf-send" data-f="${id}" ${rfReady(id)?"":"disabled"}>${C.send}</button></div>`:""}</div>`}
 function rfReady(id){const F=RF[id];return !!F.stars&&(!RF_CFG[id].needText||!!(F.text||"").trim())}
 function rfRedraw(id){const el=$("#rf-"+id);if(!el)return;el.outerHTML=rfHTML(id)}
 document.addEventListener("input",e=>{const f=e.target.dataset&&e.target.dataset.f;if(f&&RF[f]&&e.target.id==="rf-"+f+"-text"){RF[f].text=e.target.value;const s=document.querySelector(`#rf-${f} [data-act="rf-send"]`);if(s)s.disabled=!rfReady(f)}},SIG);
 function rfPost(id,ctx){const F=RF[id],text=(F.text||"").trim().slice(0,600);logEv({kind:"feedback",form:id,stars:F.stars,tags:F.tags,text});
  KBCQ.api("POST","/api/feedback",{text,ctx:Object.assign({stars:F.stars,tags:F.tags,screen:S.screen},ctx)}).catch(()=>{});RF[id]=rfBlank()}
-/* The question rating is optional (first 10 questions). If a star was picked it is sent when the student moves on. */
-const QFB_LEAVE=["next","second","stop","end","collect","practice-end"];
-function qfbGate(a){if(S.screen==="play"&&S.phase==="reveal"&&S.qfbAsk&&!S.qfbSent&&RF.q.stars&&QFB_LEAVE.includes(a)){const q=S.q;
-  rfPost("q",{kind:"question",qid:q&&q.id,sk:q&&q.sk,type:q&&q.ty,correct:!!S.ok,practice:!!S.practice,trigger:"question "+((P.qfbN||0)+1)+" of 10"});S.qfbSent=true;P.qfbN=(P.qfbN||0)+1;saveP()}
- return true}
-const qfbHere=wide=>S.phase==="reveal"&&S.qfbAsk&&!S.qfbSent&&(innerWidth>=1000)===wide;
+/* Mandatory question rating for a student's first 10 questions: moving on from the answer (Next, stop, home…) opens
+   a rating window with no close button. Once a star is sent, the button the student pressed runs. */
+const QFB_LEAVE=["next","second","stop","end","collect","practice-end","home","fame","play"];
+function qfbGate(a,b){if(!(S.screen==="play"&&S.phase==="reveal"&&S.qfbAsk&&!S.qfbSent&&QFB_LEAVE.includes(a)))return true;
+ if(!(FB.must&&FB.form==="q"))fbMust("q",b);return false}
+/* the results rating opens by itself once the take-home amount has counted up, and has to be sent before leaving */
+function gfbMaybe(){if(S.screen!=="result"||!S.res||S.res.fbDone||FB.must)return;clearTimeout(gfbMaybe.t);
+ gfbMaybe.t=setTimeout(()=>{if(S.screen==="result"&&S.res&&!S.res.fbDone&&!FB.must)fbMust("g")},1500)}
+function fbMust(form,after){FB.form=form;FB.must=true;FB.after=after||null;FB.trigger=form==="q"?"question "+((P.qfbN||0)+1)+" of 10":"after results";
+ fbOpen();fbLock(true);logEv({kind:"feedback_prompt",form,mandatory:true})}
+function fbDone(){FB.must=false;FB.form="m";FB.after=null;fbLock(false)}
 function fbHTML(sent){if(sent)return `<div class="fbbox" role="dialog" aria-modal="true" aria-label="Feedback"><div class="fbdone">${mascot("dance",120)}<h3>Thank you!</h3><p>Your feedback reached the KBC team.</p><button class="btn gold" data-act="fb-close">Close</button></div></div>`;
- return `<div class="fbbox" role="dialog" aria-modal="true" aria-labelledby="rf-m-h">${FB.must?"":`<button class="mx fbx" data-act="fb-close" aria-label="Close">✕</button>`}${rfHTML("m")}</div>`}
+ const f=FB.form||"m";return `<div class="fbbox fb-${f}" role="dialog" aria-modal="true" aria-labelledby="rf-${f}-h">${FB.must?"":`<button class="mx fbx" data-act="fb-close" aria-label="Close">✕</button>`}${f==="m"?"":mascot(f==="q"?"think":"dance",64)}${rfHTML(f)}</div>`}
 /* FB.must: the mandatory pop-up is up. It has no close button, ignores Escape, and the rest of the page is inert
    until the student sends a rating. */
-let FB={trigger:"",must:false};
+let FB={trigger:"",must:false,form:"m",after:null};
 /* Time on the platform counts only while the page is visible, and is saved with the student's progress, so it carries
    across sessions and devices. After FB_MUST minutes the feedback pop-up becomes mandatory: it waits until no question
    or puzzle is running, then stays until the student sends feedback (and comes back after a reload until they do). */
@@ -1446,7 +1450,7 @@ function fbTick(){if(document.hidden)return;P.tOn=Math.max((P.tOn||0)+10000,Numb
 function fbCheck(){if(P.fbSent||ME.feedbackGiven||FB.must)return;   /* a student who has already sent feedback is never asked again */
  if(P.tOn<FB_MUST*60000||!fbSafe())return;
  const m=$("#fbm"),open=m&&!m.hidden;FB.must=true;FB.trigger=`mandatory after ${FB_MUST} min on the platform`;
- if(open)m.innerHTML=fbHTML();else fbOpen();   /* if the student already opened it from the button, it just loses its close button */
+ FB.form="m";if(open)m.innerHTML=fbHTML();else fbOpen();   /* if the student already opened it from the button, it just loses its close button */
  fbLock(true);if(!P.fbPrompted){P.fbPrompted=true;saveP()}logEv({kind:"feedback_prompt",at:FB_MUST,mandatory:true})}
 /* Pixel can be hidden from the header; the hot seat then gives its space to the question */
 function syncBuddy(){const off=!!store.get("kbc-hide-buddy",false),b=$("#buddybtn");document.body.classList.toggle("nobuddy",off);
@@ -1483,7 +1487,7 @@ function noteZoomMaybe(){if(S.screen!=="play"||S.practice||!S.run||S.phase!=="as
   a.onfinish=()=>{o.remove();t.classList.remove("wait");t.classList.add("land");setTimeout(()=>t.classList.remove("land"),600)}},1500)}
 function resultCountUp(){if(S.screen!=="result"||!S.res||S.res.counted)return;S.res.counted=true;const el=$(".res .ramt"),to=S.res.payout||0;if(!el||!to||reduceMotion)return;
  const t0=performance.now(),d=1200,st=n=>{const k=Math.min(1,(n-t0)/d),e=1-Math.pow(1-k,3);el.textContent=fmtR(Math.round(to*e));if(k<1)requestAnimationFrame(st)};requestAnimationFrame(st)}
-function render(){const prev=render.scr;render.scr=S.screen;if(prev&&prev!==S.screen&&pingLive.at&&Date.now()-pingLive.at>8000)pingLive();const r=render0();screenH1();setTimeout(()=>{noteZoomMaybe();resultCountUp();if(prev!==S.screen)pxRest()},60);
+function render(){const prev=render.scr;render.scr=S.screen;if(prev&&prev!==S.screen&&pingLive.at&&Date.now()-pingLive.at>8000)pingLive();const r=render0();screenH1();setTimeout(()=>{noteZoomMaybe();resultCountUp();gfbMaybe();if(prev!==S.screen)pxRest()},60);
  if(prev!==S.screen){const app=$("#app");if(app&&prev){app.classList.remove("scr-in");void app.offsetWidth;app.classList.add("scr-in")}
   if(S.screen==="path")requestAnimationFrame(pauseOffscreen)}
  return r}
@@ -1872,7 +1876,7 @@ function guideOverlay(){let m=$("#guidem");if(!m){m=document.createElement("div"
  setTimeout(()=>{const c=m.querySelector(".mx");c&&c.focus()},30)}
 document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;for(const id of ["#solm","#guidem","#leavem"]){const m=$(id);if(m&&!m.hidden){e.preventDefault();m.hidden=true;return}}if(TI>=0){e.preventDefault();tourEnd()}},SIG);
 document.addEventListener("click",e=>{if(e.target.classList&&e.target.classList.contains("modalx"))e.target.hidden=true},SIG);
-document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b||b.disabled)return;const a=b.dataset.act;if(!qfbGate(a))return;
+document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b||b.disabled)return;const a=b.dataset.act;if(!qfbGate(a,b))return;
  if(a!=="menu"&&b.closest("#menu"))setMenu(false);
  if(a==="leave-stay"){modalClose("#leavem");return}
  if(a==="leave-go"){modalClose("#leavem");const el=PEND;PEND=null;if(el){LEAVE_OK=true;try{el.click()}finally{LEAVE_OK=false}}return}
@@ -1898,15 +1902,16 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(b.closest("#menu"))setMenu(false);
  if(a==="extratime"){store.set("kbc-extra-time",!store.get("kbc-extra-time",false));syncXtime();fsToast(store.get("kbc-extra-time",false)?"Extra time is on: 50% more time on every question.":"Extra time is off.");return}
  if(a==="buddy-toggle"){store.set("kbc-hide-buddy",!store.get("kbc-hide-buddy",false));syncBuddy();const y=scrollY;render();scrollTo({top:y});return}
- if(a==="fb-open"){if(!FB.must)FB.trigger="";fbOpen();return}
+ if(a==="fb-open"){if(!FB.must){FB.trigger="";FB.form="m"}fbOpen();return}
  if(a==="fb-close"){if(FB.must)return;$("#fbm").hidden=true;return}
  if(a==="rf-star"){const f=b.dataset.f;if(!RF[f])return;RF[f].stars=+b.dataset.n;RF[f].tags=[];rfRedraw(f);SFX.pick();const n=document.querySelector(`#rf-${f} .rf-s[data-n="${b.dataset.n}"]`);n&&n.focus({preventScroll:true});return}
  if(a==="rf-tag"){const f=b.dataset.f,F=RF[f];if(!F||!F.stars)return;const t=RF_CFG[f].set[F.stars].tags[+b.dataset.i];F.tags=F.tags.includes(t)?F.tags.filter(x=>x!==t):F.tags.concat(t);b.setAttribute("aria-pressed",F.tags.includes(t));return}
  if(a==="rf-send"){const f=b.dataset.f;if(!RF[f]||!rfReady(f))return;
-  if(f==="m"){rfPost("m",{kind:"general",trigger:FB.trigger||"feedback button"});P.fbSent=true;saveP();if(FB.must){FB.must=false;fbLock(false)}$("#fbm").innerHTML=fbHTML(true);ROBO.happy();return}
-  if(f==="g"&&S.res){rfPost("g",{kind:"game",reason:S.res.reason,correct:S.res.correct,answered:S.res.answered,reached:S.res.reached,trigger:"after results"});S.res.fbDone="sent";render();ROBO.happy()}return}
- if(a==="rf-skip"){if(S.res){S.res.fbDone="skip";RF.g=rfBlank();logEv({kind:"feedback_skip",form:"g"});render()}return}
- if(a==="theme"){setTheme(document.documentElement.dataset.theme==="light"?"dark":"light");return}
+  if(f==="m"){rfPost("m",{kind:"general",trigger:FB.trigger||"feedback button"});P.fbSent=true;saveP();if(FB.must)fbDone();$("#fbm").innerHTML=fbHTML(true);ROBO.happy();gfbMaybe();return}
+  if(f==="q"){const q=S.q,go=FB.after;rfPost("q",{kind:"question",qid:q&&q.id,sk:q&&q.sk,type:q&&q.ty,correct:!!S.ok,practice:!!S.practice,trigger:FB.trigger});
+   S.qfbSent=true;P.qfbN=(P.qfbN||0)+1;saveP();fbDone();$("#fbm").hidden=true;if(go&&go.isConnected)go.click();return}
+  if(f==="g"&&S.res){rfPost("g",{kind:"game",reason:S.res.reason,correct:S.res.correct,answered:S.res.answered,reached:S.res.reached,trigger:"after results"});S.res.fbDone="sent";fbDone();$("#fbm").innerHTML=fbHTML(true);ROBO.happy()}return}
+  if(a==="theme"){setTheme(document.documentElement.dataset.theme==="light"?"dark":"light");return}
  if(a==="pathjump"){pathJump(true);return}
  if(a==="pathsk"){if(b.classList.contains("lock"))return;const sk=b.dataset.sk,g=curGroup(),cur=curSkill(g);
   if(!S.open&&(!cur||sk!==cur.id)){fsToast(barOf(sk)>=BPS?"✓ Topic cleared. Well done!":"🔒 Clear the topics before this one to unlock it.");return}
@@ -1956,6 +1961,7 @@ document.addEventListener("input",e=>{if(e.target.dataset&&e.target.dataset.bqIn
 document.addEventListener("change",e=>{if(e.target.id==="fameuni"){loadFame("uni",e.target.value);return}if(e.target.matches(".mrow select")&&S.screen==="play"){S.msel[+e.target.dataset.i]=e.target.value;syncAct()}},SIG);
 document.addEventListener("keydown",e=>{
  if(S.screen!=="play")return;
+ if(!$("#fbm").hidden)return;
  if(e.key==="Enter"){if(e.target.id==="fillin"||(!e.target.matches("input,select,button,textarea")&&!(e.target.closest&&e.target.closest(".bq")))){const btn=$("#lockbtn")||$('[data-act="next"]')||$('[data-act="second"]')||$('[data-act="end"]');if(btn){e.preventDefault();btn.click()}}return}
  if(e.target.matches("input,select,textarea"))return;const i="abcd".indexOf(e.key.toLowerCase());
  if(i>-1&&S.q&&S.q.kind==="mcq"&&S.phase==="ask"&&i<S.q.opts.length&&!S.gone.includes(i)){S.pick=i;SFX.pick();document.querySelectorAll(".opt").forEach(o=>o.className=optCls(+o.dataset.i));syncAct()}},SIG);

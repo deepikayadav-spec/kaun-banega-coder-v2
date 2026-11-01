@@ -1427,18 +1427,23 @@ function qfbGate(a){if(S.screen==="play"&&S.phase==="reveal"&&S.qfbAsk&&!S.qfbSe
  return true}
 const qfbHere=wide=>S.phase==="reveal"&&S.qfbAsk&&!S.qfbSent&&(innerWidth>=1000)===wide;
 function fbHTML(sent){if(sent)return `<div class="fbbox" role="dialog" aria-modal="true" aria-label="Feedback"><div class="fbdone">${mascot("dance",120)}<h3>Thank you!</h3><p>Your feedback reached the KBC team.</p><button class="btn gold" data-act="fb-close">Close</button></div></div>`;
- return `<div class="fbbox" role="dialog" aria-modal="true" aria-labelledby="rf-m-h"><button class="mx fbx" data-act="fb-close" aria-label="Close">✕</button>${rfHTML("m")}</div>`}
-let FB={trigger:""};
+ return `<div class="fbbox" role="dialog" aria-modal="true" aria-labelledby="rf-m-h">${FB.must?"":`<button class="mx fbx" data-act="fb-close" aria-label="Close">✕</button>`}${rfHTML("m")}</div>`}
+/* FB.must: the mandatory pop-up is up. It has no close button, ignores Escape, and the rest of the page is inert
+   until the student sends a rating. */
+let FB={trigger:"",must:false};
 /* Time on the platform counts only while the page is visible, and is saved with the student's progress, so it carries
-   across sessions and devices. Each reminder shows once; it waits until no question or puzzle is running. */
-const FB_AT=[5,15,30,60];
-function fbSafe(){const m=$("#fbm");if(m&&!m.hidden)return false;if(TI>=0)return false;if(document.querySelector(".modalx:not([hidden])"))return false;
+   across sessions and devices. After FB_MUST minutes the feedback pop-up becomes mandatory: it waits until no question
+   or puzzle is running, then stays until the student sends feedback (and comes back after a reload until they do). */
+const FB_MUST=13;
+function fbSafe(){if(TI>=0)return false;if(document.getElementById("kintro"))return false;if(document.querySelector(".modalx:not([hidden])"))return false;
  if(S.screen==="play"&&S.phase!=="reveal"&&S.phase!=="none")return false;if(S.screen==="fff"&&S.fff&&!S.fff.done&&!S.fff.intro)return false;return true}
-function fbTick(){if(document.hidden)return;P.tOn=(P.tOn||0)+10000;P.fbAt=P.fbAt||[];if(P.tOn%60000<10000)saveP();
- if(P.fbSent||ME.feedbackGiven)return;   /* a student who has already sent feedback is never asked again */
- const due=FB_AT.filter(t=>P.tOn>=t*60000&&!P.fbAt.includes(t));if(!due.length||!fbSafe())return;
- P.fbAt.push(...due);saveP();FB.trigger=`after ${due[due.length-1]>=60?due[due.length-1]/60+" hour":due[due.length-1]+" min"} on the platform`;fbOpen();logEv({kind:"feedback_prompt",at:due[due.length-1]})}
-/* timed feedback pop-ups are off: feedback is asked after each of the first 10 questions and on the results screen */
+function fbLock(on){for(const el of document.body.children)if(el.id!=="fbm"&&el.tagName!=="SCRIPT")el.inert=on}
+function fbTick(){if(document.hidden)return;P.tOn=(P.tOn||0)+10000;if(P.tOn%60000<10000)saveP();
+ if(P.fbSent||ME.feedbackGiven||FB.must)return;   /* a student who has already sent feedback is never asked again */
+ if(P.tOn<FB_MUST*60000||!fbSafe())return;
+ const m=$("#fbm"),open=m&&!m.hidden;FB.must=true;FB.trigger=`mandatory after ${FB_MUST} min on the platform`;
+ if(open)m.innerHTML=fbHTML();else fbOpen();   /* if the student already opened it from the button, it just loses its close button */
+ fbLock(true);if(!P.fbPrompted){P.fbPrompted=true;saveP()}logEv({kind:"feedback_prompt",at:FB_MUST,mandatory:true})}
 /* Pixel can be hidden from the header; the hot seat then gives its space to the question */
 function syncBuddy(){const off=!!store.get("kbc-hide-buddy",false),b=$("#buddybtn");document.body.classList.toggle("nobuddy",off);
  if(b){const n=buddyName();b.setAttribute("aria-pressed",off);b.title=off?`Show ${n}`:`Hide ${n}`;b.setAttribute("aria-label",off?`Show ${n}, your KBC buddy`:`Hide ${n}, your KBC buddy`);const l=b.querySelector(".lbl");if(l)l.textContent=off?`Show ${n}`:`Hide ${n}`}}
@@ -1456,7 +1461,7 @@ new MutationObserver(fitSoon).observe(document.getElementById("app"),{childList:
 let fitW=innerWidth;addEventListener("resize",()=>{if(phoneLike()&&innerWidth===fitW)return;fitW=innerWidth;fitSoon()},SIG);
 function fbOpen(){const m=$("#fbm");m.hidden=false;m.innerHTML=fbHTML();setTimeout(()=>{const t=m.querySelector(".rf-s");t&&t.focus()},50)}
 
-document.addEventListener("keydown",e=>{const m=$("#fbm");if(m&&!m.hidden&&e.key==="Escape"){e.preventDefault();e.stopPropagation();m.hidden=true}},true);
+document.addEventListener("keydown",e=>{const m=$("#fbm");if(m&&!m.hidden&&e.key==="Escape"){e.preventDefault();e.stopPropagation();if(!FB.must)m.hidden=true}},true);
 function diwaliDecor(){cosmos();const t=$(".toran");if(t&&(!t.childElementCount||Math.abs((+t.dataset.w||0)-innerWidth)>40))buildToran();
  const k=$(".kandil");if(k&&!k.childElementCount)k.innerHTML=KANDIL;const d=$(".bigdiya");if(d&&!d.childElementCount)d.innerHTML=BIGDIYA;
  document.body.classList.toggle("onhome",S.screen==="home")}
@@ -1889,12 +1894,12 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(b.closest("#menu"))setMenu(false);
  if(a==="extratime"){store.set("kbc-extra-time",!store.get("kbc-extra-time",false));syncXtime();fsToast(store.get("kbc-extra-time",false)?"Extra time is on: 50% more time on every question.":"Extra time is off.");return}
  if(a==="buddy-toggle"){store.set("kbc-hide-buddy",!store.get("kbc-hide-buddy",false));syncBuddy();const y=scrollY;render();scrollTo({top:y});return}
- if(a==="fb-open"){FB.trigger="";fbOpen();return}
- if(a==="fb-close"){$("#fbm").hidden=true;return}
+ if(a==="fb-open"){if(!FB.must)FB.trigger="";fbOpen();return}
+ if(a==="fb-close"){if(FB.must)return;$("#fbm").hidden=true;return}
  if(a==="rf-star"){const f=b.dataset.f;if(!RF[f])return;RF[f].stars=+b.dataset.n;RF[f].tags=[];rfRedraw(f);SFX.pick();const n=document.querySelector(`#rf-${f} .rf-s[data-n="${b.dataset.n}"]`);n&&n.focus({preventScroll:true});return}
  if(a==="rf-tag"){const f=b.dataset.f,F=RF[f];if(!F||!F.stars)return;const t=RF_CFG[f].set[F.stars].tags[+b.dataset.i];F.tags=F.tags.includes(t)?F.tags.filter(x=>x!==t):F.tags.concat(t);b.setAttribute("aria-pressed",F.tags.includes(t));return}
  if(a==="rf-send"){const f=b.dataset.f;if(!RF[f]||!RF[f].stars)return;
-  if(f==="m"){rfPost("m",{kind:"general",trigger:FB.trigger||"feedback button"});P.fbSent=true;saveP();$("#fbm").innerHTML=fbHTML(true);ROBO.happy();return}
+  if(f==="m"){rfPost("m",{kind:"general",trigger:FB.trigger||"feedback button"});P.fbSent=true;saveP();if(FB.must){FB.must=false;fbLock(false)}$("#fbm").innerHTML=fbHTML(true);ROBO.happy();return}
   if(f==="g"&&S.res){rfPost("g",{kind:"game",reason:S.res.reason,correct:S.res.correct,answered:S.res.answered,reached:S.res.reached,trigger:"after results"});S.res.fbDone="sent";render();ROBO.happy()}return}
  if(a==="rf-skip"){if(S.res){S.res.fbDone="skip";RF.g=rfBlank();logEv({kind:"feedback_skip",form:"g"});render()}return}
  if(a==="theme"){setTheme(document.documentElement.dataset.theme==="light"?"dark":"light");return}
@@ -1956,6 +1961,6 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden)return;if(
 function syncSound(){const b=$("#soundbtn");if(b){b.setAttribute("aria-pressed",soundOn);const l=b.querySelector(".lbl");if(l)l.textContent=soundOn?"Sound on":"Sound off"}}
 syncSound();addEventListener("pointerdown",()=>{if(soundOn)ctx()},SIG);
 KBCQ.onRerender(()=>{if(S.screen==="play"){const y=scrollY;render();scrollTo({top:y})}});
-render();initOnline();syncXtime();
+render();initOnline();syncXtime();setInterval(fbTick,10000);
 setTimeout(()=>M3D.warm(COSTUMES[CHAR]||COSTUMES.byte,BYTE_POSES),1500);
 })();

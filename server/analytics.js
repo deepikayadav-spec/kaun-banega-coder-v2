@@ -109,6 +109,8 @@ function compute(raw, W, G) {
   const inW = (d) => d >= W.from && d <= W.to;
   const firstDay = new Map([...AD].map(([r, s]) => [r, [...s].sort()[0]]));
   const activeInW = [...AD].filter(([, s]) => [...s].some(inW)).length;
+  const msBy = new Map(); for (const r of act) msBy.set(r.roll_no, (msBy.get(r.roll_no) || 0) + Number(r.ms));
+  const timeEach = [...AD].filter(([, s]) => [...s].some(inW)).map(([r]) => msBy.get(r) || 0);   // every active student, 0 if no time logged
   const newInW = [...firstDay].filter(([, d]) => inW(d)).length;
   const dau = (day) => [...AD].filter(([, s]) => s.has(day)).length;
   const back = (n) => Array.from({ length: n }, (_, i) => addDays(W.to, -i));
@@ -132,7 +134,7 @@ function compute(raw, W, G) {
   return {
     students: cohort.length, activated: cohort.filter((c) => c.activated).length, active: activeInW, newInW, returning: activeInW - newInW,
     dauEnd: dau(W.to), avgDau: round1(avgDau), wau, mau, stickiness: mau ? pct(avgDau, mau) : null,
-    logins: logins.length, timeMs, timePerDay: studentDays ? timeMs / studentDays : null, timePerActive: activeInW ? timeMs / activeInW : null,
+    logins: logins.length, timeMs, timePerDay: studentDays ? timeMs / studentDays : null, timePerActive: activeInW ? timeMs / activeInW : null, timeMedian: median(timeEach),
     games: ev.filter((e) => e.kind === 'run_start').length, fffRate: pct(fffWon, fff.length), fffN: fff.length,
     answers: ans.length, perPlayer: players.size ? round1(ans.length / players.size) : null, players: players.size,
     accuracy: pct(right, ans.length), medianMs: median(ans.map((a) => Number(a.ms)).filter((x) => x > 0)),
@@ -166,7 +168,8 @@ export async function overview(F, G) {
       M('Stickiness (DAU/MAU)', x.stickiness, 'pct', 'Average DAU as a share of MAU: how often a monthly player comes back.'),
       M('Logins', x.logins, 'count', 'Logins in the period' + since + '.'),
       M('Time on portal', x.timeMs, 'ms', 'Time with the game open and visible, all students, in the period' + since + '.'),
-      M('Time per active student', x.timePerActive, 'ms', 'Total time on the portal per student active in the period.', { basis: x.active }) ] },
+      M('Time per active student', x.timePerActive, 'ms', 'Total time on the portal per student active in the period.', { basis: x.active }),
+      M('Median time per student', x.timeMedian, 'ms', 'Half the active students spent less than this on the portal in the period, half spent more. Not pulled up by a few very long sessions.', { basis: x.active }) ] },
 
     { name: 'Gameplay', metrics: [
       M('Games started', x.games, 'count', 'Hot-seat games started (after Fastest Finger).'),
@@ -226,7 +229,7 @@ export async function compareUniversities(F, G) {
   const byUni = new Map();
   for (const c of raw.cohort) { const u = c.university || '(no university)'; if (!byUni.has(u)) byUni.set(u, new Set()); byUni.get(u).add(c.roll_no); }
   const row = (name, x) => ({ university: name, students: x.students, activated: x.activated, activatedPct: pct(x.activated, x.students),
-    active: x.active, activePct: pct(x.active, x.students), avgDau: x.avgDau, wau: x.wau, logins: x.logins, timePerActive: x.timePerActive,
+    active: x.active, activePct: pct(x.active, x.students), avgDau: x.avgDau, wau: x.wau, logins: x.logins, timePerActive: x.timePerActive, timeMedian: x.timeMedian,
     answers: x.answers, perPlayer: x.perPlayer, accuracy: x.accuracy, medianMs: x.medianMs, fffRate: x.fffRate, games: x.games,
     levelUps: x.levelUps, skillsDone: x.skillsDone, withSkillPct: pct(x.withSkill, x.students), prizeWinnersPct: pct(x.prizeWinners, x.students),
     d1: x.d1.value, d7: x.d7.value, avgStars: x.avgStars, starsGeneral: x.starsGeneral.avg, starsGame: x.starsGame.avg });

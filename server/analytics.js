@@ -25,11 +25,12 @@ const isDay = (d) => /^\d{4}-\d{2}-\d{2}$/.test(String(d || ''));
 export async function recordLogin(run, roll, university) {
   await run('INSERT INTO student_logins (roll_no, university, at) VALUES (?, ?, ?)', roll, university || null, Date.now());
 }
-// A ping arrives every ~30 s while the game is visible: add the time since the last ping (at most 45 s).
+// A ping arrives every ~30 s while the game is visible: add the time since the last ping. A gap over 45 s means the
+// tab was hidden in between, so only 15 s (half a ping interval, as for the first ping of the day) is added.
 export async function recordPing(run, one_, roll) {
   const now = Date.now(), day = istDay(now);
   const r = await one_('SELECT last_at FROM activity WHERE roll_no = ? AND day = ?', roll, day);
-  const add = r ? Math.max(0, Math.min(45000, now - Number(r.last_at))) : 15000;
+  const gap = r ? now - Number(r.last_at) : Infinity, add = gap <= 45000 ? Math.max(0, gap) : 15000;
   await run(`INSERT INTO activity (roll_no, day, ms, pings, first_at, last_at) VALUES (?, ?, ?, 1, ?, ?)
     ON CONFLICT (roll_no, day) DO UPDATE SET ms = activity.ms + ?, pings = activity.pings + 1, last_at = excluded.last_at`, roll, day, add, now, now, add);
 }
@@ -119,10 +120,14 @@ function compute(raw, W, G) {
   const players = new Set(ans.map((a) => a.roll_no));
   const starters = new Set(G ? G.skills.filter((s) => s.starter).map((s) => s.id) : []);
   const cleared = states.map((s) => Object.entries((s.state && s.state.skills) || {}).filter(([id, k]) => k.status === 'done' && !starters.has(id) && (!G || G.idx[id] != null)).length);
-  const ret = (n) => { const elig = [...firstDay].filter(([, d]) => addDays(d, n) <= W.to);
+  const lastFull = W.to < istDay(Date.now()) ? W.to : addDays(W.to, -1);   // today is still running
+  const ret = (n) => { const elig = [...firstDay].filter(([, d]) => addDays(d, n) <= lastFull);
     const kept = elig.filter(([r, d]) => AD.get(r).has(addDays(d, n))).length; return { value: pct(kept, elig.length), basis: elig.length }; };
   const inactive7 = [...AD].filter(([, s]) => ![...s].some((d) => d > addDays(W.to, -7))).length;
-  const stars = fb.map((f) => Number(f.ctx && f.ctx.stars)).filter((x) => x >= 1 && x <= 11);
+  const starOf = (f) => { const x = Number(f.ctx && f.ctx.stars); return x >= 1 ? Math.min(5, Math.round(x)) : null; };
+  const kindOf = (f) => (f.ctx && ['question', 'game'].includes(f.ctx.kind) ? f.ctx.kind : 'general');
+  const stars = fb.map(starOf).filter((x) => x != null);
+  const avgOf = (k) => { const a = fb.filter((f) => kindOf(f) === k).map(starOf).filter((x) => x != null); return { n: a.length, avg: a.length ? round1(a.reduce((p, q) => p + q, 0) / a.length) : null }; };
   return {
     students: cohort.length, activated: cohort.filter((c) => c.activated).length, active: activeInW, newInW, returning: activeInW - newInW,
     dauEnd: dau(W.to), avgDau: round1(avgDau), wau, mau, stickiness: mau ? pct(avgDau, mau) : null,
@@ -135,7 +140,8 @@ function compute(raw, W, G) {
     withSkill: cleared.filter((n) => n > 0).length, skillsPer: states.length ? round1(cleared.reduce((a, b) => a + b, 0) / states.length) : null,
     prizeWinners: prizes.filter((p) => Number(p.best) > 0).length,
     d1: ret(1), d7: ret(7), inactive7, everActive: firstDay.size,
-    ratings: stars.length, avgStars: stars.length ? round1(stars.reduce((a, b) => a + b, 0) / stars.length) : null
+    ratings: stars.length, avgStars: stars.length ? round1(stars.reduce((a, b) => a + b, 0) / stars.length) : null,
+    starsGeneral: avgOf('general'), starsGame: avgOf('game'), starsQuestion: avgOf('question'), studentDays
   };
 }
 
@@ -159,7 +165,8 @@ export async function overview(F, G) {
       M('Stickiness (DAU/MAU)', x.stickiness, 'pct', 'Average DAU as a share of MAU: how often a monthly player comes back.'),
       M('Logins', x.logins, 'count', 'Logins in the period' + since + '.'),
       M('Time on portal', x.timeMs, 'ms', 'Time with the game open and visible, all students, in the period' + since + '.'),
-      M('Time per active day', x.timePerDay, 'ms', 'Average visible time per student on the days they played.') ] },
+      M('Time per active day', x.timePerDay, 'ms', 'Time on portal ÷ student-days with time recorded: how long a student stays on a day they come.', { basis: x.studentDays }),
+      M('Time per active student', x.timePerActive, 'ms', 'Time on portal ÷ students active in the period: total time per student over the whole period (higher than per day when students come on more than one day).', { basis: x.active }) ] },
     { name: 'Gameplay', metrics: [
       M('Games started', x.games, 'count', 'Hot-seat games started (after Fastest Finger).'),
       M('Fastest Finger win rate', x.fffRate, 'pct', 'Puzzles won out of puzzles finished.', { basis: x.fffN }),
@@ -176,12 +183,15 @@ export async function overview(F, G) {
       M('Skills cleared per player', x.skillsPer, 'count', 'Average skills finished by students who have started, ever.'),
       M('Won a prize', x.prizeWinners, 'count', 'Students who have cleared at least one skill group (first prize or more), ever.', { of: x.students }) ] },
     { name: 'Retention', metrics: [
-      M('D1 retention', x.d1.value, 'pct', 'Of students whose first day was at least 1 day before the end of the period, the share who came back the next day.', { basis: x.d1.basis }),
-      M('D7 retention', x.d7.value, 'pct', 'Of students whose first day was at least 7 days before the end of the period, the share active again 7 days later.', { basis: x.d7.basis }),
+      M('D1 retention', x.d1.value, 'pct', 'Of students whose next day has fully ended (today does not count yet), the share who came back the day after their first day.', { basis: x.d1.basis }),
+      M('D7 retention', x.d7.value, 'pct', 'Of students whose 7th day has fully ended (today does not count yet), the share active again 7 days after their first day.', { basis: x.d7.basis }),
       M('Inactive 7+ days', x.inactive7, 'count', 'Students active before, with no activity in the last 7 days of the period.', { of: x.everActive }) ] },
     { name: 'Feedback', metrics: [
       M('Ratings', x.ratings, 'count', 'Star ratings sent in the period (per question, per game and general).'),
-      M('Average rating', x.avgStars, 'stars', 'Average of the star ratings.') ] }
+      M('Average rating (all)', x.avgStars, 'stars', 'Average of every star rating, out of 5.', { basis: x.ratings }),
+      M('General rating', x.starsGeneral.avg, 'stars', 'Feedback button and the pop-up: how is KBC so far.', { basis: x.starsGeneral.n }),
+      M('Game rating', x.starsGame.avg, 'stars', 'After results: how was this game.', { basis: x.starsGame.n }),
+      M('Question rating', x.starsQuestion.avg, 'stars', 'Ratings of single questions.', { basis: x.starsQuestion.n }) ] }
   ];
   const { ans, act, states, prizes, AD } = raw;
   const daily = W.list.map((d) => ({ day: d, active: [...AD].filter(([, s]) => s.has(d)).length, answers: ans.filter((a) => a.day === d).length,
@@ -216,10 +226,10 @@ export async function compareUniversities(F, G) {
   const byUni = new Map();
   for (const c of raw.cohort) { const u = c.university || '(no university)'; if (!byUni.has(u)) byUni.set(u, new Set()); byUni.get(u).add(c.roll_no); }
   const row = (name, x) => ({ university: name, students: x.students, activated: x.activated, activatedPct: pct(x.activated, x.students),
-    active: x.active, activePct: pct(x.active, x.students), avgDau: x.avgDau, wau: x.wau, logins: x.logins, timePerActive: x.timePerActive,
+    active: x.active, activePct: pct(x.active, x.students), avgDau: x.avgDau, wau: x.wau, logins: x.logins, timePerDay: x.timePerDay, timePerActive: x.timePerActive,
     answers: x.answers, perPlayer: x.perPlayer, accuracy: x.accuracy, medianMs: x.medianMs, fffRate: x.fffRate, games: x.games,
     levelUps: x.levelUps, skillsDone: x.skillsDone, withSkillPct: pct(x.withSkill, x.students), prizeWinnersPct: pct(x.prizeWinners, x.students),
-    d1: x.d1.value, d7: x.d7.value, avgStars: x.avgStars });
+    d1: x.d1.value, d7: x.d7.value, avgStars: x.avgStars, starsGeneral: x.starsGeneral.avg, starsGame: x.starsGame.avg });
   const rows = [...byUni].map(([u, rolls]) => row(u, compute(only(raw, rolls), W, G))).sort((a, b) => (a.university === '(no university)') - (b.university === '(no university)') || b.students - a.students);
   return { days: W.days, from: W.from, to: W.to, filters: { university: F.uni || null, batch: F.batch || null }, rows, total: row('All universities', compute(raw, W, G)) };
 }

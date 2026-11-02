@@ -282,11 +282,12 @@ test('student analytics: overview, student rows and detail; logins and live ping
   // the period starts at the first real login (today in this test), not 30 days back with empty days
   assert.equal(o.body.daily.length, 1);
   // both time averages are on the overview and in the university comparison, with the same names
-  assert.ok('Time per active student' in m && !('Time per active day' in m));
+  assert.ok('Time per active student' in m && 'Median time per student' in m && !('Time per active day' in m));
   assert.ok(['General rating', 'Game rating', 'Question rating'].every((k) => k in m));
   const cmp = await call('a', 'GET', '/api/admin/stats/compare?days=30');
   assert.equal(cmp.status, 200);
   assert.equal(cmp.body.total.timePerActive, m['Time per active student']);
+  assert.equal(cmp.body.total.timeMedian, m['Median time per student']);
   // the money board comes with the analytics, so the admin page can show prizes in rupees
   assert.ok(Array.isArray(o.body.ladder) && o.body.ladder.length >= 2 && o.body.ladder[0] === 10, JSON.stringify(o.body.ladder));
   assert.ok(o.body.prizes.every((p) => p.rupees === (p.prizes ? o.body.ladder[p.prizes - 1] : 0)));

@@ -684,12 +684,26 @@ admin.post('/admins', requireSuper, jsonBody, wrap(async (req, res) => {
   await audit(req.admin.id, 'admin_upsert', email, { role, uni });
   res.json({ ok: true, email, tempPassword: pw });
 }));
-admin.get('/feedback', wrap(async (req, res) => {
-  // test data (the rules in Admin > Settings: roll prefixes, universities, batches) is left out, as in analytics
-  // (a roll no longer on the student list is checked against the test roll prefixes only)
+// test data (the rules in Admin > Settings: roll prefixes, universities, batches) is left out, as in analytics
+// (a roll no longer on the student list is checked against the test roll prefixes only)
+async function feedbackRows(req, limit) {
   const uni = scope(req), TR = await testRules(), R = realStudentsSql(TR), P = realStudentsSql({ ...TR, universities: [], batches: [] }, 'f');
-  res.json({ rows: await all(`SELECT f.id, f.roll_no, m.name, m.university, f.text, f.ctx, f.at FROM feedback f LEFT JOIN students_master m ON m.roll_no = f.roll_no
-    WHERE ${P.sql} AND (m.roll_no IS NULL OR (${R.sql}))${uni ? ' AND m.university = ?' : ''} ORDER BY f.at DESC LIMIT 5000`, ...P.args, ...R.args, ...(uni ? [uni] : [])) });
+  return all(`SELECT f.id, f.roll_no, m.name, m.university, f.text, f.ctx, f.at FROM feedback f LEFT JOIN students_master m ON m.roll_no = f.roll_no
+    WHERE ${P.sql} AND (m.roll_no IS NULL OR (${R.sql}))${uni ? ' AND m.university = ?' : ''} ORDER BY f.at DESC LIMIT ${limit}`, ...P.args, ...R.args, ...(uni ? [uni] : []));
+}
+admin.get('/feedback', wrap(async (req, res) => { res.json({ rows: await feedbackRows(req, 5000) }); }));
+// one row per rating or comment: score = stars, plus the optional extra stars a 5-star rating can add (up to 11)
+admin.get('/feedback.csv', wrap(async (req, res) => {
+  const ist = (ms) => new Date(Number(ms) + 5.5 * 3600e3).toISOString().slice(0, 19).replace('T', ' ');
+  const rows = (await feedbackRows(req, 100000)).map((f) => {
+    let c = f.ctx; if (typeof c === 'string') { try { c = JSON.parse(c); } catch { c = null; } } c = c || {};
+    const stars = Math.min(5, Math.round(Number(c.stars) || 0)), extra = stars === 5 ? Math.min(6, Number(c.bonus) || 0) : 0;
+    return { at_ist: ist(f.at), roll_no: f.roll_no, name: f.name, university: f.university,
+      form: c.kind === 'question' ? 'question' : c.kind === 'game' ? 'end of game' : 'general', stars: stars || '', extra_stars: extra || '', score: stars ? stars + extra : '',
+      tags: Array.isArray(c.tags) ? c.tags.join('; ') : '', feedback: f.text || '', question_id: c.qid || '', answered: c.correct == null ? '' : c.correct ? 'right' : 'wrong',
+      asked: c.trigger || 'feedback button', screen: c.screen || '' };
+  });
+  res.type('text/csv').attachment('kbc-feedback.csv').send(csv(rows, ['at_ist', 'roll_no', 'name', 'university', 'form', 'stars', 'extra_stars', 'score', 'tags', 'feedback', 'question_id', 'answered', 'asked', 'screen']));
 }));
 
 // ---------- pages (local dev; on Vercel the static files and rewrites in vercel.json serve them)

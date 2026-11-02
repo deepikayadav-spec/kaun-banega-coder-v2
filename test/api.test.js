@@ -376,4 +376,11 @@ test('admin feedback leaves out test students (Admin > Settings test rules)', as
   const texts = r.body.rows.map((x) => x.text);
   assert.ok(texts.includes('real note'));
   for (const t of ['test cred note', 'test uni note', 'orphan test note']) assert.ok(!texts.includes(t), t);
+  // the CSV export has the same rows (test data left out), with the score spelled out
+  await run(`INSERT INTO feedback (roll_no, text, ctx, at) VALUES ('N26P02A0001', 'loved it, a lot', ?, ?)`, JSON.stringify({ stars: 5, bonus: 6, kind: 'game', tags: ['fun', 'fast'] }), now);
+  const c = await call('a', 'GET', '/api/admin/feedback.csv');
+  assert.equal(c.status, 200);
+  assert.match(c.body, /^at_ist,roll_no,name,university,form,stars,extra_stars,score,tags,feedback,/);
+  assert.match(c.body, /,end of game,5,6,11,fun; fast,"loved it, a lot",/);
+  assert.ok(c.body.includes('real note') && !c.body.includes('test cred note'));
 });

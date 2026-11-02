@@ -372,7 +372,7 @@ function fbDraw(){const kinds=[["all","All ratings"],["general","General (how is
  const max=Math.max(1,...Object.values(by).map(m=>m.size));
  const scores=[11,10,9,8,7,6,5,4,3,2,1].filter(k=>by[k]||k<=5);
  const list=FBV.rows.filter(f=>(FBV.kind==="all"||fbKind(f.c)===FBV.kind)&&(!FBV.score||fbScore(f.c)===FBV.score));
- $("#m").innerHTML=`<div class="card"><h2>How students rated KBC</h2>
+ $("#m").innerHTML=`<div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">How students rated KBC</h2><a class="b q" style="text-decoration:none" href="/api/admin/feedback.csv?${uq()}">Download feedback CSV</a></div>
   <div class="seg" style="margin-bottom:12px">${kinds.map(([k,l])=>`<button class="b q ${FBV.kind===k?"on":""}" data-fk="${k}">${l}</button>`).join("")}</div>
   <p class="muted" style="margin:0 0 10px">${rated.length} ratings from ${studs} students · average ${avg} ★ out of 5. A student counts once per score; a student who rated twice with different scores shows in both rows. Click a row to see those ratings below.</p>
   <table>${scores.map(k=>{const m=by[k],n=m?m.size:0;return `<tr data-fs="${k}" style="cursor:pointer${FBV.score===k?";background:var(--acc-2)":""}"><td style="white-space:nowrap;width:70px"><b style="color:${k>5?"#7C3AED":"#B45309"}">${k} ★</b></td><td style="width:40%"><div class="bar"><i style="width:${n/max*100}%${k>5?";background:#7C3AED":""}"></i></div></td><td style="white-space:nowrap">${n} student${n===1?"":"s"}${m&&m.n!==n?` <span class="muted">(${m.n} ratings)</span>`:""}</td><td>${k>5&&m?`<span class="muted">${[...m.values()].map(esc).join(", ")}</span>`:""}</td></tr>`}).join("")}</table>

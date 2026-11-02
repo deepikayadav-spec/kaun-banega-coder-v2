@@ -8,6 +8,7 @@
 // held to their own university. Nothing here writes to student data.
 import { all, one } from './db.js';
 import { realStudentsSql } from './settings.js';
+import { ladderFor } from './engine.js';
 
 const DAY = 864e5, IST = 5.5 * 36e5;
 export const istDay = (ms) => new Date(ms + IST).toISOString().slice(0, 10);
@@ -198,12 +199,14 @@ export async function overview(F, G) {
   }
   const bands = {}; for (const p of prizes) bands[Number(p.best) || 0] = (bands[Number(p.best) || 0] || 0) + 1;
   const skillName = (id) => (G && G.idx[id] != null ? G.skills[G.idx[id]].name : id);
+  const ladder = G ? ladderFor(G.groups.length) : [];
   return {
+    ladder,
     filters: { university: F.uni || null, batch: F.batch || null }, days: W.days, from: W.from, to: W.to, groups, daily,
     nowAt: Object.values(now).sort((a, b) => b.students - a.students).slice(0, 15),
     skills: Object.values(bySkill).filter((s) => s.n >= 10).map((s) => ({ id: s.id, name: skillName(s.id), n: s.n, acc: pct(s.right, s.n), students: s.students.size })).sort((a, b) => a.acc - b.acc),
     types: Object.values(byType).filter((t) => t.n >= 10).map((t) => ({ key: t.key, n: t.n, acc: pct(t.right, t.n), medianMs: median(t.ms) })).sort((a, b) => a.acc - b.acc),
-    prizes: Object.entries(bands).map(([b, n]) => ({ prizes: Number(b), students: n })).sort((a, b) => a.prizes - b.prizes)
+    prizes: Object.entries(bands).map(([b, n]) => ({ prizes: Number(b), rupees: Number(b) ? ladder[Number(b) - 1] || 0 : 0, students: n })).sort((a, b) => a.prizes - b.prizes)
   };
 }
 
@@ -238,6 +241,7 @@ export async function studentRows(F, G, { q = '', sort = 'recent', limit = 2000 
     LEFT JOIN engine_state e ON e.roll_no = m.roll_no
     WHERE ${where} LIMIT ?`, W.from, W.to, W.fromMs, W.toMs, W.fromMs, W.toMs, ...args, Math.min(5000, limit));
   const starters = new Set(G ? G.skills.filter((s) => s.starter).map((s) => s.id) : []);
+  const ladder = G ? ladderFor(G.groups.length) : [];
   const out = rows.map((r) => {
     const sk = (r.state && r.state.skills) || {};
     const done = Object.entries(sk).filter(([id, k]) => k.status === 'done' && !starters.has(id) && (!G || G.idx[id] != null)).length;
@@ -248,14 +252,14 @@ export async function studentRows(F, G, { q = '', sort = 'recent', limit = 2000 
       ms: Number(r.ms) || 0, daysActive: Number(r.days_active) || 0, logins: Number(r.logins) || 0,
       answers: Number(r.answers) || 0, accuracy: pct(Number(r.right_n) || 0, Number(r.answers) || 0), hot: Number(r.hot) || 0,
       skillsDone: done, nowAt: cur ? { id: cur.id, name: cur.name, level: sk[cur.id].level } : null,
-      prizes: Number(r.best) || 0, coins: Number(r.coins) || 0, games: Number((r.gp && r.gp.runs) || 0), totalMs: Number((r.gp && r.gp.tOn) || 0)
+      prizes: Number(r.best) || 0, prizeRupees: Number(r.best) ? ladder[Number(r.best) - 1] || 0 : 0, coins: Number(r.coins) || 0, games: Number((r.gp && r.gp.runs) || 0), totalMs: Number((r.gp && r.gp.tOn) || 0)
     };
   });
   const S = { recent: (a, b) => (b.lastActive || 0) - (a.lastActive || 0), time: (a, b) => b.ms - a.ms, answers: (a, b) => b.answers - a.answers,
-    accuracy: (a, b) => (b.accuracy ?? -1) - (a.accuracy ?? -1), skills: (a, b) => b.skillsDone - a.skillsDone, least: (a, b) => (a.lastActive || 0) - (b.lastActive || 0),
+    accuracy: (a, b) => (b.accuracy ?? -1) - (a.accuracy ?? -1), skills: (a, b) => b.skillsDone - a.skillsDone, wallet: (a, b) => b.coins - a.coins || b.prizes - a.prizes, prize: (a, b) => b.prizes - a.prizes || b.coins - a.coins, least: (a, b) => (a.lastActive || 0) - (b.lastActive || 0),
     name: (a, b) => String(a.name).localeCompare(String(b.name)), university: (a, b) => a.university.localeCompare(b.university) || String(a.name).localeCompare(String(b.name)) }[sort] || (() => 0);
   out.sort(S);
-  return { days: W.days, from: W.from, to: W.to, total: out.length, rows: out };
+  return { days: W.days, from: W.from, to: W.to, total: out.length, ladder, rows: out };
 }
 
 // ---------- one student

@@ -351,3 +351,15 @@ test('analytics: live now lists who is on the portal and what they are doing', a
   const mr = await call('m', 'GET', '/api/admin/stats/live');
   assert.ok(!mr.body.rows.some((r) => r.roll_no === 'N26P02A0001'), 'scoped admin sees only their university');
 });
+
+test('admin feedback leaves out test students (Admin > Settings test rules)', async () => {
+  const now = Date.now();
+  await run("INSERT INTO students_master (roll_no, name, university, created_at, updated_at) VALUES ('TEST0042', 'Tester', 'Test', ?, ?), ('N26P02A0777', 'Sandbox Kid', 'Test University', ?, ?) ON CONFLICT (roll_no) DO NOTHING", now, now, now, now);
+  await run("INSERT INTO feedback (roll_no, text, ctx, at) VALUES ('TEST0042', 'test cred note', NULL, ?), ('N26P02A0777', 'test uni note', NULL, ?), ('TEST9999', 'orphan test note', NULL, ?), ('N26P02A0001', 'real note', NULL, ?)", now, now, now, now);
+  await call('a', 'PUT', '/api/admin/settings/test-rules', { rollPrefixes: ['TEST'], universities: ['Test', 'Test University'], batches: ['TEST'] });
+  const r = await call('a', 'GET', '/api/admin/feedback');
+  assert.equal(r.status, 200);
+  const texts = r.body.rows.map((x) => x.text);
+  assert.ok(texts.includes('real note'));
+  for (const t of ['test cred note', 'test uni note', 'orphan test note']) assert.ok(!texts.includes(t), t);
+});

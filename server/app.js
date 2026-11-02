@@ -683,9 +683,11 @@ admin.post('/admins', requireSuper, jsonBody, wrap(async (req, res) => {
   res.json({ ok: true, email, tempPassword: pw });
 }));
 admin.get('/feedback', wrap(async (req, res) => {
-  const uni = scope(req);
+  // test data (the rules in Admin > Settings: roll prefixes, universities, batches) is left out, as in analytics
+  // (a roll no longer on the student list is checked against the test roll prefixes only)
+  const uni = scope(req), TR = await testRules(), R = realStudentsSql(TR), P = realStudentsSql({ ...TR, universities: [], batches: [] }, 'f');
   res.json({ rows: await all(`SELECT f.id, f.roll_no, m.name, m.university, f.text, f.ctx, f.at FROM feedback f LEFT JOIN students_master m ON m.roll_no = f.roll_no
-    ${uni ? 'WHERE m.university = ?' : ''} ORDER BY f.at DESC LIMIT 500`, ...(uni ? [uni] : [])) });
+    WHERE ${P.sql} AND (m.roll_no IS NULL OR (${R.sql}))${uni ? ' AND m.university = ?' : ''} ORDER BY f.at DESC LIMIT 500`, ...P.args, ...R.args, ...(uni ? [uni] : [])) });
 }));
 
 // ---------- pages (local dev; on Vercel the static files and rewrites in vercel.json serve them)

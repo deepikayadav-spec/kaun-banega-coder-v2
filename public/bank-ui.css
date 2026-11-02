@@ -72,6 +72,12 @@
 .bq-legend code{color:var(--tx)}
 .bq-ta,.bq-code,.bq-gap select,.bq-tok select,.bq-probe input{background:#0B1222;color:#E2E8F0;border-color:var(--hl)}
 html[data-theme="light"] .bq-ta,html[data-theme="light"] .bq-code{background:#0F172A;color:#E2E8F0}
+/* fill-the-blank answer box: the skin makes --surface cream while --fg stays light, so typed text was invisible */
+.fillrow.bq input{background:#0B1222;color:#E2E8F0;border-color:var(--hl);caret-color:#FFC83D}
+.fillrow.bq input::placeholder{color:#64748B}
+.fillrow.bq input.right{background:rgba(61,220,132,.12);border-color:#3DD16F}
+.fillrow.bq input.wrong{background:rgba(255,90,120,.12);border-color:#FF5468}
+html[data-theme="light"] .fillrow.bq input:not(.right):not(.wrong){background:#0F172A}
 
 /* the grouping question: numbered how-to, colour + letter for every group and piece, a note when a group is full */
 .bq-how{list-style:none;margin:0 0 4px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;border-radius:12px;background:rgba(94,234,212,.07);border:1px solid rgba(94,234,212,.35)}

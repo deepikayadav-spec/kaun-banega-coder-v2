@@ -116,7 +116,7 @@ function compute(raw, W, G) {
   const back = (n) => Array.from({ length: n }, (_, i) => addDays(W.to, -i));
   const activeIn = (list) => [...AD].filter(([, s]) => list.some((d) => s.has(d))).length;
   const avgDau = W.list.reduce((n, d) => n + dau(d), 0) / W.list.length;
-  const mau = activeIn(back(30)), wau = activeIn(back(7));
+  const mau = activeIn(back(30));
   const timeMs = act.reduce((n, r) => n + Number(r.ms), 0), studentDays = act.filter((r) => Number(r.ms) > 0).length;
   const right = ans.filter((a) => a.correct).length;
   const fff = ev.filter((e) => e.kind === 'fff'), fffWon = fff.filter((e) => e.data && e.data.ok).length;
@@ -133,7 +133,7 @@ function compute(raw, W, G) {
   const avgOf = (k) => { const a = fb.filter((f) => kindOf(f) === k).map(starOf).filter((x) => x != null); return { n: a.length, avg: a.length ? round1(a.reduce((p, q) => p + q, 0) / a.length) : null }; };
   return {
     students: cohort.length, activated: cohort.filter((c) => c.activated).length, active: activeInW, newInW, returning: activeInW - newInW,
-    dauEnd: dau(W.to), avgDau: round1(avgDau), wau, mau, stickiness: mau ? pct(avgDau, mau) : null,
+    dauEnd: dau(W.to), avgDau: round1(avgDau), mau, stickiness: mau ? pct(avgDau, mau) : null,
     logins: logins.length, timeMs, timePerDay: studentDays ? timeMs / studentDays : null, timePerActive: activeInW ? timeMs / activeInW : null, timeMedian: median(timeEach),
     games: ev.filter((e) => e.kind === 'run_start').length, fffRate: pct(fffWon, fff.length), fffN: fff.length,
     answers: ans.length, perPlayer: players.size ? round1(ans.length / players.size) : null, players: players.size,
@@ -163,7 +163,6 @@ export async function overview(F, G) {
     { name: 'Activity', metrics: [
       M('DAU (last day)', x.dauEnd, 'count', `Students active on ${W.to} (IST), the last day of the period.`),
       M('Avg. DAU', x.avgDau, 'count', 'Average daily active students over the period.'),
-      M('WAU', x.wau, 'count', 'Students active in the 7 days up to the end of the period.'),
       M('MAU', x.mau, 'count', 'Students active in the 30 days up to the end of the period.'),
       M('Stickiness (DAU/MAU)', x.stickiness, 'pct', 'Average DAU as a share of MAU: how often a monthly player comes back.'),
       M('Logins', x.logins, 'count', 'Logins in the period' + since + '.'),
@@ -229,7 +228,7 @@ export async function compareUniversities(F, G) {
   const byUni = new Map();
   for (const c of raw.cohort) { const u = c.university || '(no university)'; if (!byUni.has(u)) byUni.set(u, new Set()); byUni.get(u).add(c.roll_no); }
   const row = (name, x) => ({ university: name, students: x.students, activated: x.activated, activatedPct: pct(x.activated, x.students),
-    active: x.active, activePct: pct(x.active, x.students), avgDau: x.avgDau, wau: x.wau, logins: x.logins, timePerActive: x.timePerActive, timeMedian: x.timeMedian,
+    active: x.active, activePct: pct(x.active, x.students), avgDau: x.avgDau, logins: x.logins, timePerActive: x.timePerActive, timeMedian: x.timeMedian,
     answers: x.answers, perPlayer: x.perPlayer, accuracy: x.accuracy, medianMs: x.medianMs, fffRate: x.fffRate, games: x.games,
     levelUps: x.levelUps, skillsDone: x.skillsDone, withSkillPct: pct(x.withSkill, x.students), prizeWinnersPct: pct(x.prizeWinners, x.students),
     d1: x.d1.value, d7: x.d7.value, avgStars: x.avgStars, starsGeneral: x.starsGeneral.avg, starsGame: x.starsGame.avg });

@@ -280,15 +280,21 @@ test('student analytics: overview, student rows and detail; logins and live ping
   assert.ok(m['Logins'] >= 1, 'logins recorded');
   assert.ok(m['DAU (last day)'] >= 1);
   assert.equal(o.body.daily.length, 30);
+  // the money board comes with the analytics, so the admin page can show prizes in rupees
+  assert.ok(Array.isArray(o.body.ladder) && o.body.ladder.length >= 2 && o.body.ladder[0] === 10, JSON.stringify(o.body.ladder));
+  assert.ok(o.body.prizes.every((p) => p.rupees === (p.prizes ? o.body.ladder[p.prizes - 1] : 0)));
   const s = await call('a', 'GET', '/api/admin/stats/students?days=30&sort=answers');
   assert.equal(s.status, 200);
   const asha = s.body.rows.find((r) => r.roll_no === 'N26P02A0001');
   assert.ok(asha && asha.answers > 0 && asha.logins >= 1 && asha.ms > 0, JSON.stringify(asha));
+  assert.ok('prizeRupees' in asha && 'coins' in asha);
+  assert.equal((await call('a', 'GET', '/api/admin/stats/students?days=30&sort=wallet')).status, 200);
   const d = await call('a', 'GET', '/api/admin/stats/student/N26P02A0001?days=30');
   assert.equal(d.status, 200);
   assert.ok(d.body.recent.length > 0 && d.body.daily.length >= 1);
   const csvR = await call('a', 'GET', '/api/admin/stats/students.csv?days=30');
   assert.match(csvR.body, /^roll_no,name,university,last_active_ist/);
+  assert.match(csvR.body.split(String.fromCharCode(10))[0], /prize_rupees,wallet_rupees/);
   // a university-scoped admin only sees that university
   const mr = await call('m', 'GET', '/api/admin/stats/students?days=30');
   assert.ok(mr.body.rows.every((r) => r.university === 'Malla Reddy University - Hyderabad'));

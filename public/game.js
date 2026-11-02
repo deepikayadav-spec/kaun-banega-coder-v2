@@ -919,6 +919,8 @@ let qInt=null;
 /* seconds per question: 60 on rungs 1–6, then 3–4 s less each rung down to 30 s on 7 crore */
 /* "Extra time" (menu): 50% more time on every timed question and puzzle, for students who need it (WCAG 2.2.1) */
 const xtime=s=>store.get("kbc-extra-time",false)?Math.round(s*1.5):s;
+/* L4 types where the student writes code get more time on the clock than the 60 s (30 s higher up) hot seat default */
+const TYPE_SECS={faded:120,grow:180,write:180,diverge:180};
 function syncXtime(){const b=$("#extrabtn");if(!b)return;const on=!!store.get("kbc-extra-time",false);b.setAttribute("aria-pressed",on);const l=b.querySelector(".lbl");if(l)l.textContent=on?"Extra time: on":"Extra time: off"}
 function secsFor(r){return r<6?CFG.secs:Math.max(30,Math.round(CFG.secs-(r-5)*(CFG.secs-30)/(LADDER.length-6)))}
 /* The next question comes from the progression engine on the server: it decides skill, level, type, difficulty and variant. */
@@ -935,7 +937,7 @@ function pollGraph(){graphPolled=Date.now();KBCQ.api("GET","/api/version").then(
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pollGraph()});
 function setQ(r){if(r.engine){ENGINE=r.engine;graphCheck(ENGINE)}
  if(!r.question){Object.assign(S,blankQ(),{q:null,phase:"none",noQ:r});return}
- const q=KBCQ.adapt(r.question,r.address,GR),secs=xtime(S.run&&S.run.first&&!S.run.answered?FIRST_SECS:secsFor(rungOf()));
+ const q=KBCQ.adapt(r.question,r.address,GR),secs=xtime(Math.max(TYPE_SECS[q.ty]||0,S.run&&S.run.first&&!S.run.answered?FIRST_SECS:secsFor(rungOf())));
  Object.assign(S,blankQ(),{q,phase:"ask",time:secs,secsMax:secs,qT0:Date.now()})}
 /* PREQ[mode]: a question already fetched for that mode. The server keeps one open question per student, so fetching for
    one mode makes any question kept for another mode stale: those are dropped. */

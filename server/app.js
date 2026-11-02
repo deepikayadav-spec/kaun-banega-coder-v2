@@ -565,9 +565,11 @@ admin.get('/analytics', wrap(async (req, res) => {
 // Filters from the Analytics filter bar: university (held to the admin's own for a scoped admin), batch, and a period
 // (?days=N, or ?from=YYYY-MM-DD&to=YYYY-MM-DD). Test data (Admin > Settings) is always left out.
 async function filters(req) {
-  const since = await one('SELECT MIN(at) AS at FROM student_logins');
-  return { uni: scope(req), batch: req.query.batch ? String(req.query.batch).slice(0, 80) : null, days: req.query.days,
-    from: req.query.from ? String(req.query.from) : null, to: req.query.to ? String(req.query.to) : null, rules: await testRules(),
+  const since = await one('SELECT MIN(at) AS at FROM student_logins'), rules = await testRules(), R = realStudentsSql(rules);
+  // the first day a real student logged in: periods never start before it, so averages are not diluted by empty days
+  const first = await one(`SELECT MIN(l.at) AS at FROM student_logins l JOIN students_master m ON m.roll_no = l.roll_no WHERE ${R.sql}`, ...R.args);
+  return { launch: first && first.at ? stats.istDay(Number(first.at)) : null, uni: scope(req), batch: req.query.batch ? String(req.query.batch).slice(0, 80) : null, days: req.query.days,
+    from: req.query.from ? String(req.query.from) : null, to: req.query.to ? String(req.query.to) : null, rules,
     loginsSince: since && since.at ? stats.istDay(Number(since.at)) : null };
 }
 admin.get('/stats/filters', wrap(async (req, res) => {

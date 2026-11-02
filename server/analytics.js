@@ -37,11 +37,12 @@ export async function recordPing(run, one_, roll) {
 
 // ---------- filters
 // The period: `from`..`to` (IST days, inclusive) when given, else the last `days` days up to today.
-export function windowOf({ days = 30, from = null, to = null } = {}) {
+export function windowOf({ days = 30, from = null, to = null, launch = null } = {}) {
   const today = istDay(Date.now());
   let end = isDay(to) && to <= today ? to : today;
   let start = isDay(from) ? from : addDays(end, -(Math.max(1, Math.min(3650, Number(days) || 30)) - 1));
   if (start > end) [start, end] = [end, start];
+  if (isDay(launch) && start < launch && launch <= end) start = launch;   // nothing happened before the first real login
   const n = Math.round((midDay(end) - midDay(start)) / DAY) + 1;
   return { days: n, from: start, to: end, fromMs: dayStart(start), toMs: dayStart(end) + DAY, list: Array.from({ length: n }, (_, i) => addDays(start, i)) };
 }
@@ -165,8 +166,8 @@ export async function overview(F, G) {
       M('Stickiness (DAU/MAU)', x.stickiness, 'pct', 'Average DAU as a share of MAU: how often a monthly player comes back.'),
       M('Logins', x.logins, 'count', 'Logins in the period' + since + '.'),
       M('Time on portal', x.timeMs, 'ms', 'Time with the game open and visible, all students, in the period' + since + '.'),
-      M('Time per active day', x.timePerDay, 'ms', 'Time on portal ÷ student-days with time recorded: how long a student stays on a day they come.', { basis: x.studentDays }),
-      M('Time per active student', x.timePerActive, 'ms', 'Time on portal ÷ students active in the period: total time per student over the whole period (higher than per day when students come on more than one day).', { basis: x.active }) ] },
+      M('Time per active day', x.timePerDay, 'ms', 'Average time a student spends on a day they play.', { basis: x.studentDays }) ] },
+
     { name: 'Gameplay', metrics: [
       M('Games started', x.games, 'count', 'Hot-seat games started (after Fastest Finger).'),
       M('Fastest Finger win rate', x.fffRate, 'pct', 'Puzzles won out of puzzles finished.', { basis: x.fffN }),
@@ -226,7 +227,7 @@ export async function compareUniversities(F, G) {
   const byUni = new Map();
   for (const c of raw.cohort) { const u = c.university || '(no university)'; if (!byUni.has(u)) byUni.set(u, new Set()); byUni.get(u).add(c.roll_no); }
   const row = (name, x) => ({ university: name, students: x.students, activated: x.activated, activatedPct: pct(x.activated, x.students),
-    active: x.active, activePct: pct(x.active, x.students), avgDau: x.avgDau, wau: x.wau, logins: x.logins, timePerDay: x.timePerDay, timePerActive: x.timePerActive,
+    active: x.active, activePct: pct(x.active, x.students), avgDau: x.avgDau, wau: x.wau, logins: x.logins, timePerDay: x.timePerDay,
     answers: x.answers, perPlayer: x.perPlayer, accuracy: x.accuracy, medianMs: x.medianMs, fffRate: x.fffRate, games: x.games,
     levelUps: x.levelUps, skillsDone: x.skillsDone, withSkillPct: pct(x.withSkill, x.students), prizeWinnersPct: pct(x.prizeWinners, x.students),
     d1: x.d1.value, d7: x.d7.value, avgStars: x.avgStars, starsGeneral: x.starsGeneral.avg, starsGame: x.starsGame.avg });

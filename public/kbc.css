@@ -1790,7 +1790,7 @@ html[data-theme="light"] body:has(.univ) .ph-t b{color:#0F766E!important}
 .pworld .mav::after{content:"";position:absolute;left:50%;bottom:-6px;width:60%;height:10px;translate:-50% 0;border-radius:50%;background:radial-gradient(rgba(94,234,212,.35),transparent 70%);filter:blur(3px)}
 @media (prefers-reduced-motion:reduce){.pworld .mav,.pworld .mav .mascot{animation:none!important}}
 /* home cleanups */
-.home4 [data-act="practice"],.home4 .h-sub .hint{display:none!important}
+.home4 .h-sub .hint{display:none!important}
 .steps3 li{align-items:center}
 /* home mascot: gentle drift so it never looks stuck */
 .h4-bot .mascot{animation:hdrift 11s ease-in-out infinite!important}
@@ -2466,7 +2466,7 @@ html[data-theme="light"] .fx-k.miss{color:#C2410C}html[data-theme="light"] .fx-k
 
 /* ===================== UX & accessibility fixes (design critique + WCAG 2.1 AA audit, 31 Oct) ===================== */
 /* reveal: one main action; leaving and the full working are quiet links (still 44px tall to tap) */
-.actions .btn.quiet[data-act="stop"],.actions .btn.quiet[data-act="practice-end"],.actions .solbtn{background:none!important;border:0!important;box-shadow:none!important;
+.actions .btn.quiet[data-act="stop"],.actions .solbtn{background:none!important;border:0!important;box-shadow:none!important;
   color:#A7B0C8!important;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px;padding:10px 8px!important;min-height:44px;font-weight:700}
 .actions .btn.quiet[data-act="stop"]:hover,.actions .solbtn:hover{color:#F1F5F9!important}
 html[data-theme="light"] .actions .btn.quiet[data-act="stop"],html[data-theme="light"] .actions .solbtn{color:#334155!important}

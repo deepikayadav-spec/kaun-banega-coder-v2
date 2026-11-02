@@ -168,17 +168,16 @@ async function analytics(){
 /* Live now: who has the game open this minute and what they are doing. Refreshes every 15 s while the view is open. */
 const ago=t=>{if(!t)return "—";const s=Math.max(0,Math.round((Date.now()-t)/1000));return s<60?s+" s ago":s<3600?Math.floor(s/60)+" min ago":Math.floor(s/3600)+" h ago"};
 const dur=t=>{if(!t)return "—";const m=Math.max(0,Math.round((Date.now()-t)/60000));return m<1?"just now":m<60?m+" min":Math.floor(m/60)+" h "+(m%60)+" min"};
-const MODE={hotseat:["Hot seat","ok"],practice:["Practice","warn"],browsing:["Browsing","muted"],unknown:["On the portal","muted"]};
+const MODE={hotseat:["Hot seat","ok"],browsing:["Browsing","muted"],unknown:["On the portal","muted"]};
 async function anLive(){const box=$("#an-body");if(!box)return;
  clearTimeout(AP.liveT);
  const d=await api("GET","/api/admin/stats/live?"+aq());
  if(TAB!=="analytics"||AP.view!=="live"||!$("#an-body"))return;
  const S=d.summary,f=AP.liveF||"all",rows=d.rows.filter(r=>f==="all"||r.mode===f||(f==="browsing"&&r.mode==="unknown"));
- const doing=r=>r.question&&(r.mode==="hotseat"||r.mode==="practice")?`${esc(r.doing)}${r.mode==="practice"?" (practice)":""}<br><small class="muted">${sid(r.question.skill)} ${esc(r.question.name)} · L${r.question.level} ${esc(r.question.type)}${r.answeredThisGame?` · ${r.answeredThisGame} answered this game`:""}</small>`:esc(r.doing);
+ const doing=r=>r.question&&r.mode==="hotseat"?`${esc(r.doing)}<br><small class="muted">${sid(r.question.skill)} ${esc(r.question.name)} · L${r.question.level} ${esc(r.question.type)}${r.answeredThisGame?` · ${r.answeredThisGame} answered this game`:""}</small>`:esc(r.doing);
  box.innerHTML=`<div class="kpis an-livek">
   <button class="kpi ${f==="all"?"on":""}" data-lf="all"><small><span class="dot"></span> On the portal now</small><b>${S.live.toLocaleString("en-IN")}</b><span class="of">seen in the last ${Math.round(d.liveMs/1000)} s</span></button>
   <button class="kpi ${f==="hotseat"?"on":""}" data-lf="hotseat"><small>In the hot seat</small><b>${S.hotseat}</b><span class="of">Fastest Finger or answering</span></button>
-  <button class="kpi ${f==="practice"?"on":""}" data-lf="practice"><small>Practising</small><b>${S.practice}</b></button>
   <button class="kpi ${f==="browsing"?"on":""}" data-lf="browsing"><small>Browsing</small><b>${S.browsing}</b><span class="of">home, path, Hall of Fame…</span></button>
   <div class="kpi"><small>Left in the last 15 min</small><b>${S.leftRecently}</b></div>
  </div>
@@ -243,7 +242,7 @@ async function anDetail(roll){const cell=$("#an-det");if(!cell)return;
  cell.innerHTML=`<div class="grid2 an-d"><div><h3>Day by day</h3><table><tr><th>Day</th><th>Time</th><th>Questions</th><th></th><th>Right</th></tr>${d.daily.slice().reverse().map(x=>`<tr><td>${x.day}</td><td>${fmtMs(x.ms)}</td><td>${x.answers}</td><td style="width:30%"><div class="bar"><i style="width:${x.answers/mx*100}%"></i></div></td><td>${pct(x.right,x.answers)}</td></tr>`).join("")||'<tr><td colspan=5 class="muted">No activity in the period.</td></tr>'}</table>
   <h3>Topics</h3><table><tr><th>Topic</th><th>Answers</th><th>Accuracy</th></tr>${d.skills.map(s=>`<tr><td>${sid(s.id)} ${esc(s.name)}</td><td>${s.n}</td><td>${s.acc}%</td></tr>`).join("")||'<tr><td colspan=3 class="muted">No answers yet.</td></tr>'}</table></div>
  <div><h3>Progress steps</h3><table><tr><th>When</th><th>Step</th><th>Topic</th></tr>${d.steps.map(s=>`<tr><td>${dt(s.at)}</td><td>${{level_up:"Level up",skill_done:"Topic cleared ✓",unlock:"Topic unlocked"}[s.kind]||s.kind}</td><td>${sid(s.skill)} ${esc(s.name)}</td></tr>`).join("")||'<tr><td colspan=3 class="muted">None yet.</td></tr>'}</table>
-  <h3>Last answers</h3><table><tr><th>When</th><th>Topic</th><th>Question</th><th>Result</th><th>Time</th></tr>${d.recent.map(a=>`<tr><td>${dt(a.at)}</td><td>${sid(a.skill)}</td><td class="muted">L${a.level} ${esc(a.type)} R${a.r} V${a.variant}${a.mode==="practice"?" · practice":""}</td><td>${a.timeout?'<span class="warn">Time out</span>':a.correct?'<span class="ok">Right</span>':'<span class="bad">Wrong</span>'}</td><td>${fmtMs(a.ms)}</td></tr>`).join("")||'<tr><td colspan=5 class="muted">No answers yet.</td></tr>'}</table>
+  <h3>Last answers</h3><table><tr><th>When</th><th>Topic</th><th>Question</th><th>Result</th><th>Time</th></tr>${d.recent.map(a=>`<tr><td>${dt(a.at)}</td><td>${sid(a.skill)}</td><td class="muted">L${a.level} ${esc(a.type)} R${a.r} V${a.variant}</td><td>${a.timeout?'<span class="warn">Time out</span>':a.correct?'<span class="ok">Right</span>':'<span class="bad">Wrong</span>'}</td><td>${fmtMs(a.ms)}</td></tr>`).join("")||'<tr><td colspan=5 class="muted">No answers yet.</td></tr>'}</table>
   <p class="muted">Logins (latest 50): ${d.logins.length?d.logins.slice(0,10).map(dt).join(" · ")+(d.logins.length>10?" …":""):"none recorded"}</p></div></div>`}
 
 /* ================= Settings: universities (NIAT ID prefixes) and test-data rules. Everyone can see; super admins edit. ================= */

@@ -804,13 +804,13 @@ const CHEER=["Correct! One more like that.","Nailed it. Keep the streak going.",
 /* ===== Energy (per game): wrong −20, timeout −25, every 3-in-a-row +10, 0% ends the game; path progress is always kept ===== */
 function energyTick(ok){const R=S.run,b=R.en;if(ok){R.cs=(R.cs||0)+1;if(R.cs%3===0&&R.en<100){R.en=Math.min(100,R.en+10);S.enGain=10;setTimeout(()=>ROBO.charge(),900)}}else{R.cs=0;R.en=Math.max(0,R.en-(S.timeout?25:20));S.enLoss=b-R.en;setTimeout(()=>ROBO.powerdown(),400)}
  logEv({kind:"energy",en:R.en,ok})}
-function energyHTML(){if(S.practice||!S.run)return "";const e=S.run.en,c=e>50?"hi":e>20?"mid":"lo",d=S.phase==="reveal"?(S.enLoss?`<em class="eloss">−${S.enLoss}%</em>`:S.enGain?`<em class="egain">+${S.enGain}%</em>`:""):"";
+function energyHTML(){if(!S.run)return "";const e=S.run.en,c=e>50?"hi":e>20?"mid":"lo",d=S.phase==="reveal"?(S.enLoss?`<em class="eloss">−${S.enLoss}%</em>`:S.enGain?`<em class="egain">+${S.enGain}%</em>`:""):"";
  return `<div class="energy ${c}" role="meter" aria-label="Energy ${e} percent" aria-valuenow="${e}" aria-valuemin="0" aria-valuemax="100"><span class="ebolt">⚡</span><span class="ebat"><i style="width:${e}%"></i></span><b>${e}%</b>${d}${S.run.cs%3===2&&e<100?"<small>1 more right = +10%</small>":""}</div>`}
 function dockHTML(mood,cls,extra){const I=S.info,q=S.q;let say;
  if(!q)say=S.phase==="loading"?"Picking your next question…":S.phase==="error"?"Hmm, the line dropped. Try again?":"Nice work! More levels are coming.";
  else if(S.phase==="locked")say="Locked in… fingers crossed!";
- else if(S.phase==="reveal")say=S.ok?(I&&I.rungUp?`You won ${fmtR(amountOf(I.after))}! Next question.`:CHEER[hashStr(q.id)%CHEER.length]):(S.practice?(S.timeout?"Time ran out. Read why, then try the next one.":"Not quite. Read why, then try the next one."):(S.timeout?"Too slow! Read why, then try a new question.":"Not quite. Read why, then try a new question."));
- else say=!S.practice&&S.run.en<=20?"Low battery! One more miss and we power down.":S.hint?"Hint's up there. You've got this.":S.run.answered===0?"First question! Read the code line by line.":CALM[hashStr(q.id)%CALM.length];
+ else if(S.phase==="reveal")say=S.ok?(I&&I.rungUp?`You won ${fmtR(amountOf(I.after))}! Next question.`:CHEER[hashStr(q.id)%CHEER.length]):(S.timeout?"Too slow! Read why, then try a new question.":"Not quite. Read why, then try a new question.");
+ else say=S.run.en<=20?"Low battery! One more miss and we power down.":S.hint?"Hint's up there. You've got this.":S.run.answered===0?"First question! Read the code line by line.":CALM[hashStr(q.id)%CALM.length];
  const r=rungOf(),stake=r<OPEN?LADDER[r]:0;
  if(cls==="col")return `<aside class="mcol" aria-label="${esc(buddyName())}, your KBC buddy"><p class="say">${esc(say)}</p>${mascot(mood,176)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span>${extra||""}</aside>`;
  return `<div class="coach">${mascot(mood,64)}<p class="say">${esc(say)}</p></div>`}
@@ -896,7 +896,7 @@ function logEv(e){const ev=Object.assign({t:Date.now()},e);
  if(e.kind==="answer")return; /* answers are stored by the server when graded */
  EVQ.push(ev);clearTimeout(evT);evT=setTimeout(flushEv,EVQ.length>=20?0:3000)}
 function syncLive(){document.querySelectorAll(".livenum").forEach(e=>e.textContent=LIVE);const c=$("#livechip");if(c){c.hidden=!LIVE;c.querySelector("b").textContent=LIVE;c.title=`${LIVE} student${LIVE===1?" is":"s are"} playing right now`}}
-async function pingLive(){if(document.hidden)return;pingLive.at=Date.now();try{const d=await KBCQ.api("POST","/api/live",{screen:S.screen,practice:!!S.practice,answered:S.run?S.run.answered||0:0});LIVE=d.live||0;syncLive()}catch(e){}}
+async function pingLive(){if(document.hidden)return;pingLive.at=Date.now();try{const d=await KBCQ.api("POST","/api/live",{screen:S.screen,answered:S.run?S.run.answered||0:0});LIVE=d.live||0;syncLive()}catch(e){}}
 /* Hall of Fame: scope "all" ranks every university, scope "uni" one university (the student's own by default) */
 async function loadFame(scope,uni,quiet){FQ={scope:scope||"all",uni:uni||""};const want=JSON.stringify(FQ);if(S.screen==="fame"&&!quiet){FAMEC=null;render()}
  try{const d=await KBCQ.api("GET",`/api/fame?scope=${encodeURIComponent(FQ.scope)}&uni=${encodeURIComponent(FQ.uni)}`);if(JSON.stringify(FQ)!==want)return;
@@ -921,9 +921,6 @@ let qInt=null;
 const xtime=s=>store.get("kbc-extra-time",false)?Math.round(s*1.5):s;
 function syncXtime(){const b=$("#extrabtn");if(!b)return;const on=!!store.get("kbc-extra-time",false);b.setAttribute("aria-pressed",on);const l=b.querySelector(".lbl");if(l)l.textContent=on?"Extra time: on":"Extra time: off"}
 function secsFor(r){return r<6?CFG.secs:Math.max(30,Math.round(CFG.secs-(r-5)*(CFG.secs-30)/(LADDER.length-6)))}
-function startPractice(){ctx();goFull();clearInterval(qInt);clearInterval(fInt);
- S={screen:"play",name:S.name,used:{},run:{t0:Date.now(),answered:0,correct:0,startRung:0,peak:0,fb:0,en:100,cs:0},practice:true};
- logEv({kind:"practice_start"});newQ();render();scrollTo({top:0})}
 /* The next question comes from the progression engine on the server: it decides skill, level, type, difficulty and variant. */
 const blankQ=()=>({enLoss:0,enGain:0,thinkLong:false,pick:null,gone:[],hint:false,hintText:"",fill:"",ord:[],msel:[],bq:{},deadline:0,away:0,timeout:false,info:null,ok:null,res:null,pendingRes:null,revealing:false,noQ:null,retryWin:false});
 /* The admin can upload a new skill graph at any time. Every engine view names the live graph; when it differs from the
@@ -936,9 +933,9 @@ function pathReload(){if(pathReload.on)return;pathReload.on=1;try{clearTimeout(s
 let graphPolled=Date.now();
 function pollGraph(){graphPolled=Date.now();KBCQ.api("GET","/api/version").then(r=>{if(r&&r.graph&&r.graph!==GR.version){S.graphChanged=1;if(SAFE_SCREENS.includes(S.screen))pathReload()}}).catch(()=>{})}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pollGraph()});
-function setQ(r){const practice=!!S.practice;if(r.engine){ENGINE=r.engine;graphCheck(ENGINE)}
+function setQ(r){if(r.engine){ENGINE=r.engine;graphCheck(ENGINE)}
  if(!r.question){Object.assign(S,blankQ(),{q:null,phase:"none",noQ:r});return}
- const q=KBCQ.adapt(r.question,r.address,GR),secs=xtime(practice?CFG.secs:S.run&&S.run.first&&!S.run.answered?FIRST_SECS:secsFor(rungOf()));
+ const q=KBCQ.adapt(r.question,r.address,GR),secs=xtime(S.run&&S.run.first&&!S.run.answered?FIRST_SECS:secsFor(rungOf()));
  Object.assign(S,blankQ(),{q,phase:"ask",time:secs,secsMax:secs,qT0:Date.now()})}
 /* PREQ[mode]: a question already fetched for that mode. The server keeps one open question per student, so fetching for
    one mode makes any question kept for another mode stale: those are dropped. */
@@ -949,7 +946,7 @@ function keepNext(r){if(r&&r.next&&r.next.mode){dropPre(r.next.mode);PREQ[r.next
 function nextFor(m){dropPre(m);const x=PREQ[m];delete PREQ[m];const fetchIt=()=>KBCQ.api("GET","/api/play/next?mode="+m);
  return x&&Date.now()-x.at<5*60e3?x.p.then(r=>r||fetchIt(),fetchIt):fetchIt()}
 function newQ(){const tok=S.qtok=(S.qtok||0)+1;Object.assign(S,blankQ(),{q:null,phase:"loading"});
- nextFor(S.practice?"practice":"hotseat").then(r=>{if(S.qtok!==tok||S.screen!=="play")return;setQ(r);render()})
+ nextFor("hotseat").then(r=>{if(S.qtok!==tok||S.screen!=="play")return;setQ(r);render()})
   .catch(e=>{if(S.qtok!==tok||S.screen!=="play")return;S.phase="error";S.err=e.message;render()})}
 /* Full screen: requested from the Play click (a user gesture). Browsers or frames that refuse it are simply ignored. */
 const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement;
@@ -960,7 +957,7 @@ function goFull(manual){try{const d=document.documentElement;if(fsEl())return;co
 function toggleFull(){try{if(fsEl()){const ex=document.exitFullscreen||document.webkitExitFullscreen;const p=ex&&ex.call(document);p&&p.catch&&p.catch(()=>{})}else goFull(true)}catch(e){}}
 document.addEventListener("fullscreenchange",()=>{const b=$("#fsbtn");if(b){b.setAttribute("aria-pressed",!!fsEl());b.title=fsEl()?"Exit full screen":"Full screen"}});
 function startRun(fromFFF){ctx();goFull();if(!fromFFF)SFX.start();clearInterval(qInt);clearInterval(fInt);P.rung=0;const first=!P.runs;
- S={screen:"play",name:S.name,used:{},run:{t0:Date.now(),answered:0,correct:0,startRung:0,peak:0,fb:0,en:100,cs:0,first},practice:false};P.runs++;
+ S={screen:"play",name:S.name,used:{},run:{t0:Date.now(),answered:0,correct:0,startRung:0,peak:0,fb:0,en:100,cs:0,first}};P.runs++;
  logEv({kind:"run_start",rung:rungOf()});newQ();render();scrollTo({top:0})}
 
 /* ================= Grading and progress rules ================= */
@@ -1016,8 +1013,8 @@ async function reveal(){if(S.phase==="reveal"||S.revealing)return;S.revealing=tr
  const ok=!!res.correct;S.ok=ok;S.res=res;S.phase="reveal";S.revealAt=Date.now();KBCQ.reveal(q,res,S);
  /* "Try a similar question": the follow-up is the same skill and type; getting it right is the moment worth counting */
  if(S.retryOf){if(ok&&q.sk===S.retryOf){S.retryWin=true;logEv({kind:"retry_correct",sk:q.sk})}S.retryOf=null}
- const info=apply(ok,res);S.info=info;if(!S.practice)energyTick(ok);S.run.peak=Math.max(S.run.peak||0,info.before,info.after);S.run.answered++;if(ok)S.run.correct++;
- logEv({kind:"answer",sk:q.sk,ty:q.ty,v:q.v,qid:q.id,ok,timeout:!!S.timeout,practice:!!S.practice,rung:info.after});S.run.fb=0;
+ const info=apply(ok,res);S.info=info;energyTick(ok);S.run.peak=Math.max(S.run.peak||0,info.before,info.after);S.run.answered++;if(ok)S.run.correct++;
+ logEv({kind:"answer",sk:q.sk,ty:q.ty,v:q.v,qid:q.id,ok,timeout:!!S.timeout,rung:info.after});S.run.fb=0;
  render();
  if(ok){SFX.right();setTimeout(()=>SFX.coinDrop(info.rungUp?7:3),260);spotFx("win");window.KB3D&&KB3D.boost();if(info.rungUp){if(info.ck)setTimeout(()=>SFX.fanfare(),900);confetti(info.ck?260:160)}else confetti(50)}
  else{SFX.wrong();flash();spotFx("lose");window.KB3D&&KB3D.alarm()}
@@ -1030,7 +1027,7 @@ function endRun(reason){stopQ();leaveReveal();const R=S.run,dur=Date.now()-R.t0,
  const pay=R.earned||0; /* prizes are credited the moment a group is cleared; a game just reports what it earned */
  const before=(P.coins||0)-pay;saveP();
  logEv({kind:"run_end",reason,dur,fb:R.fb,answered:R.answered,correct:R.correct,rung:peak,payout:pay});saveFame();
- S={screen:"result",name:S.name,res:{reason,answered:R.answered,correct:R.correct,secs:Math.round(dur/1000),reached:peak,payout:pay,wallet:P.coins,last:S.q,ok:S.ok,info:S.info,practice:S.practice}};render();scrollTo({top:0});
+ S={screen:"result",name:S.name,res:{reason,answered:R.answered,correct:R.correct,secs:Math.round(dur/1000),reached:peak,payout:pay,wallet:P.coins,last:S.q,ok:S.ok,info:S.info}};render();scrollTo({top:0});
  if(pay>0){setTimeout(()=>flyCoins(pay,before,P.coins),500);if(reason==="win")setTimeout(()=>confetti(200),300)}}
 function flyCoins(pay,from,to){const chip=$("#wchip");if(!chip)return;const cr=chip.getBoundingClientRect(),tx=cr.left+14,ty=cr.top+cr.height/2-13,n=Math.min(14,4+Math.round(Math.log10(pay+1)*2));
  for(let i=0;i<n;i++){const c=document.createElement("span");c.className="flycoin";c.textContent="{}";const sx=innerWidth*.28+Math.random()*innerWidth*.22,sy=innerHeight*.4+Math.random()*120;c.style.transform=`translate(${sx}px,${sy}px) scale(.6)`;document.body.appendChild(c);
@@ -1102,13 +1099,12 @@ function ready(){const q=S.q;if(!q)return false;if(q.kind==="bank")return KBCQ.r
 function actHTML(){const h=actHTML0();return S.phase==="reveal"&&S.q?h+`<button class="btn quiet solbtn" data-act="sol">💡 Reveal solution</button>`:h}
 function actHTML0(){const q=S.q;
  if(S.phase==="ask"){if(S.quitAsk)return `<span class="ask">Stop here and keep ${fmtR(amountOf(rungOf()))}?</span><button class="btn gold" data-act="quit">Yes, stop</button><button class="btn quiet" data-act="quit-no">Keep playing</button>`;
-  if(!ready())return `${S.practice?'<button class="btn quiet sm" data-act="practice-end">End practice</button>':'<button class="btn quiet sm" data-act="quit-ask">Stop playing</button>'}`;
+  if(!ready())return '<button class="btn quiet sm" data-act="quit-ask">Stop playing</button>';
   return `<span class="ask">Final answer?</span><button class="btn gold" id="lockbtn" data-act="lock">Lock answer</button>${q.kind==="mcq"?`<button class="btn quiet" data-act="unpick">Change</button>`:""}`}
  if(S.phase==="locked")return `<span class="ask pulse">Answer locked… let's see</span>`;
- if(S.practice)return `<span class="banner ${S.ok?"win":"lose"}">${S.ok?"Correct!":S.timeout?"Time's up":"Not quite"}</span><button class="btn gold" data-act="next">Next →</button><button class="btn quiet" data-act="practice-end">End practice</button>`;
  if(!S.ok&&S.run.en<=0)return `<span class="banner lose">Out of energy</span><button class="btn gold" data-act="end">See my game →</button>`;
  if(!S.ok)return `<span class="banner lose">${S.timeout?"Time's up":"Not this time"}</span><button class="btn gold" data-act="second">Try a new question →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
- if(S.ok)return rungOf()>=OPEN&&!S.practice?`<span class="banner win">Correct answer!</span><button class="btn gold" data-act="collect">Collect ${fmtR(LADDER[OPEN-1])} →</button>`:`<span class="banner win">${S.retryWin?"You fixed it! ✓":"Correct answer!"}</span><button class="btn gold" data-act="next">Next →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
+ if(S.ok)return rungOf()>=OPEN?`<span class="banner win">Correct answer!</span><button class="btn gold" data-act="collect">Collect ${fmtR(LADDER[OPEN-1])} →</button>`:`<span class="banner win">${S.retryWin?"You fixed it! ✓":"Correct answer!"}</span><button class="btn gold" data-act="next">Next →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
  return `<span class="banner lose">${S.timeout?"Time's up":"Wrong answer"}</span><button class="btn gold" data-act="end">See my game →</button>`}
 function feedbackHTML(){const I=S.info;if(S.phase!=="reveal"||!I)return "";let h="";
  if(S.ok&&I.rungUp)h+=`<div class="rungup">${noteBig(amountOf(I.after),"won")||mascot("happy",72)}<b>You won ${fmtR(amountOf(I.after))}!</b><span>${I.ck?`${stg(I.ck)} locked in. A wrong answer can't take you below this.`:`Prize ${I.after} of 15 won. ${I.after<OPEN?`Next: ${fmtR(LADDER[I.after])}.`:""}`}</span></div>`;
@@ -1136,17 +1132,17 @@ function vNoQ(){const r=S.noQ||{},soon=(r.comingSoon||[]).map(id=>SK[id]).filter
  else if(S.phase==="error")body=`<div class="qcard card"><h2 class="qtext">We couldn't load a question</h2><p class="muted">${esc(S.err||"Check your internet connection.")}</p><div class="ractions"><button class="btn gold" data-act="next">Try again</button><button class="btn quiet" data-act="stop">Leave</button></div></div>`;
  else body=`<div class="qcard card"><h2 class="qtext">${r.allDone?"You've cleared every skill on the path!":"You've cleared everything that's ready for you."}</h2>
   <p class="muted">${r.allDone?"There is nothing left to unlock. Legend.":`New questions are on their way for ${soon.length?soon.slice(0,4).map(s=>esc(s.name)).join(", ")+(soon.length>4?" and more":""):"your next skills"}. Your progress is saved, so come back soon.`}</p>
-  <div class="ractions">${S.practice?'<button class="btn gold" data-act="practice-end">End practice</button>':'<button class="btn gold" data-act="stop">Save progress & leave</button>'}<button class="btn quiet" data-act="path">See my path</button></div></div>`;
+  <div class="ractions"><button class="btn gold" data-act="stop">Save progress & leave</button><button class="btn quiet" data-act="path">See my path</button></div></div>`;
  return `<div class="play">${dockHTML(S.phase==="loading"?"think":"chai","col")}<div class="left"><section class="mainc">${body}</section></div><div class="side">${boardHTML(rungOf())}</div></div>`}
 function vPlay(){if(!S.q)return vNoQ();const q=S.q,r=rungOf(),st=rowSteps(Math.min(r,ROWS.length-1)),stake=r<OPEN?LADDER[r]:LADDER[OPEN-1];
  const pips="";
- const mood=S.phase==="reveal"?(S.ok?(S.info&&S.info.ck?"trophy":"dance"):S.timeout?"tired":"bonk"):S.phase==="locked"?"think":(!S.practice&&S.run.en<=20?"tired":S.practice&&S.run.answered===0?"type":S.thinkLong?"think":(S.pick!=null||S.fill||(S.ord&&S.ord.length)?"pointa":"pointq"));
+ const mood=S.phase==="reveal"?(S.ok?(S.info&&S.info.ck?"trophy":"dance"):S.timeout?"tired":"bonk"):S.phase==="locked"?"think":(S.run.en<=20?"tired":S.thinkLong?"think":(S.pick!=null||S.fill||(S.ord&&S.ord.length)?"pointa":"pointq"));
  return `<div class="play ${S.phase==="reveal"?"rev":""}">${dockHTML(mood,"col")}<div class="left"><div class="hud"><div class="lls">${energyHTML()}</div>
 <div class="clock ${S.time<=10?"low":""}" id="clock" style="--p:${S.time/(S.secsMax||CFG.secs)}" role="timer" aria-label="Seconds left"><span>${S.time}</span></div>
-<div class="stake one">${S.practice?"":`<span class="stk-note" id="stknote">${noteThumb(stake)}</span>`}<span class="stk-t"><small>${S.practice?"Practice round":"Playing for"}</small><b>${S.practice?"No stakes":fmtR(stake)}</b></span>${!S.practice&&boardMin()?`<button class="bmax" data-act="board-min" aria-label="Show the money board">Money board <b aria-hidden="true">＋</b></button>`:""}</div></div>
+<div class="stake one"><span class="stk-note" id="stknote">${noteThumb(stake)}</span><span class="stk-t"><small>Playing for</small><b>${fmtR(stake)}</b></span>${boardMin()?`<button class="bmax" data-act="board-min" aria-label="Show the money board">Money board <b aria-hidden="true">＋</b></button>`:""}</div></div>
 ${stripHTML(r)}<button class="mbtoggle" data-act="board" aria-label="Show the money board">Money board</button>
 <section class="mainc" id="mainc">
-<div class="qcard card"><div class="qtop"><span class="chip gold">${S.practice?"Practice":`Question ${S.run.answered+(S.phase==="reveal"?0:1)}`}</span>${pips?`<span class="rowprog">To the next prize <span class="pips" aria-label="${st.done} of ${st.total}">${pips}</span></span>`:""}</div>
+<div class="qcard card"><div class="qtop"><span class="chip gold">Question ${S.run.answered+(S.phase==="reveal"?0:1)}</span>${pips?`<span class="rowprog">To the next prize <span class="pips" aria-label="${st.done} of ${st.total}">${pips}</span></span>`:""}</div>
 <h2 class="qtext">${esc(q.prompt)}</h2>${KBCQ.above(q,S)}
 ${q.code?codeHTML(q.code):""}
 ${q.ai!=null?`<div class="ai"><i>AI</i><span>The AI says this prints <b>${esc(q.ai)}</b></span></div>`:""}
@@ -1470,7 +1466,7 @@ function diwaliDecor(){cosmos();const t=$(".toran");if(t&&(!t.childElementCount|
 const SCREEN_H1={home:"Kaun Banega Coder: home",play:"Hot seat",fff:"Fastest Finger First",path:"My path",fame:"Hall of Fame",guide:"How to play",wallet:"Your wallet",buddy:"Your buddy",result:"Game over",team:"Team dashboard"};
 function screenH1(){const app=$("#app");if(!app||app.querySelector("h1"))return;const h=document.createElement("h1");h.className="sr";h.textContent=SCREEN_H1[S.screen]||"Kaun Banega Coder";app.prepend(h)}
 /* Every time the student sits down for a new prize, its banknote zooms in big, then flies to the HUD */
-function noteZoomMaybe(){if(S.screen!=="play"||S.practice||!S.run||S.phase!=="ask")return;const rr=rungOf(),stake=rr<OPEN?LADDER[rr]:LADDER[OPEN-1];
+function noteZoomMaybe(){if(S.screen!=="play"||!S.run||S.phase!=="ask")return;const rr=rungOf(),stake=rr<OPEN?LADDER[rr]:LADDER[OPEN-1];
  if(S.run.zoomed===stake)return;S.run.zoomed=stake;const t=$("#stknote");if(reduceMotion||!NOTE[stake]||!t)return;
  const o=document.createElement("div");o.className="nzoom";o.setAttribute("aria-hidden","true");o.innerHTML=`<div class="nz-in">${nSvg(noteFront(stake,true),"")}<b>Playing for ${fmtR(stake)}</b></div>`;document.body.appendChild(o);
  const box=o.firstChild;t.classList.add("wait");SFX.coinDrop&&SFX.coinDrop(2);
@@ -1521,7 +1517,7 @@ let homeIdle=null;
 addEventListener("pointermove",e=>{if(S.screen!=="home"||!window.KB3D||!KB3D.aim)return;KB3D.aim(e.clientX,e.clientY);clearTimeout(homeIdle);homeIdle=setTimeout(()=>KB3D.release(),1600)},SIG);
 function spotFx(k){const sp=$("#spot");if(sp){sp.classList.remove("win","lose");sp.classList.add(k)}}
 addEventListener("resize",()=>placeSpot(),SIG);addEventListener("scroll",()=>placeSpot(),SIG);
-function syncAct(){const a=$(".actions");if(a)a.innerHTML=actHTML();if(S.screen==="play"&&S.phase==="ask"&&!S.thinkLong&&!(S.practice&&S.run.answered===0)){const want=(S.pick!=null||S.fill||(S.ord&&S.ord.length))?"pointa":"pointq",b=document.querySelector(".mcol .mascot");if(b&&!b.classList.contains(want)){const t=document.createElement("div");t.innerHTML=mascot(want,176);b.replaceWith(t.firstChild)}}}
+function syncAct(){const a=$(".actions");if(a)a.innerHTML=actHTML();if(S.screen==="play"&&S.phase==="ask"&&!S.thinkLong){const want=(S.pick!=null||S.fill||(S.ord&&S.ord.length))?"pointa":"pointq",b=document.querySelector(".mcol .mascot");if(b&&!b.classList.contains(want)){const t=document.createElement("div");t.innerHTML=mascot(want,176);b.replaceWith(t.firstChild)}}}
 
 /* ================= Effects ================= */
 function flash(){const f=$("#flash");f.classList.remove("on");void f.offsetWidth;f.classList.add("on");const m=$("#mainc");if(m){m.classList.remove("shake");void m.offsetWidth;m.classList.add("shake")}}
@@ -1862,7 +1858,7 @@ const LEAVES={home:1,fame:1,wallet:1,path:1,logout:1,buddy:1,tour:1};
 function inGame(){return S.screen==="play"||S.screen==="seat"||(S.screen==="fff"&&S.fff&&S.fff.done!=="bad")}
 function askLeave(b){PEND=b;let m=$("#leavem");if(!m){m=document.createElement("div");m.id="leavem";m.className="modalx";document.body.appendChild(m)}
  const fff=S.screen==="fff";
- m.innerHTML=`<div class="mbox" role="alertdialog" aria-modal="true" aria-labelledby="lvh">${mascot("think",96)}<h3 id="lvh">Leave this game?</h3><p>${fff?"You'll lose this Fastest Finger round. To reach the hot seat you'll need to win one again.":S.practice?"Your practice round will end here.":"This game ends here and you keep what you've won so far. Next time you'll start again from Fastest Finger First."}</p><p class="muted">Your path progress is always saved.</p><div class="mbtns"><button class="btn gold" data-act="leave-stay">Keep playing</button><button class="btn quiet" data-act="leave-go">Leave game</button></div></div>`;
+ m.innerHTML=`<div class="mbox" role="alertdialog" aria-modal="true" aria-labelledby="lvh">${mascot("think",96)}<h3 id="lvh">Leave this game?</h3><p>${fff?"You'll lose this Fastest Finger round. To reach the hot seat you'll need to win one again.":"This game ends here and you keep what you've won so far. Next time you'll start again from Fastest Finger First."}</p><p class="muted">Your path progress is always saved.</p><div class="mbtns"><button class="btn gold" data-act="leave-stay">Keep playing</button><button class="btn quiet" data-act="leave-go">Leave game</button></div></div>`;
  m.hidden=false;setTimeout(()=>{const s=m.querySelector('[data-act="leave-stay"]');s&&s.focus()},30)}
 function guideOverlay(){let m=$("#guidem");if(!m){m=document.createElement("div");m.id="guidem";m.className="modalx wide";document.body.appendChild(m)}
  m.innerHTML=`<div class="mbox guidebox" role="dialog" aria-modal="true" aria-label="How to play"><button class="mx" data-act="guide-close" aria-label="Close">✕</button>${vGuide(true)}</div>`;m.hidden=false;
@@ -1934,7 +1930,6 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="quit"){endRun("stop");return}
  if(a==="next"){leaveReveal();newQ();render();scrollTo({top:0});return}
  if(a==="second"&&S.screen==="play"){logEv({kind:"retry",rung:rungOf(),sk:S.q&&S.q.sk});S.retryOf=S.q&&S.q.sk;leaveReveal();newQ();render();scrollTo({top:0});say("A new question on the same topic.");return}
- if(a==="practice-end"&&S.practice){leaveReveal();logEv({kind:"practice_end",answered:S.run.answered,correct:S.run.correct});S={screen:"home",name:S.name};render();scrollTo({top:0});return}
  if(a==="board"){document.body.classList.toggle("boardopen");return}
  if(a==="stop"){endRun("stop");return}
  if(a==="end"){endRun(S.run&&S.run.en<=0?"energy":S.timeout?"timeout":"wrong");return}

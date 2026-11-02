@@ -296,7 +296,7 @@ const SCREENS = new Set(['home', 'play', 'result', 'fame', 'team', 'path', 'fff'
 app.post('/api/live', requireStudent, jsonBody, wrap(async (req, res) => {
   const was = await one('SELECT last_seen, since FROM presence WHERE roll_no = ?', req.student.roll_no), now = Date.now();
   const screen = SCREENS.has(req.body?.screen) ? req.body.screen : null;
-  const info = screen ? { practice: !!req.body?.practice, answered: Math.max(0, Math.min(999, Number(req.body?.answered) || 0)) } : null;
+  const info = screen ? { answered: Math.max(0, Math.min(999, Number(req.body?.answered) || 0)) } : null;
   const since = was && was.since && was.last_seen > now - LIVE_MS ? was.since : now; // a new live session after a gap
   await run(`INSERT INTO presence (roll_no, last_seen, since, screen, info) VALUES (?, ?, ?, ?, ?)
     ON CONFLICT (roll_no) DO UPDATE SET last_seen = excluded.last_seen, since = excluded.since, screen = COALESCE(excluded.screen, presence.screen), info = COALESCE(excluded.info, presence.info)`,

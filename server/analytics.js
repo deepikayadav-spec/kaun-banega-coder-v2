@@ -113,7 +113,7 @@ function compute(raw, W, G) {
   const avgDau = W.list.reduce((n, d) => n + dau(d), 0) / W.list.length;
   const mau = activeIn(back(30)), wau = activeIn(back(7));
   const timeMs = act.reduce((n, r) => n + Number(r.ms), 0), studentDays = act.filter((r) => Number(r.ms) > 0).length;
-  const hot = ans.filter((a) => a.mode === 'hotseat').length, right = ans.filter((a) => a.correct).length;
+  const right = ans.filter((a) => a.correct).length;
   const fff = ev.filter((e) => e.kind === 'fff'), fffWon = fff.filter((e) => e.data && e.data.ok).length;
   const players = new Set(ans.map((a) => a.roll_no));
   const starters = new Set(G ? G.skills.filter((s) => s.starter).map((s) => s.id) : []);
@@ -127,7 +127,7 @@ function compute(raw, W, G) {
     dauEnd: dau(W.to), avgDau: round1(avgDau), wau, mau, stickiness: mau ? pct(avgDau, mau) : null,
     logins: logins.length, timeMs, timePerDay: studentDays ? timeMs / studentDays : null, timePerActive: activeInW ? timeMs / activeInW : null,
     games: ev.filter((e) => e.kind === 'run_start').length, fffRate: pct(fffWon, fff.length), fffN: fff.length,
-    answers: ans.length, hot, practice: ans.length - hot, perPlayer: players.size ? round1(ans.length / players.size) : null, players: players.size,
+    answers: ans.length, perPlayer: players.size ? round1(ans.length / players.size) : null, players: players.size,
     accuracy: pct(right, ans.length), medianMs: median(ans.map((a) => Number(a.ms)).filter((x) => x > 0)),
     timeouts: pct(ans.filter((a) => a.timeout).length, ans.length), lifelines: pct(ans.filter((a) => Array.isArray(a.lifelines) && a.lifelines.length).length, ans.length),
     levelUps: tr.filter((t) => t.kind === 'level_up').length, skillsDone: tr.filter((t) => t.kind === 'skill_done').length,
@@ -162,8 +162,7 @@ export async function overview(F, G) {
     { name: 'Gameplay', metrics: [
       M('Games started', x.games, 'count', 'Hot-seat games started (after Fastest Finger).'),
       M('Fastest Finger win rate', x.fffRate, 'pct', 'Puzzles won out of puzzles finished.', { basis: x.fffN }),
-      M('Questions answered', x.answers, 'count', 'Hot seat and practice.'),
-      M('Hot seat / practice', `${x.hot} / ${x.practice}`, 'text', 'Answers in the hot seat and in practice.'),
+      M('Questions answered', x.answers, 'count', 'All answers in the period.'),
       M('Questions per player', x.perPlayer, 'count', 'Answers per student who answered at least once in the period.'),
       M('Accuracy', x.accuracy, 'pct', 'Right answers out of all answers.'),
       M('Median answer time', x.medianMs, 'ms', 'Time from the question appearing to locking the answer.'),
@@ -299,13 +298,13 @@ export async function liveNow(F, G, liveMs = 75000) {
   const out = rows.map((r) => {
     const info = r.info || {}, pend = r.pending, sk = (r.state && r.state.skills) || {};
     const playing = r.screen === 'play' || r.screen === 'fff' || r.screen === 'seat';
-    const mode = r.screen === 'play' ? (info.practice ? 'practice' : 'hotseat') : r.screen === 'fff' || r.screen === 'seat' ? 'hotseat' : 'browsing';
+    const mode = playing ? 'hotseat' : 'browsing';
     const q = playing && pend && pend.skill ? { skill: pend.skill, name: name(pend.skill), level: pend.level, type: pend.type, mode: pend.mode, servedAt: Number(pend.servedAt) || null } : null;
     const cur = G ? G.skills.find((S) => sk[S.id] && sk[S.id].status === 'open' && sk[S.id].q > 0) || G.skills.find((S) => sk[S.id] && sk[S.id].status === 'open') : null;
     return {
       roll_no: r.roll_no, name: r.name, university: r.university || '', batch: r.batch || '', live: Number(r.last_seen) > now - liveMs,
       lastSeen: Number(r.last_seen), since: Number(r.since) || null, screen: r.screen || null, doing: (r.screen && SCREEN[r.screen]) || 'On the portal',
-      mode: r.screen ? mode : 'unknown', practice: !!info.practice, answeredThisGame: Number(info.answered) || 0, question: q,
+      mode: r.screen ? mode : 'unknown', answeredThisGame: Number(info.answered) || 0, question: q,
       nowAt: cur ? { id: cur.id, name: cur.name, level: sk[cur.id].level } : null,
       todayMs: Number(r.today_ms) || 0, todayAnswers: Number(r.today_n) || 0, todayAcc: pct(Number(r.today_right) || 0, Number(r.today_n) || 0),
       lastAnswer: Number(r.last_at) || null
@@ -316,7 +315,7 @@ export async function liveNow(F, G, liveMs = 75000) {
   for (const r of live) byUni[r.university || '(no university)'] = (byUni[r.university || '(no university)'] || 0) + 1;
   return {
     at: now, liveMs, filters: { university: F.uni || null, batch: F.batch || null },
-    summary: { live: live.length, hotseat: count((r) => r.mode === 'hotseat'), practice: count((r) => r.mode === 'practice'), browsing: count((r) => r.mode === 'browsing' || r.mode === 'unknown'),
+    summary: { live: live.length, hotseat: count((r) => r.mode === 'hotseat'), browsing: count((r) => r.mode === 'browsing' || r.mode === 'unknown'),
       leftRecently: left.length, answersToday: live.reduce((n, r) => n + r.todayAnswers, 0) },
     byUniversity: Object.entries(byUni).map(([university, n]) => ({ university, n })).sort((a, b) => b.n - a.n),
     rows: live, recent: left.slice(0, 200)

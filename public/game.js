@@ -980,7 +980,7 @@ function stopQ(){clearInterval(qInt);qInt=null}
 /* Idle nudge: if a student does nothing on a question for 18 s, Pixel flies over to the answers, taps them and says
    something encouraging, then flies home. At most every 25 s, never while they are interacting, never with reduced motion
    (then only the bubble changes). */
-const IDLE_SAY=["Still with me? Tap the answer you think is right.","Take it line by line. Then pick one!","No pressure. Your best guess is a great start.","Stuck? A lifeline might help."];
+const IDLE_SAY=["Still with me? Tap the answer you think is right.","Take it line by line. Then pick one!","No pressure. Your best guess is a great start."];
 let idleT=0,idleN=0,lastAct=Date.now();
 ["pointerdown","keydown","pointermove"].forEach(ev=>addEventListener(ev,()=>{lastAct=Date.now()},{passive:true,signal:AC.signal}));
 function idleArm(){clearTimeout(idleT);if(S.screen!=="play"||S.phase!=="ask")return;idleT=setTimeout(idleNudge,4000)}
@@ -1390,9 +1390,9 @@ const RF_LABEL=["","not it","kinda mid","it was okay","pretty good","loved it"];
 const RF_GAME={
  1:{head:"What broke it? Tap any.",prompt:"What made this game forgettable?",hint:"Be honest. The first thing that comes to mind is fine.",tags:["game froze or crashed","marked my right answer wrong","lost my progress","questions made no sense","way too hard to enjoy","felt like a test, not a game"]},
  2:{head:"What went wrong? Tap any.",prompt:"What made this game forgettable?",hint:"Be honest. The first thing that comes to mind is fine.",tags:["same questions on repeat","got boring after 5 min","too slow between questions","timer too stressful","explanations did not click","no reason to keep going"]},
- 3:{head:"What held it back? Tap any.",prompt:"What one change would make you play again tomorrow?",hint:"One thing is enough.",tags:["needs more variety","too easy early on","difficulty jumped too fast","lifelines felt useless","want to play with friends","want harder final questions"]},
+ 3:{head:"What held it back? Tap any.",prompt:"What one change would make you play again tomorrow?",hint:"One thing is enough.",tags:["needs more variety","too easy early on","difficulty jumped too fast","explanations were too long","want to play with friends","want harder final questions"]},
  4:{head:"What is missing for a 5? Tap any.",prompt:"What would make this game unforgettable?",hint:"It was good. What would make you tell a friend about it?",tags:["more topics","a leaderboard","share my score","a daily challenge","play vs a friend","better explanations"]},
- 5:{head:"What hit? Tap any.",prompt:"What would make this game unforgettable?",hint:"Think bigger than a fix. Dream a little.",tags:["explanations hit","lifelines were clutch","the pressure was fun","learned something new","would play with friends","sending this to my batch"]}};
+ 5:{head:"What hit? Tap any.",prompt:"What would make this game unforgettable?",hint:"Think bigger than a fix. Dream a little.",tags:["explanations hit","the questions were fun","the pressure was fun","learned something new","would play with friends","sending this to my batch"]}};
 const rfBlank=()=>({stars:0,tags:[],text:"",bonus:0});
 /* 11/5, after Airbnb's 11-star exercise: on the general form a 5 opens six optional extra stars (6 to 11), and the
    question asks what would make KBC an 11 instead of what to fix. ctx.bonus (0-6) is what the admin Feedback tab shows. */
@@ -1683,7 +1683,7 @@ function seatDemo(){return `<div class="dm dm-seat"><div class="dm-qc">What does
 function vSeat(){const first=!P.runs;
  return `<div class="fffgrid"><aside class="fffbot"><p class="say">You made it! I'm ${esc(buddyName())}, and I'll be right here with you. Read this, then take your seat.</p>${mascot("finish",200)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span></aside><section class="fffw enter"><div class="qcard card fffhead fintro seatin"><span class="chip gold">The hot seat</span><div class="fi-ic" aria-hidden="true">🪑</div><h2 class="qtext">How the hot seat works</h2>
 <div class="fi-cols"><div><ol class="fi-steps"><li style="--i:0"><b>1</b><span>Read the question and the code</span></li><li style="--i:1"><b>2</b><span>Answer it the way the question asks: pick, tap, type or put in order</span></li><li style="--i:2"><b>3</b><span>Press <strong>Lock answer</strong>. Then tap <strong>Reveal solution</strong> to see the working</span></li></ol>
-<div class="fi-meta"><span>⏱ ${seatSecsNote()}</span><span>⚡ A miss costs energy; 3 right in a row gives some back</span><span>🛟 Stuck? Use a lifeline: 50:50, Ask the mentor or Flip</span></div></div>
+<div class="fi-meta"><span>⏱ ${seatSecsNote()}</span><span>⚡ A miss costs energy; 3 right in a row gives some back</span></div></div>
 <figure class="demo" aria-label="How it looks: a short looping demo"><figcaption>Watch how it works</figcaption>${seatDemo()}</figure></div>
 <div class="fi-go"><button class="btn gold glow" data-act="seat-go">${first?"I'm ready, start →":"Start the hot seat →"}</button></div><small class="muted">or press Enter</small></div></section><div class="fffsp"></div></div>`}
 function vFFFIntro(F){const M=FMODE[F.mode];

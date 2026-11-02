@@ -75,7 +75,7 @@ async function load(F, W) {
       FROM students_master m WHERE ${C.sql}`, ...C.args),
     all(`SELECT l.roll_no, l.at FROM student_logins l JOIN students_master m ON m.roll_no = l.roll_no WHERE ${C.sql} AND l.at >= ? AND l.at < ?`, ...C.args, W.fromMs, W.toMs),
     all(`SELECT a.roll_no, a.day, a.ms FROM activity a JOIN students_master m ON m.roll_no = a.roll_no WHERE ${C.sql} AND a.day >= ? AND a.day <= ?`, ...C.args, W.from, W.to),
-    all(`SELECT a.roll_no, a.mode, a.correct, a.timeout, a.ms, a.lifelines, a.skill, a.type, a.level, ${DAY_SQL('a.at')} AS day
+    all(`SELECT a.roll_no, a.mode, a.correct, a.timeout, a.ms, a.skill, a.type, a.level, ${DAY_SQL('a.at')} AS day
       FROM attempts a JOIN students_master m ON m.roll_no = a.roll_no WHERE ${C.sql} AND a.at >= ? AND a.at < ?`, ...C.args, W.fromMs, W.toMs),
     all(`SELECT e.roll_no, e.kind, e.data FROM events e JOIN students_master m ON m.roll_no = e.roll_no
       WHERE ${C.sql} AND e.at >= ? AND e.at < ? AND e.kind IN ('run_start', 'fff')`, ...C.args, W.fromMs, W.toMs),
@@ -136,7 +136,7 @@ function compute(raw, W, G) {
     games: ev.filter((e) => e.kind === 'run_start').length, fffRate: pct(fffWon, fff.length), fffN: fff.length,
     answers: ans.length, perPlayer: players.size ? round1(ans.length / players.size) : null, players: players.size,
     accuracy: pct(right, ans.length), medianMs: median(ans.map((a) => Number(a.ms)).filter((x) => x > 0)),
-    timeouts: pct(ans.filter((a) => a.timeout).length, ans.length), lifelines: pct(ans.filter((a) => Array.isArray(a.lifelines) && a.lifelines.length).length, ans.length),
+    timeouts: pct(ans.filter((a) => a.timeout).length, ans.length),
     levelUps: tr.filter((t) => t.kind === 'level_up').length, skillsDone: tr.filter((t) => t.kind === 'skill_done').length,
     withSkill: cleared.filter((n) => n > 0).length, skillsPer: states.length ? round1(cleared.reduce((a, b) => a + b, 0) / states.length) : null,
     prizeWinners: prizes.filter((p) => Number(p.best) > 0).length,
@@ -175,8 +175,7 @@ export async function overview(F, G) {
       M('Questions per player', x.perPlayer, 'count', 'Answers per student who answered at least once in the period.'),
       M('Accuracy', x.accuracy, 'pct', 'Right answers out of all answers.'),
       M('Median answer time', x.medianMs, 'ms', 'Time from the question appearing to locking the answer.'),
-      M('Timed out', x.timeouts, 'pct', 'Answers where the clock ran out.'),
-      M('Lifeline use', x.lifelines, 'pct', 'Answers where a lifeline (50:50, hint, flip) was used.') ] },
+      M('Timed out', x.timeouts, 'pct', 'Answers where the clock ran out.') ] },
     { name: 'Progress', metrics: [
       M('Level-ups', x.levelUps, 'count', 'Levels cleared (two right in a row) in the period.'),
       M('Skills cleared', x.skillsDone, 'count', 'Skills finished (L4 cleared) in the period.'),

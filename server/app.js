@@ -647,10 +647,10 @@ const csv = (rows, cols) => [cols.join(','), ...rows.map((r) => cols.map((k) => 
 }).join(','))].join('\n');
 admin.get('/export/attempts.csv', wrap(async (req, res) => {
   const uni = scope(req);
-  const rows = await all(`SELECT a.roll_no, m.name, a.university, a.question_id, a.skill, a.level, a.type, a.r, a.variant, a.mode, a.correct, a.timeout, a.ms, a.lifelines,
+  const rows = await all(`SELECT a.roll_no, m.name, a.university, a.question_id, a.skill, a.level, a.type, a.r, a.variant, a.mode, a.correct, a.timeout, a.ms,
       TO_CHAR(TO_TIMESTAMP(a.at / 1000) AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM-DD HH24:MI:SS') AS at_ist
     FROM attempts a LEFT JOIN students_master m ON m.roll_no = a.roll_no ${uni ? 'WHERE a.university = ?' : ''} ORDER BY a.at LIMIT 200000`, ...(uni ? [uni] : []));
-  res.type('text/csv').attachment('kbc-attempts.csv').send(csv(rows, ['roll_no', 'name', 'university', 'question_id', 'skill', 'level', 'type', 'r', 'variant', 'mode', 'correct', 'timeout', 'ms', 'lifelines', 'at_ist']));
+  res.type('text/csv').attachment('kbc-attempts.csv').send(csv(rows, ['roll_no', 'name', 'university', 'question_id', 'skill', 'level', 'type', 'r', 'variant', 'mode', 'correct', 'timeout', 'ms', 'at_ist']));
 }));
 admin.get('/export/students.csv', wrap(async (req, res) => {
   const uni = scope(req), c = await content();

@@ -62,6 +62,16 @@ test('login with the first name alone works only when it is unique at the univer
   assert.equal((await call('f3', 'POST', '/api/auth/login', { roll: 'N26P02A0103', name: 'Rahman' })).status, 401, 'only the first name counts');
 });
 
+test('a database seeded with older question types gets the new hot seat modes on boot', async () => {
+  const { one } = await import('../server/db.js'), { seedIfEmpty, content } = await import('../server/bank.js');
+  const modes = async () => { const r = await one("SELECT data FROM question_types WHERE key = 'faded'"); return (typeof r.data === 'string' ? JSON.parse(r.data) : r.data).modes; };
+  await run(`UPDATE question_types SET data = ? WHERE key = 'faded'`, JSON.stringify({ ...JSON.parse(fs.readFileSync('server/content/question-types.json', 'utf8')).types.find((t) => t.key === 'faded'), modes: ['practice'] }));
+  assert.deepEqual(await modes(), ['practice']);
+  await seedIfEmpty();
+  assert.deepEqual(await modes(), ['practice', 'hotseat']);
+  assert.ok((await content()).typesDoc.types.find((t) => t.key === 'faded').modes.includes('hotseat'));
+});
+
 test('play: next is stable until answered; answers are graded and stored; S1 can be finished', async () => {
   const n1 = await call('s', 'GET', '/api/play/next?mode=hotseat');
   const n2 = await call('s', 'GET', '/api/play/next?mode=hotseat');

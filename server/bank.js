@@ -269,6 +269,22 @@ export async function seedIfEmpty() {
   }
   const t = await one('SELECT COUNT(*)::int AS n FROM question_types');
   if (!t.n) await uploadTypes(readContent('question-types.json'));
+  // Modes added in server/content/question-types.json reach a database seeded earlier (e.g. the L4 types joining the
+  // hot seat). Modes are only ever added this way, never removed, so it is safe to run on every boot.
+  else {
+    const have = Object.fromEntries((await all('SELECT key, data FROM question_types')).map((r) => [r.key, typeof r.data === 'string' ? JSON.parse(r.data) : r.data]));
+    let changed = 0;
+    for (const f of readContent('question-types.json').types) {
+      const d = have[f.key];
+      if (!d) continue;
+      const add = (f.modes || []).filter((m) => !(d.modes || []).includes(m));
+      if (!add.length) continue;
+      d.modes = [...(d.modes || []), ...add];
+      await run('UPDATE question_types SET data = ? WHERE key = ?', json(d), f.key);
+      changed++;
+    }
+    if (changed) invalidate();
+  }
   const q = await one('SELECT COUNT(*)::int AS n FROM questions');
   if (!q.n) {
     await uploadBank(readContent('bank-S1-full.json'), { fileName: 'bank-S1-full.json' });

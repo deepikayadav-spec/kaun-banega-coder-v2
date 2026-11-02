@@ -92,6 +92,10 @@ test('play: next is stable until answered; answers are graded and stored; S1 can
       case 'fill': answer = { text: p.sample, stdout: p.target }; break;
       case 'parsons': answer = { order: p.sample.split('\n').map((l) => c.items.indexOf(l)), stdout: p.target }; break;
       case 'golf': answer = { picks: p.tokens.map((t) => t.choices.find((x) => x !== t.now && !/^["']/.test(x))), stdout: p.target }; break;
+      // L4 code types (hot seat since 2 Nov): the browser runs the code and reports what it printed
+      case 'faded': case 'write': answer = { code: p.sample, stdout: p.target }; break;
+      case 'grow': answer = { code: p.sample, stdout: p.tiers[p.tiers.length - 1].expected }; break;
+      case 'diverge': answer = { programs: p.samples.map((code) => ({ code, stdout: p.target })) }; break;
       default: throw new Error('hot seat served ' + q.type);
     }
     const a = await call('s', 'POST', '/api/play/answer', { qid: q.id, answer, ms: 1000, prefetch: true });

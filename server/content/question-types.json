@@ -589,6 +589,7 @@
       "ui": "faded",
       "grading": "run",
       "modes": [
+        "hotseat",
         "practice"
       ],
       "lifeline_5050": false,
@@ -613,6 +614,7 @@
       "ui": "grow",
       "grading": "run",
       "modes": [
+        "hotseat",
         "practice"
       ],
       "lifeline_5050": false,
@@ -636,6 +638,7 @@
       "ui": "code",
       "grading": "run",
       "modes": [
+        "hotseat",
         "practice"
       ],
       "lifeline_5050": false,
@@ -660,6 +663,7 @@
       "ui": "diverge",
       "grading": "run",
       "modes": [
+        "hotseat",
         "practice"
       ],
       "lifeline_5050": false,

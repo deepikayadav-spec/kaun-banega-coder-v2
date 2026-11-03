@@ -970,7 +970,10 @@ async function submitAnswer(){const q=S.q,ms=Date.now()-S.qT0;
  return KBCQ.api("POST","/api/play/answer",{qid:q.id,answer,ms,timeout:!!S.timeout,prefetch:true}).then(keepNext)}
 function apply(ok,res){const q=S.q,sk=q.sk,before=res&&res.rungBefore!=null?res.rungBefore:rungOf(),info={before,mastered:false,rungUp:false,ck:null,drop:null,msg:res&&res.msg};
  if(ok){P.correct++;P.streak[sk]=(P.streak[sk]||0)+1}else P.streak[sk]=0;
+ /* the level track before and after this answer, for the level tracker and the "what changed" line */
+ info.sk=sk;info.ok=ok;info.tb=trackOf(sk);
  if(res&&res.engine){ENGINE=res.engine;graphCheck(ENGINE)}
+ info.ta=trackOf(sk);info.trans=(res&&res.transitions)||[];info.lvup=info.trans.some(t=>t.kind==="level_up"||t.kind==="skill_done");
  P.answered++;dayTick();comboTick(ok);const after=rungOf();info.after=after;
  if(after>before){info.rungUp=true;if(CK[after-1])info.ck=CK[after-1];logEv({kind:"rung",rung:after});P.paid=P.paid||{};for(let r=before+1;r<=after;r++)if(!P.paid[r]){P.paid[r]=1;const amt=amountOf(r);P.coins=(P.coins||0)+amt;if(S.run)S.run.earned=(S.run.earned||0)+amt}}
  if(res&&res.transitions)info.mastered=res.transitions.some(t=>t.kind==="level_up"||t.kind==="skill_done");
@@ -1020,6 +1023,7 @@ async function reveal(){if(S.phase==="reveal"||S.revealing)return;S.revealing=tr
  render();
  if(ok){SFX.right();setTimeout(()=>SFX.coinDrop(info.rungUp?7:3),260);spotFx("win");window.KB3D&&KB3D.boost();if(info.rungUp){if(info.ck)setTimeout(()=>SFX.fanfare(),900);confetti(info.ck?260:160)}else confetti(50)}
  else{SFX.wrong();flash();spotFx("lose");window.KB3D&&KB3D.alarm()}
+ if(info.lvup)setTimeout(()=>{if(S.screen==="play"&&S.phase==="reveal"&&S.info===info)levelUpFX(info)},reduceMotion?100:info.rungUp?1500:800);
  say(ok?(info.rungUp?"Group cleared! Prize "+fmtR(amountOf(info.after))+" won.":"Correct! "+(info.msg||"")):(S.timeout?"Time is up. ":"Wrong answer. ")+"The answer was "+(q.show||"")+".")}
 function say(t){const e=$("#sr-live");if(e){e.textContent="";setTimeout(()=>e.textContent=t,30)}}
 function leaveReveal(){if(S.revealAt)S.run.fb+=Math.min(Date.now()-S.revealAt,120000);S.revealAt=0}
@@ -1108,7 +1112,7 @@ function actHTML0(){const q=S.q;
  if(!S.ok)return `<span class="banner lose">${S.timeout?"Time's up":"Not this time"}</span><button class="btn gold" data-act="second">Try a new question →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
  if(S.ok)return rungOf()>=OPEN?`<span class="banner win">Correct answer!</span><button class="btn gold" data-act="collect">Collect ${fmtR(LADDER[OPEN-1])} →</button>`:`<span class="banner win">${S.retryWin?"You fixed it! ✓":"Correct answer!"}</span><button class="btn gold" data-act="next">Next →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
  return `<span class="banner lose">${S.timeout?"Time's up":"Wrong answer"}</span><button class="btn gold" data-act="end">See my game →</button>`}
-function feedbackHTML(){const I=S.info;if(S.phase!=="reveal"||!I)return "";let h="";
+function feedbackHTML(){const I=S.info;if(S.phase!=="reveal"||!I)return "";let h=progressDelta();
  if(S.ok&&I.rungUp)h+=`<div class="rungup">${noteBig(amountOf(I.after),"won")||mascot("happy",72)}<b>You won ${fmtR(amountOf(I.after))}!</b><span>${I.ck?`${stg(I.ck)} locked in. A wrong answer can't take you below this.`:`Prize ${I.after} of 15 won. ${I.after<OPEN?`Next: ${fmtR(LADDER[I.after])}.`:""}`}</span></div>`;
  if(!S.ok&&I.drop)h+=`<div class="drop">${mascot("sad",44)}<span>${I.drop.lostRung?`Dropped from ${fmtR(I.drop.from)} to <b>${fmtR(I.drop.to)}</b> (${stg(I.drop.ck)}).`:`Back to your ${stg(I.drop.ck)} checkpoint: progress on this prize resets.`}</span></div>`;
  return h}
@@ -1144,7 +1148,7 @@ function vPlay(){if(!S.q)return vNoQ();const q=S.q,r=rungOf(),st=rowSteps(Math.m
 <div class="stake one"><span class="stk-note" id="stknote">${noteThumb(stake)}</span><span class="stk-t"><small>Playing for</small><b>${fmtR(stake)}</b></span>${boardMin()?`<button class="bmax" data-act="board-min" aria-label="Show the money board">Money board <b aria-hidden="true">＋</b></button>`:""}</div></div>
 ${stripHTML(r)}<button class="mbtoggle" data-act="board" aria-label="Show the money board">Money board</button>
 <section class="mainc" id="mainc">
-<div class="qcard card"><div class="qtop"><span class="chip gold">Question ${S.run.answered+(S.phase==="reveal"?0:1)}</span>${pips?`<span class="rowprog">To the next prize <span class="pips" aria-label="${st.done} of ${st.total}">${pips}</span></span>`:""}</div>
+<div class="qcard card"><div class="qtop"><span class="chip gold">Question ${S.run.answered+(S.phase==="reveal"?0:1)}</span>${pips?`<span class="rowprog">To the next prize <span class="pips" aria-label="${st.done} of ${st.total}">${pips}</span></span>`:""}${levelHUD(q)}</div>
 <h2 class="qtext">${esc(q.prompt)}</h2>${KBCQ.above(q,S)}
 ${q.code?codeHTML(q.code):""}
 ${q.ai!=null?`<div class="ai"><i>AI</i><span>The AI says this prints <b>${esc(q.ai)}</b></span></div>`:""}
@@ -1202,6 +1206,85 @@ function skillDetail(s){const e=engSk(s.id),cells=e.cells||{};
  const here=e.status==="done"?`<div class="here ok"><b>Skill cleared</b></div>`:e.status==="locked"?`<div class="here"><b>Locked</b><span>Opens when you clear ${esc(s.pre.join(", ")||"the skills before it")}.</span></div>`:
   e.content==="none"?`<div class="here"><b>Coming soon</b><span>Questions for this skill are on their way.</span></div>`:`<div class="here"><small>You are here</small><b>L${e.level} ${esc(LEVELS[e.level-1].name)} · R${e.r} ${DIFFS[e.r-1][1]}</b><span>${e.rightStreak?"One more right answer clears this level.":"Two right answers in a row clear this level."}</span></div>`;
  return `<div class="skd card"><div class="skd-h"><div><b>${esc(s.name)}</b><p class="muted">${e.right||0}/${e.q||0} answered right${s.pre.length?` · builds on ${s.pre.join(", ")}`:""}</p></div>${here}</div><div class="lvls">${cols}</div></div>`}
+/* ================= Level progression: where the student is in a topic, what moves them up, what just changed =================
+   Display only. The rules live in server/engine.js: levelTrack() sends each open skill's track (climb, streak, remaining,
+   next, onMiss) with every engine view, so nothing here re-decides when a student moves up. */
+const LVINFO=GR.levelsInfo||{};
+const LVNAME=l=>(GR.levels||{})[l]||"";
+const LVBADGE=l=>(LVINFO[l]&&LVINFO[l].badge)||LVNAME(l);
+const LVDO=l=>(LVINFO[l]&&LVINFO[l].do)||"";
+const RLBL=r=>["","Low","Medium","Hard"][r]||"";
+const RDESC=r=>{const d=(GR.difficulty||{})[r]||"";return d.includes(":")?d.split(":").slice(1).join(":").trim():""};
+const trackOf=sk=>engSk(sk).track||null;
+/* question formats a student can meet at a level in the hot seat (real types from question-types.json) */
+const lvTypes=(l,n)=>GR.types.filter(t=>t.level===l&&(t.modes||[]).includes("hotseat")).slice(0,n).map(t=>t.name);
+const lvTo=t=>t.next.skillDone?"clear this topic":`reach Level ${t.next.level}`;
+function lvGoal(t){if(!t)return "";
+ if(t.climb.length)return `A right answer takes difficulty up to R${t.climb[0]}. Then 2 right in a row to ${lvTo(t)}.`;
+ return t.streak?`1 more right answer to ${lvTo(t)}!`:`2 right answers in a row to ${lvTo(t)}.`}
+const lvAria=(e,t)=>t?`Level ${t.level} of 4, ${LVNAME(t.level)}. ${t.climb.length?`Difficulty R${t.r} of ${t.rmax}.`:`${t.streak} of 2 right in a row.`} ${lvGoal(t)}`:e.status==="done"?"Topic cleared: all 4 levels done.":"";
+/* the 4-level road: cleared levels gold, the current one glowing, later ones dim */
+function lvRoad(e,cls){const lv=e.status==="done"?5:e.level||1;
+ return `<span class="lvroad ${cls||""}" aria-hidden="true">${[1,2,3,4].map(l=>`${l>1?`<i class="lr-bar ${l<=lv?"on":""}"></i>`:""}<span class="lr-n ${l<lv?"done":l===lv&&e.status==="open"?"now":""}" title="Level ${l}: ${esc(LVNAME(l))}"><b>${l<lv?"✓":"L"+l}</b></span>`).join("")}</span>`}
+/* the steps of the current level: L1 difficulty chevrons (R2…rmax, lit up to the current R), then the two in-a-row slots */
+function lvPips(t,fx){if(!t)return "";fx=fx||{};
+ const ch=t.level===1&&t.rmax>1?Array.from({length:t.rmax-1},(_,i)=>i+2).map(r=>`<i class="lp-c ${r<=t.r?"on":""} ${fx.rUp===r?"pop":""}" title="Difficulty R${r} ${RLBL(r)}">R${r}</i>`).join(""):"";
+ const st=[0,1].map(i=>`<i class="lp-s ${i<t.streak?"on":""} ${fx.fill===i?"pop":""} ${fx.drain&&i===0?"drain":""}" title="Right answer ${i+1} of 2 in a row"></i>`).join("");
+ return `<span class="lvpips">${ch?`<span class="lp-cs">${ch}</span><i class="lp-sep"></i>`:""}<span class="lp-ss">${st}</span></span>`}
+/* how the last answer moved the track, for the pip animations */
+function lvFx(I){if(!I||!I.tb||!I.ta)return {};const T=I.trans||[],up=T.find(x=>x.kind==="r_up");
+ return {rUp:up?up.detail.to:null,fill:I.ok&&I.ta.streak>I.tb.streak?I.ta.streak-1:null,drain:!I.ok&&I.tb.streak>0}}
+/* Question page: the level tracker in the question card. The skill is the one this question was served for. */
+function levelHUD(q){const sk=q&&q.sk;if(!sk||!SK[sk])return "";const e=engSk(sk),t=e.track;
+ const I=S.phase==="reveal"&&S.info&&S.info.sk===sk?S.info:null,fx=lvFx(I);
+ const lvl=t?t.level:e.status==="done"?4:e.level||1;
+ return `<button type="button" class="lvhud ${I&&I.lvup?"up":""}" data-act="lvinfo" aria-label="${esc(lvAria(e,t))} Show level details">
+<span class="lvh-a"><span class="lvh-k">${esc(SK[sk].short||SK[sk].name)}</span><span class="lvh-l">${e.status==="done"?"Topic cleared ✓":`Level ${lvl} <em>· ${esc(LVNAME(lvl))}</em>`}</span></span>
+${lvRoad(e)}${t?`<span class="lvh-s">${lvPips(t,fx)}<span class="lvh-m">${t.climb.length?`R${t.climb[0]} next`:`${t.remaining} to ${t.next.skillDone?"clear":"L"+t.next.level}`}</span><span class="lvh-g">${I&&lvHead(I)?`<b class="lvh-d">${esc(lvHead(I))}</b> `:""}${esc(lvGoal(t))}</span></span>`:""}</button>`}
+/* after an answer, the tracker's goal line starts with what changed (the full line is under the answer) */
+function lvHead(I){const T=I.trans||[],k=x=>T.some(t=>t.kind===x);
+ return k("level_up")?"Level up!":k("r_up")?"Difficulty up!":k("r_drop")?"Back to R1.":I.ok&&I.ta&&I.tb&&I.ta.streak>I.tb.streak?"Nice!":!I.ok&&I.tb&&I.tb.streak>0?"Streak reset.":""}
+/* After the answer: one line on what changed, read from the engine's own transitions */
+function progressDelta(){const I=S.info;if(S.phase!=="reveal"||!I||!I.tb)return "";const T=I.trans||[],tb=I.tb,ta=I.ta;
+ const has=k=>T.find(x=>x.kind===k);let ic="",h="",p="",cls="";
+ if(has("skill_done")){ic="🏆";cls="big";h="Topic cleared!";const un=T.filter(x=>x.kind==="unlock").map(x=>SK[x.skill]).filter(Boolean);p=un.length?`Unlocked: ${un.slice(0,3).map(s=>esc(s.name)).join(", ")}${un.length>3?` and ${un.length-3} more`:""}.`:"All 4 levels of this topic done."}
+ else if(has("level_up")){const to=has("level_up").detail.to.l;ic="⬆";cls="big";h=`Level up! Level ${to}: ${esc(LVNAME(to))}`;p=esc(LVDO(to)||"New question types start now.")}
+ else if(has("r_up")){const r=has("r_up").detail.to;ic="▲";cls="up";h=`Difficulty up: R${r} ${RLBL(r)}`;p=`${RDESC(r)?esc(RDESC(r).replace(/^./,c=>c.toUpperCase()))+". ":""}${ta?esc(lvGoal(ta)):""}`}
+ else if(has("r_drop")){ic="↺";cls="soft";h="Back to R1 Low to warm up";p="Each right answer climbs the difficulty again, then 2 in a row moves you up."}
+ else if(I.ok&&ta&&ta.streak>tb.streak){ic="⚡";cls="up";h="1 of 2 in a row";p=esc(lvGoal(ta))}
+ else if(!I.ok&&tb.streak>0){ic="↺";cls="soft";h="Streak reset";p=`Your level is safe: 2 right in a row will still ${lvTo(tb)}.`}
+ else if(!I.ok){ic="•";cls="soft";h=`Still Level ${tb.level}`;p="A miss never takes a level away. 2 right in a row moves you up."}
+ else return "";
+ return `<div class="lvdelta ${cls}" role="status"><i aria-hidden="true">${ic}</i><span><b>${h}</b>${p?`<small>${p}</small>`:""}</span></div>`}
+/* the full picture of a topic's levels: milestones with badges, the steps of the current level, what comes next */
+function lvMilestones(s){const e=engSk(s.id),t=e.track,lv=e.status==="done"?5:e.level||1;
+ return `<ol class="lvms">${[1,2,3,4].map(l=>{const st=l<lv?"done":l===lv&&e.status==="open"?"now":"";
+  return `<li class="lvm ${st}"><span class="lvm-b" aria-hidden="true">${st==="done"?"✓":st==="now"?"L"+l:LOCKI}</span><div><b>Level ${l} · ${esc(LVNAME(l))}${st==="done"?` <em class="lvm-badge">${esc(LVBADGE(l))}</em>`:""}</b>
+<small>${esc(LVDO(l))}</small>${st==="now"&&t?`<div class="lvm-now">${lvPips(t)}<span>${esc(lvGoal(t))}</span></div>`:""}${st===""&&l===lv+1?`<small class="lvm-x">Formats: ${esc(lvTypes(l,3).join(", "))}</small>`:""}</div></li>`}).join("")}</ol>
+<p class="lvrec">Your record on this topic: <b>${e.q||0}</b> answered · <b>${e.q?Math.round((e.right||0)/e.q*100):0}%</b> right <small>(for your info: moving up only needs right answers in a row)</small></p>`}
+function lvInfoOpen(){const q=S.q;if(!q||!SK[q.sk])return;let m=$("#lvinfom");if(!m){m=document.createElement("div");m.id="lvinfom";m.className="modalx";document.body.appendChild(m)}
+ const s=SK[q.sk];
+ m.innerHTML=`<div class="mbox lvbox" role="dialog" aria-modal="true" aria-labelledby="lvinfo-h"><button class="mx" data-act="lvinfo-close" aria-label="Close">✕</button><small class="lvbox-k">Your levels in this topic</small><h3 id="lvinfo-h">${esc(s.name)}</h3>${lvMilestones(s)}<div class="mbtns"><button class="btn gold" data-act="lvinfo-close">Back to the question</button></div></div>`;
+ m.hidden=false;setTimeout(()=>{const b=m.querySelector(".mbtns .btn");b&&b.focus({preventScroll:true})},30)}
+/* Level up / topic cleared: the badge unlocks, then what to expect at the new level. Tap, Enter or Esc to continue. */
+function levelUpFX(I){const T=I.trans||[],done=T.find(x=>x.kind==="skill_done"),up=T.find(x=>x.kind==="level_up");if(!done&&!up)return;
+ const s=SK[I.sk]||{name:""},to=up?up.detail.to.l:4,from=up?up.detail.from.l:4,un=T.filter(x=>x.kind==="unlock").map(x=>SK[x.skill]).filter(Boolean);
+ let m=$("#lvupm");if(!m){m=document.createElement("div");m.id="lvupm";m.className="modalx lvupx";document.body.appendChild(m)}
+ const road=`<span class="lvroad big" aria-hidden="true">${[1,2,3,4].map(l=>`${l>1?`<i class="lr-bar ${done||l<=to?"on":""}"></i>`:""}<span class="lr-n ${done||l<to?"done":l===to?"now":""} ${(done&&l===4)||(!done&&l===to)?"fresh":""}"><b>${done||l<to?"✓":"L"+l}</b></span>`).join("")}</span>`;
+ m.innerHTML=`<div class="mbox lvup" role="dialog" aria-modal="true" aria-labelledby="lvup-h"><span class="lvu-rays" aria-hidden="true"></span>
+<div class="lvu-badge ${done?"cleared":""}" aria-hidden="true"><span class="lvu-lock">${LOCKI}</span><b>${done?"✓":"L"+to}</b></div>
+<p class="lvu-k">${done?"Topic cleared":"Level up"}</p><h2 id="lvup-h">${done?esc(s.name):`Level ${to}: ${esc(LVNAME(to))}`}</h2>
+<p class="lvu-from">${done?`All 4 levels done. Badge earned: <b>${esc(LVBADGE(4))}</b>`:`Level ${from} ${esc(LVNAME(from))} cleared · Badge earned: <b>${esc(LVBADGE(from))}</b>`}</p>${road}
+${done?(un.length?`<div class="lvu-next"><small>New topics unlocked</small><ul class="lvu-un">${un.slice(0,4).map((u,i)=>`<li style="--i:${i}">🔓 ${esc(u.name)}</li>`).join("")}${un.length>4?`<li style="--i:4">+ ${un.length-4} more on your path</li>`:""}</ul></div>`:"")
+ :`<div class="lvu-next"><small>At Level ${to} you'll</small><p>${esc(LVDO(to))}</p>${lvTypes(to,3).length?`<ul class="lvu-ty">${lvTypes(to,3).map((n,i)=>`<li style="--i:${i}">${esc(n)}</li>`).join("")}</ul>`:""}<small class="lvu-rule">To move up again: 2 right answers in a row</small></div>`}
+<div class="mbtns"><button class="btn gold" data-act="lvup-close">Continue →</button></div></div>`;
+ m.hidden=false;
+ if(!I.rungUp){confetti(120);setTimeout(()=>SFX.fanfare(),250)}
+ try{ROBO.happy()}catch(e){}
+ say(done?`Topic cleared: ${s.name}. ${un.length?"Unlocked "+un.map(u=>u.name).join(", ")+".":""}`:`Level up! Level ${to}, ${LVNAME(to)}. ${LVDO(to)}`);
+ logEv({kind:"level_fx",sk:I.sk,to:done?"done":to});
+ setTimeout(()=>{const b=m.querySelector(".mbtns .btn");b&&b.focus({preventScroll:true})},60)}
+function lvupClose(){modalClose("#lvupm");const n=$('.actions [data-act="next"],.actions [data-act="collect"]');n&&n.focus({preventScroll:true})}
 /* Candy-style map: winding road from the bottom (G1) to the top (G15). Skills are round level nodes; a prize chest ends each group. */
 const CKCOL={C1:"#14C3A2",C2:"#FF4F8B",C3:"#7B5CFF",C4:"#2F8CFF",C5:"#FF8A1F",C6:"#FFC52E",FIN:"#FFC52E"};
 const CKNAME={C1:"Python basics",C2:"Loops & lists",C3:"Functions",C4:"Data & errors",C5:"GRIT practice",C6:"Grand finale",FIN:"Grand finale"};
@@ -1292,12 +1375,12 @@ function vPath(){const g0=curGroup(),gi=g0.idx,s0=curSkill(g0),open=S.open&&SK[S
   if(it.k==="ck"){const pc=PLC[it.c]||PLC.C1;return `<button class="ckplanet ${["C2","C4","C6"].includes(it.c)?"ring":""} ${S.openCk===it.c?"sel":""}" data-act="pathck" data-c="${it.c}" aria-label="${stg(it.c)}: ${CKNAME[it.c]}. Show its topics" style="left:${it.x}%;top:${it.top}px;--p1:${pc[0]};--p2:${pc[1]};--cc:${CKCOL[it.c]}"><span class="pl"></span><span class="pt"><b>${stg(it.c)}</b>${CKNAME[it.c]}</span></button>`}
   if(it.k==="pz"){const g=it.g,s=g.idx<gi?"won":g.idx===gi?"cur":"lock";return `<div class="mprize ${s}" style="${st}">${s==="won"?`<span class="crown">★</span>`:""}<div class="chest">${boardNote(g.prize)}<b>${fmtR(g.prize)}</b></div>${s==="won"?`<span class="mp-tag">Won</span>`:""}</div>`}
   const s=it.s,g=it.g,col=CKCOL[g.c];
-  if(s.ph)return `<div class="mnode soon" style="${st};--nc:${col}"><span class="mb"><b>${it.no}</b><i class="lk">${LOCKI}</i></span><small>Level ${it.no}</small></div>`;
+  if(s.ph)return `<div class="mnode soon" style="${st};--nc:${col}"><span class="mb"><b>${it.no}</b><i class="lk">${LOCKI}</i></span><small>Topic ${it.no}</small></div>`;
   const n=barOf(s.id),es=engSk(s.id),now=s===s0,done=n>=BPS||passed(s),stt=done?"done":now?"now":"soon";
   const dots=LVEND.map(e=>`<i class="${n>=e?"on":""}"></i>`).join("");
-  return `<button class="mnode ${stt} ${open===s?"sel":""}" style="${st};--nc:${col}" data-act="pathsk" data-sk="${s.id}" aria-label="Level ${it.no}: ${esc(s.name)}${done?", cleared":es.status==="locked"?", locked":""}">${now?`<span class="mav ${it.x>50?"l":"r"}">${mascot("pointup",160)}<em>You</em></span>`:""}<span class="mb">${done?TICK:`<b>${it.no}</b>`}${!done&&es.status==="locked"?`<i class="lk">${LOCKI}</i>`:""}</span><small title="${esc(s.name)}">${esc(s.short||s.name)}</small></button>`};
+  return `<button class="mnode ${stt} ${open===s?"sel":""}" style="${st};--nc:${col}" data-act="pathsk" data-sk="${s.id}" aria-label="Topic ${it.no}: ${esc(s.name)}${done?", cleared":es.status==="locked"?", locked":es.status==="open"?`, level ${es.level} of 4`:""}">${now?`<span class="mav ${it.x>50?"l":"r"}">${mascot("pointup",160)}<em>You</em></span>`:""}<span class="mb">${done?TICK:`<b>${it.no}</b>`}${!done&&es.status==="locked"?`<i class="lk">${LOCKI}</i>`:""}${!done&&es.status==="open"&&es.content!=="none"?`<span class="mdots" aria-hidden="true">${dots}</span>`:""}</span><small title="${esc(s.name)}">${esc(s.short||s.name)}</small></button>`};
  const pct=Math.round(gDone(g0)/gTotal(g0)*100);
- const sheet=open&&open===s0?`<div class="msheet" role="dialog" aria-label="${esc(open.name)}"><div class="msheet-in concept"><div class="cpt"><span class="cpt-k">Up next</span><h3>${esc(open.name)}</h3></div><div class="mfoot"><button class="btn gold" data-act="fffgo">Play this topic →</button><button class="btn sm mclose" data-act="pathsk" data-sk="${open.id}">Close</button></div></div></div>`
+ const sheet=open&&open===s0?`<div class="msheet" role="dialog" aria-label="${esc(open.name)}"><div class="msheet-in concept"><div class="cpt"><span class="cpt-k">Up next</span><h3>${esc(open.name)}</h3>${lvMilestones(open)}</div><div class="mfoot"><button class="btn gold" data-act="fffgo">Play this topic →</button><button class="btn sm mclose" data-act="pathsk" data-sk="${open.id}">Close</button></div></div></div>`
   :S.openCk?ckSheet(S.openCk,s0):"";
  const DW=diwaliHTML(items,H,TP,fogTop);
  return `<section class="pathv pfull">
@@ -1865,7 +1948,7 @@ function askLeave(b){PEND=b;let m=$("#leavem");if(!m){m=document.createElement("
 function guideOverlay(){let m=$("#guidem");if(!m){m=document.createElement("div");m.id="guidem";m.className="modalx wide";document.body.appendChild(m)}
  m.innerHTML=`<div class="mbox guidebox" role="dialog" aria-modal="true" aria-label="How to play"><button class="mx" data-act="guide-close" aria-label="Close">✕</button>${vGuide(true)}</div>`;m.hidden=false;
  setTimeout(()=>{const c=m.querySelector(".mx");c&&c.focus()},30)}
-document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;for(const id of ["#solm","#guidem","#leavem"]){const m=$(id);if(m&&!m.hidden){e.preventDefault();m.hidden=true;return}}if(TI>=0){e.preventDefault();tourEnd()}},SIG);
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;for(const id of ["#lvupm","#lvinfom","#solm","#guidem","#leavem"]){const m=$(id);if(m&&!m.hidden){e.preventDefault();m.hidden=true;return}}if(TI>=0){e.preventDefault();tourEnd()}},SIG);
 document.addEventListener("click",e=>{if(e.target.classList&&e.target.classList.contains("modalx"))e.target.hidden=true},SIG);
 document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b||b.disabled)return;const a=b.dataset.act;
  if(a!=="menu"&&b.closest("#menu"))setMenu(false);
@@ -1877,6 +1960,9 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="logout"){logout();return}
  if(a==="sol"){solOpen();return}
  if(a==="sol-close"){modalClose("#solm");return}
+ if(a==="lvinfo"){lvInfoOpen();return}
+ if(a==="lvinfo-close"){modalClose("#lvinfom");return}
+ if(a==="lvup-close"){lvupClose();return}
  /* the intro (intro.js) plays again on a fresh load of /?intro */
  if(a==="intro"){try{pushP(true)}catch(e){}location.href="/?intro";return}
  if(a==="tour"){if(S.screen==="play")endRun("stop");tourStart();return}
@@ -1952,6 +2038,7 @@ document.addEventListener("change",e=>{if(e.target.id==="fameuni"){loadFame("uni
 document.addEventListener("keydown",e=>{
  if(S.screen!=="play")return;
  if(!$("#fbm").hidden)return;
+ if(document.querySelector("#lvupm:not([hidden]),#lvinfom:not([hidden])"))return; /* level dialogs take their own keys */
  if(e.key==="Enter"){if(e.target.id==="fillin"||(!e.target.matches("input,select,button,textarea")&&!(e.target.closest&&e.target.closest(".bq")))){const btn=$("#lockbtn")||$('[data-act="next"]')||$('[data-act="second"]')||$('[data-act="end"]');if(btn){e.preventDefault();btn.click()}}return}
  if(e.target.matches("input,select,textarea"))return;const i="abcd".indexOf(e.key.toLowerCase());
  if(i>-1&&S.q&&S.q.kind==="mcq"&&S.phase==="ask"&&i<S.q.opts.length&&!S.gone.includes(i)){S.pick=i;SFX.pick();document.querySelectorAll(".opt").forEach(o=>o.className=optCls(+o.dataset.i));syncAct()}},SIG);

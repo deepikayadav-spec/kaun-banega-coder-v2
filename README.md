@@ -35,6 +35,17 @@ The app follows the same pattern as Saturday Sprint: one Express app running as 
   - The hot seat serves only types whose modes include `hotseat`; the rest come up in Practice.
   - A skill with nothing to serve shows as "coming soon".
 
+### How students see their progress
+
+`levelTrack()` in `server/engine.js` turns a skill's state into what moves the student up from where they are: the L1 difficulty climb still to go, the two-in-a-row slots, the right answers remaining, and what a miss does there. It is display only and comes with every engine view as `skills[id].track`, so the game never re-decides the rules. A test plays random answers and checks the track against what `applyAnswer` actually does.
+
+- **Question page:** a level tracker in the question card. It shows the topic, Level 1–4 with its name, the steps of this level and the goal ("1 more right answer to reach Level 3"). Tap it for the topic's level milestones.
+- **After each answer:** one line on what changed, read from the engine's transitions: a step filled, difficulty up, streak reset, back to R1, level up or topic cleared.
+- **Level up / topic cleared:** a dialog with the badge, the new level and what to expect there (the level's line plus real question formats from `question-types.json`), and any topics it unlocked.
+- **My path:** the current topic's sheet shows the four level milestones and badges, and map nodes carry four level dots.
+
+Level badges and the one-line "what you'll do" for each level live in `levels_info` in `question-types.json`.
+
 ### Data (Postgres)
 
 - **Students and access:**

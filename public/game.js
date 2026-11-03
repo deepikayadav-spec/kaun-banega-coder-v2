@@ -1210,8 +1210,6 @@ function skillDetail(s){const e=engSk(s.id),cells=e.cells||{};
    Display only. The rules live in server/engine.js: levelTrack() sends each open skill's track (climb, streak, remaining,
    next, onMiss) with every engine view, so nothing here re-decides when a student moves up. */
 const LVINFO=GR.levelsInfo||{};
-const LVNAME=l=>(GR.levels||{})[l]||"";
-const LVBADGE=l=>(LVINFO[l]&&LVINFO[l].badge)||LVNAME(l);
 const LVDO=l=>(LVINFO[l]&&LVINFO[l].do)||"";
 const RLBL=r=>["","Low","Medium","Hard"][r]||"";
 const RDESC=r=>{const d=(GR.difficulty||{})[r]||"";return d.includes(":")?d.split(":").slice(1).join(":").trim():""};
@@ -1219,36 +1217,42 @@ const trackOf=sk=>engSk(sk).track||null;
 /* question formats a student can meet at a level in the hot seat (real types from question-types.json) */
 const lvTypes=(l,n)=>GR.types.filter(t=>t.level===l&&(t.modes||[]).includes("hotseat")).slice(0,n).map(t=>t.name);
 const lvTo=t=>t.next.skillDone?"clear this topic":`reach Level ${t.next.level}`;
+/* the short rule shown under the tracker (L4 has no next level: two in a row clears the topic) */
+const lvRule=t=>t&&t.next.skillDone?"2 consecutive streaks to clear this topic":"2 consecutive streaks to unlock the next level";
 function lvGoal(t){if(!t)return "";
  if(t.climb.length)return `A right answer takes difficulty up to R${t.climb[0]}. Then 2 right in a row to ${lvTo(t)}.`;
  return t.streak?`1 more right answer to ${lvTo(t)}!`:`2 right answers in a row to ${lvTo(t)}.`}
-const lvAria=(e,t)=>t?`Level ${t.level} of 4, ${LVNAME(t.level)}. ${t.climb.length?`Difficulty R${t.r} of ${t.rmax}.`:`${t.streak} of 2 right in a row.`} ${lvGoal(t)}`:e.status==="done"?"Topic cleared: all 4 levels done.":"";
-/* the 4-level road: cleared levels gold, the current one glowing, later ones dim */
-function lvRoad(e,cls){const lv=e.status==="done"?5:e.level||1;
- return `<span class="lvroad ${cls||""}" aria-hidden="true">${[1,2,3,4].map(l=>`${l>1?`<i class="lr-bar ${l<=lv?"on":""}"></i>`:""}<span class="lr-n ${l<lv?"done":l===lv&&e.status==="open"?"now":""}" title="Level ${l}: ${esc(LVNAME(l))}"><b>${l<lv?"✓":"L"+l}</b></span>`).join("")}</span>`}
+const lvAria=(e,t)=>t?`Level ${t.level} of 4. ${t.climb.length?`Difficulty R${t.r} of ${t.rmax}.`:`${t.streak} of 2 right in a row.`} ${lvGoal(t)}`:e.status==="done"?"Topic cleared: all 4 levels done.":"";
+/* The level bar: four segments labelled Level 1 … Level 4. Cleared ones are gold, the current one glows and fills with
+   the two-in-a-row streak, later ones are dim. `fresh` marks the segment just reached (level-up animation). */
+function lvBar(lv,status,streak,o){o=o||{};const L=status==="done"?5:lv||1;
+ return `<span class="lvbar ${o.cls||""}" aria-hidden="true">${[1,2,3,4].map(l=>{const st=l<L?"done":l===L&&status==="open"?"now":"";
+  const f=st==="done"?1:st==="now"?Math.min(1,(streak||0)/2):0;
+  return `<span class="lb-seg ${st} ${o.fresh===l?"fresh":""}" style="--f:${f}"><i class="lb-fill"></i><b>${st==="done"?'<em class="lb-ck">✓</em>':""}Level ${l}</b></span>`}).join("")}</span>`}
 /* the steps of the current level: L1 difficulty chevrons (R2…rmax, lit up to the current R), then the two in-a-row slots */
 function lvPips(t,fx){if(!t)return "";fx=fx||{};
  const ch=t.level===1&&t.rmax>1?Array.from({length:t.rmax-1},(_,i)=>i+2).map(r=>`<i class="lp-c ${r<=t.r?"on":""} ${fx.rUp===r?"pop":""}" title="Difficulty R${r} ${RLBL(r)}">R${r}</i>`).join(""):"";
- const st=[0,1].map(i=>`<i class="lp-s ${i<t.streak?"on":""} ${fx.fill===i?"pop":""} ${fx.drain&&i===0?"drain":""}" title="Right answer ${i+1} of 2 in a row"></i>`).join("");
+ const st=[0,1].map(i=>`<i class="lp-s ${i<t.streak?"on":""} ${fx.fill===i?"pop":""} ${fx.drain&&i===0?"drain":""}" title="Right answer ${i+1} of 2 in a row"><span>${i<t.streak?"✓":i+1}</span></i>`).join("");
  return `<span class="lvpips">${ch?`<span class="lp-cs">${ch}</span><i class="lp-sep"></i>`:""}<span class="lp-ss">${st}</span></span>`}
 /* how the last answer moved the track, for the pip animations */
 function lvFx(I){if(!I||!I.tb||!I.ta)return {};const T=I.trans||[],up=T.find(x=>x.kind==="r_up");
  return {rUp:up?up.detail.to:null,fill:I.ok&&I.ta.streak>I.tb.streak?I.ta.streak-1:null,drain:!I.ok&&I.tb.streak>0}}
 /* Question page: the level tracker in the question card. The skill is the one this question was served for. */
 function levelHUD(q){const sk=q&&q.sk;if(!sk||!SK[sk])return "";const e=engSk(sk),t=e.track;
- const I=S.phase==="reveal"&&S.info&&S.info.sk===sk?S.info:null,fx=lvFx(I);
+ const I=S.phase==="reveal"&&S.info&&S.info.sk===sk?S.info:null,fx=lvFx(I),head=I?lvHead(I):"";
  const lvl=t?t.level:e.status==="done"?4:e.level||1;
  return `<button type="button" class="lvhud ${I&&I.lvup?"up":""}" data-act="lvinfo" aria-label="${esc(lvAria(e,t))} Show level details">
-<span class="lvh-a"><span class="lvh-k">${esc(SK[sk].short||SK[sk].name)}</span><span class="lvh-l">${e.status==="done"?"Topic cleared ✓":`Level ${lvl} <em>· ${esc(LVNAME(lvl))}</em>`}</span></span>
-${lvRoad(e)}${t?`<span class="lvh-s">${lvPips(t,fx)}<span class="lvh-m">${t.climb.length?`R${t.climb[0]} next`:`${t.remaining} to ${t.next.skillDone?"clear":"L"+t.next.level}`}</span><span class="lvh-g">${I&&lvHead(I)?`<b class="lvh-d">${esc(lvHead(I))}</b> `:""}${esc(lvGoal(t))}</span></span>`:""}</button>`}
-/* after an answer, the tracker's goal line starts with what changed (the full line is under the answer) */
+<span class="lvh-top"><span class="lvh-k">${esc(SK[sk].short||SK[sk].name)}</span><span class="lvh-x">${e.status==="done"?"Topic cleared ✓":"Details ›"}</span></span>
+${lvBar(lvl,e.status,t?t.streak:0,{fresh:I&&I.lvup?lvl:null})}
+${t?`<span class="lvh-s">${lvPips(t,fx)}<span class="lvh-c">${t.climb.length?`R${t.climb[0]} next`:`<b>${t.streak}</b>/2`}</span>${head?`<span class="lvh-d ${I.ok?"ok":"no"}">${esc(head)}</span>`:""}<span class="lvh-i"><i aria-hidden="true">🔥</i>${esc(lvRule(t))}</span></span>`:""}</button>`}
+/* after an answer, a short tag next to the pips says what changed (the full line is under the answer) */
 function lvHead(I){const T=I.trans||[],k=x=>T.some(t=>t.kind===x);
- return k("level_up")?"Level up!":k("r_up")?"Difficulty up!":k("r_drop")?"Back to R1.":I.ok&&I.ta&&I.tb&&I.ta.streak>I.tb.streak?"Nice!":!I.ok&&I.tb&&I.tb.streak>0?"Streak reset.":""}
+ return k("level_up")?"Level up!":k("skill_done")?"Topic cleared!":k("r_up")?"Difficulty up!":k("r_drop")?"Back to R1":I.ok&&I.ta&&I.tb&&I.ta.streak>I.tb.streak?"Streak +1":!I.ok&&I.tb&&I.tb.streak>0?"Streak reset":""}
 /* After the answer: one line on what changed, read from the engine's own transitions */
 function progressDelta(){const I=S.info;if(S.phase!=="reveal"||!I||!I.tb)return "";const T=I.trans||[],tb=I.tb,ta=I.ta;
  const has=k=>T.find(x=>x.kind===k);let ic="",h="",p="",cls="";
  if(has("skill_done")){ic="🏆";cls="big";h="Topic cleared!";const un=T.filter(x=>x.kind==="unlock").map(x=>SK[x.skill]).filter(Boolean);p=un.length?`Unlocked: ${un.slice(0,3).map(s=>esc(s.name)).join(", ")}${un.length>3?` and ${un.length-3} more`:""}.`:"All 4 levels of this topic done."}
- else if(has("level_up")){const to=has("level_up").detail.to.l;ic="⬆";cls="big";h=`Level up! Level ${to}: ${esc(LVNAME(to))}`;p=esc(LVDO(to)||"New question types start now.")}
+ else if(has("level_up")){const to=has("level_up").detail.to.l;ic="⬆";cls="big";h=`Level up! Welcome to Level ${to}`;p=esc(LVDO(to)||"New question types start now.")}
  else if(has("r_up")){const r=has("r_up").detail.to;ic="▲";cls="up";h=`Difficulty up: R${r} ${RLBL(r)}`;p=`${RDESC(r)?esc(RDESC(r).replace(/^./,c=>c.toUpperCase()))+". ":""}${ta?esc(lvGoal(ta)):""}`}
  else if(has("r_drop")){ic="↺";cls="soft";h="Back to R1 Low to warm up";p="Each right answer climbs the difficulty again, then 2 in a row moves you up."}
  else if(I.ok&&ta&&ta.streak>tb.streak){ic="⚡";cls="up";h="1 of 2 in a row";p=esc(lvGoal(ta))}
@@ -1256,11 +1260,11 @@ function progressDelta(){const I=S.info;if(S.phase!=="reveal"||!I||!I.tb)return 
  else if(!I.ok){ic="•";cls="soft";h=`Still Level ${tb.level}`;p="A miss never takes a level away. 2 right in a row moves you up."}
  else return "";
  return `<div class="lvdelta ${cls}" role="status"><i aria-hidden="true">${ic}</i><span><b>${h}</b>${p?`<small>${p}</small>`:""}</span></div>`}
-/* the full picture of a topic's levels: milestones with badges, the steps of the current level, what comes next */
+/* the full picture of a topic's levels: the four milestones, the steps of the current level, what comes next */
 function lvMilestones(s){const e=engSk(s.id),t=e.track,lv=e.status==="done"?5:e.level||1;
- return `<ol class="lvms">${[1,2,3,4].map(l=>{const st=l<lv?"done":l===lv&&e.status==="open"?"now":"";
-  return `<li class="lvm ${st}"><span class="lvm-b" aria-hidden="true">${st==="done"?"✓":st==="now"?"L"+l:LOCKI}</span><div><b>Level ${l} · ${esc(LVNAME(l))}${st==="done"?` <em class="lvm-badge">${esc(LVBADGE(l))}</em>`:""}</b>
-<small>${esc(LVDO(l))}</small>${st==="now"&&t?`<div class="lvm-now">${lvPips(t)}<span>${esc(lvGoal(t))}</span></div>`:""}${st===""&&l===lv+1?`<small class="lvm-x">Formats: ${esc(lvTypes(l,3).join(", "))}</small>`:""}</div></li>`}).join("")}</ol>
+ return `${lvBar(e.level,e.status,t?t.streak:0,{cls:"wide"})}<ol class="lvms">${[1,2,3,4].map(l=>{const st=l<lv?"done":l===lv&&e.status==="open"?"now":"";
+  return `<li class="lvm ${st}"><span class="lvm-b" aria-hidden="true">${st==="done"?"✓":st==="now"?l:LOCKI}</span><div><b>Level ${l}${st==="done"?` <em class="lvm-badge">Cleared</em>`:st==="now"?` <em class="lvm-badge now">You are here</em>`:""}</b>
+<small>${esc(LVDO(l))}</small>${st==="now"&&t?`<div class="lvm-now">${lvPips(t)}<span><b>${esc(lvRule(t))}</b>${esc(lvGoal(t))}</span></div>`:""}${st===""&&l===lv+1?`<small class="lvm-x">Formats: ${esc(lvTypes(l,3).join(", "))}</small>`:""}</div></li>`}).join("")}</ol>
 <p class="lvrec">Your record on this topic: <b>${e.q||0}</b> answered · <b>${e.q?Math.round((e.right||0)/e.q*100):0}%</b> right <small>(for your info: moving up only needs right answers in a row)</small></p>`}
 function lvInfoOpen(){const q=S.q;if(!q||!SK[q.sk])return;let m=$("#lvinfom");if(!m){m=document.createElement("div");m.id="lvinfom";m.className="modalx";document.body.appendChild(m)}
  const s=SK[q.sk];
@@ -1270,18 +1274,17 @@ function lvInfoOpen(){const q=S.q;if(!q||!SK[q.sk])return;let m=$("#lvinfom");if
 function levelUpFX(I){const T=I.trans||[],done=T.find(x=>x.kind==="skill_done"),up=T.find(x=>x.kind==="level_up");if(!done&&!up)return;
  const s=SK[I.sk]||{name:""},to=up?up.detail.to.l:4,from=up?up.detail.from.l:4,un=T.filter(x=>x.kind==="unlock").map(x=>SK[x.skill]).filter(Boolean);
  let m=$("#lvupm");if(!m){m=document.createElement("div");m.id="lvupm";m.className="modalx lvupx";document.body.appendChild(m)}
- const road=`<span class="lvroad big" aria-hidden="true">${[1,2,3,4].map(l=>`${l>1?`<i class="lr-bar ${done||l<=to?"on":""}"></i>`:""}<span class="lr-n ${done||l<to?"done":l===to?"now":""} ${(done&&l===4)||(!done&&l===to)?"fresh":""}"><b>${done||l<to?"✓":"L"+l}</b></span>`).join("")}</span>`;
  m.innerHTML=`<div class="mbox lvup" role="dialog" aria-modal="true" aria-labelledby="lvup-h"><span class="lvu-rays" aria-hidden="true"></span>
-<div class="lvu-badge ${done?"cleared":""}" aria-hidden="true"><span class="lvu-lock">${LOCKI}</span><b>${done?"✓":"L"+to}</b></div>
-<p class="lvu-k">${done?"Topic cleared":"Level up"}</p><h2 id="lvup-h">${done?esc(s.name):`Level ${to}: ${esc(LVNAME(to))}`}</h2>
-<p class="lvu-from">${done?`All 4 levels done. Badge earned: <b>${esc(LVBADGE(4))}</b>`:`Level ${from} ${esc(LVNAME(from))} cleared · Badge earned: <b>${esc(LVBADGE(from))}</b>`}</p>${road}
+<div class="lvu-badge ${done?"cleared":""}" aria-hidden="true"><span class="lvu-lock">${LOCKI}</span><b>${done?"✓":to}</b></div>
+<p class="lvu-k">${done?"Topic cleared":"Level unlocked"}</p><h2 id="lvup-h">${done?esc(s.name):`Level ${to}`}</h2>
+<p class="lvu-from">${done?"All 4 levels done.":`Level ${from} cleared with 2 in a row.`}</p>${lvBar(done?4:to,done?"done":"open",0,{cls:"big",fresh:done?4:to})}
 ${done?(un.length?`<div class="lvu-next"><small>New topics unlocked</small><ul class="lvu-un">${un.slice(0,4).map((u,i)=>`<li style="--i:${i}">🔓 ${esc(u.name)}</li>`).join("")}${un.length>4?`<li style="--i:4">+ ${un.length-4} more on your path</li>`:""}</ul></div>`:"")
- :`<div class="lvu-next"><small>At Level ${to} you'll</small><p>${esc(LVDO(to))}</p>${lvTypes(to,3).length?`<ul class="lvu-ty">${lvTypes(to,3).map((n,i)=>`<li style="--i:${i}">${esc(n)}</li>`).join("")}</ul>`:""}<small class="lvu-rule">To move up again: 2 right answers in a row</small></div>`}
+ :`<div class="lvu-next"><small>At Level ${to} you'll</small><p>${esc(LVDO(to))}</p>${lvTypes(to,3).length?`<ul class="lvu-ty">${lvTypes(to,3).map((n,i)=>`<li style="--i:${i}">${esc(n)}</li>`).join("")}</ul>`:""}<small class="lvu-rule">🔥 ${esc(to<4?"2 consecutive streaks to unlock the next level":"2 consecutive streaks to clear this topic")}</small></div>`}
 <div class="mbtns"><button class="btn gold" data-act="lvup-close">Continue →</button></div></div>`;
  m.hidden=false;
  if(!I.rungUp){confetti(120);setTimeout(()=>SFX.fanfare(),250)}
  try{ROBO.happy()}catch(e){}
- say(done?`Topic cleared: ${s.name}. ${un.length?"Unlocked "+un.map(u=>u.name).join(", ")+".":""}`:`Level up! Level ${to}, ${LVNAME(to)}. ${LVDO(to)}`);
+ say(done?`Topic cleared: ${s.name}. ${un.length?"Unlocked "+un.map(u=>u.name).join(", ")+".":""}`:`Level ${to} unlocked. ${LVDO(to)}`);
  logEv({kind:"level_fx",sk:I.sk,to:done?"done":to});
  setTimeout(()=>{const b=m.querySelector(".mbtns .btn");b&&b.focus({preventScroll:true})},60)}
 function lvupClose(){modalClose("#lvupm");const n=$('.actions [data-act="next"],.actions [data-act="collect"]');n&&n.focus({preventScroll:true})}

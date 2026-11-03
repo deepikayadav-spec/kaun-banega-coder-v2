@@ -6,10 +6,10 @@
     "4": "Create"
   },
   "levels_info": {
-    "1": { "badge": "Recogniser", "do": "Read code and recognise what it does: pick, match and predict." },
-    "2": { "badge": "Reasoner", "do": "Reason about code: explain it, trace it and work out what happens." },
-    "3": { "badge": "Repairer", "do": "Find and fix mistakes: name the bug, spot the wrong line, put code in order." },
-    "4": { "badge": "Creator", "do": "Create: plan the steps and write programs of your own." }
+    "1": { "do": "Read code and recognise what it does: pick, match and predict." },
+    "2": { "do": "Reason about code: explain it, trace it and work out what happens." },
+    "3": { "do": "Find and fix mistakes: name the bug, spot the wrong line, put code in order." },
+    "4": { "do": "Create: plan the steps and write programs of your own." }
   },
   "difficulty": {
     "1": "R1 Low: this skill only",

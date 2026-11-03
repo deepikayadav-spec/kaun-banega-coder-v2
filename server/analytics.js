@@ -70,8 +70,9 @@ export async function filterOptions({ uni = null, rules }) {
 // ---------- the raw rows a period needs, each tagged with the student's university
 async function load(F, W) {
   const C = cohortWhere(F);
-  const [cohort, logins, act, ans, ev, tr, prizes, fb, states, days] = await Promise.all([
-    all(`SELECT m.roll_no, m.university, (m.last_login_at IS NOT NULL OR EXISTS (SELECT 1 FROM attempts a WHERE a.roll_no = m.roll_no)) AS activated
+  const [cohort, logins, act, ans, ev, tr, prizes, fb, states, days, failRows] = await Promise.all([
+    all(`SELECT m.roll_no, m.university, (m.last_login_at IS NOT NULL OR EXISTS (SELECT 1 FROM attempts a WHERE a.roll_no = m.roll_no)) AS activated,
+      EXISTS (SELECT 1 FROM attempts a WHERE a.roll_no = m.roll_no) AS played
       FROM students_master m WHERE ${C.sql}`, ...C.args),
     all(`SELECT l.roll_no, l.at FROM student_logins l JOIN students_master m ON m.roll_no = l.roll_no WHERE ${C.sql} AND l.at >= ? AND l.at < ?`, ...C.args, W.fromMs, W.toMs),
     all(`SELECT a.roll_no, a.day, a.ms FROM activity a JOIN students_master m ON m.roll_no = a.roll_no WHERE ${C.sql} AND a.day >= ? AND a.day <= ?`, ...C.args, W.from, W.to),
@@ -89,24 +90,33 @@ async function load(F, W) {
         SELECT a.roll_no, a.day FROM activity a JOIN students_master m ON m.roll_no = a.roll_no WHERE ${C.sql}
         UNION SELECT l.roll_no, ${DAY_SQL('l.at')} FROM student_logins l JOIN students_master m ON m.roll_no = l.roll_no WHERE ${C.sql}
         UNION SELECT t.roll_no, ${DAY_SQL('t.at')} FROM attempts t JOIN students_master m ON m.roll_no = t.roll_no WHERE ${C.sql}
-      ) x WHERE day <= ?`, ...C.args, ...C.args, ...C.args, W.to)
+      ) x WHERE day <= ?`, ...C.args, ...C.args, ...C.args, W.to),
+    // refused logins in the period; never_in: that NIAT ID has not logged in successfully, ever
+    all(`SELECT f.roll_no, f.reason, f.university, NOT EXISTS (SELECT 1 FROM student_logins l WHERE l.roll_no = f.roll_no) AS never_in
+      FROM login_failures f WHERE f.at >= ? AND f.at < ?`, W.fromMs, W.toMs)
   ]);
   const AD = new Map();
   for (const r of days) { if (!AD.has(r.roll_no)) AD.set(r.roll_no, new Set()); AD.get(r.roll_no).add(r.day); }
-  return { cohort, logins, act, ans, ev, tr, prizes, fb, states, AD };
+  // refused logins follow the university filter and the test-data rules (a typed NIAT ID has no batch)
+  const R = F.rules || { rollPrefixes: [], universities: [] }, lc = (s) => String(s || '').toLowerCase();
+  const fails = failRows.filter((f) => !R.rollPrefixes.some((p) => String(f.roll_no).toUpperCase().startsWith(p.toUpperCase()))
+    && !R.universities.some((u) => lc(u) === lc(f.university)) && (!F.uni || f.university === F.uni));
+  return { cohort, logins, act, ans, ev, tr, prizes, fb, states, AD, fails };
 }
 // Keep only one university's rows (for the comparison)
 function only(raw, rolls) {
   const has = (r) => rolls.has(r.roll_no);
   return { cohort: raw.cohort.filter(has), logins: raw.logins.filter(has), act: raw.act.filter(has), ans: raw.ans.filter(has), ev: raw.ev.filter(has),
     tr: raw.tr.filter(has), prizes: raw.prizes.filter(has), fb: raw.fb.filter(has), states: raw.states.filter(has),
-    AD: new Map([...raw.AD].filter(([r]) => rolls.has(r))) };
+    AD: new Map([...raw.AD].filter(([r]) => rolls.has(r))), fails: raw.fails.filter(has) };
 }
 
 // ---------- every metric, from the raw rows
 function compute(raw, W, G) {
-  const { cohort, logins, act, ans, ev, tr, prizes, fb, states, AD } = raw;
+  const { cohort, logins, act, ans, ev, tr, prizes, fb, states, AD, fails = [] } = raw;
   const inW = (d) => d >= W.from && d <= W.to;
+  const failBy = (...why) => fails.filter((f) => why.includes(f.reason)).length;
+  const stuck = new Set(fails.filter((f) => f.never_in).map((f) => f.roll_no)).size;
   const firstDay = new Map([...AD].map(([r, s]) => [r, [...s].sort()[0]]));
   const activeInW = [...AD].filter(([, s]) => [...s].some(inW)).length;
   const msBy = new Map(); for (const r of act) msBy.set(r.roll_no, (msBy.get(r.roll_no) || 0) + Number(r.ms));
@@ -132,6 +142,8 @@ function compute(raw, W, G) {
   const stars = fb.map(starOf).filter((x) => x != null);
   const avgOf = (k) => { const a = fb.filter((f) => kindOf(f) === k).map(starOf).filter((x) => x != null); return { n: a.length, avg: a.length ? round1(a.reduce((p, q) => p + q, 0) / a.length) : null }; };
   return {
+    loginFails: fails.length, failNotListed: failBy('not_on_list'), failName: failBy('name_mismatch', 'first_name_shared'), stuck,
+    neverPlayed: cohort.filter((c) => c.activated && !c.played).length,
     students: cohort.length, activated: cohort.filter((c) => c.activated).length, active: activeInW, newInW, returning: activeInW - newInW,
     dauEnd: dau(W.to), avgDau: round1(avgDau), wau, mau, stickiness: mau ? pct(avgDau, mau) : null,
     logins: logins.length, timeMs, timePerDay: studentDays ? timeMs / studentDays : null, timePerActive: activeInW ? timeMs / activeInW : null, timeMedian: median(timeEach),
@@ -160,6 +172,13 @@ export async function overview(F, G) {
       M('Active in period', x.active, 'count', 'Logged in, had the game open or answered on at least one day in the period.', { of: x.students }),
       M('New in period', x.newInW, 'count', 'Students whose first active day falls in the period.'),
       M('Returning in period', x.returning, 'count', 'Active in the period, first active before it.') ] },
+    { name: 'Getting in', metrics: [
+      M('Never logged in', x.students - x.activated, 'count', 'Students on the list who have never logged in or answered, ever. The first place to look when students are not reaching the game.', { of: x.students }),
+      M('Refused logins', x.loginFails, 'count', 'Login attempts the portal turned away in the period (recorded from this release on; not split by batch).'),
+      M('ID not found', x.failNotListed, 'count', 'Refused because the NIAT ID typed is not on the list: a typo, or the student is missing from the upload.'),
+      M('Name did not match', x.failName, 'count', 'Refused because the name typed does not match the list for that NIAT ID.'),
+      M('Stuck at login', x.stuck, 'count', 'Different NIAT IDs refused in the period that have never logged in successfully. Check these against the master list.'),
+      M('Logged in, never played', x.neverPlayed, 'count', 'Students who have logged in but never answered a question, ever: they got in but did not reach the hot seat.', { of: x.activated }) ] },
     { name: 'Activity', metrics: [
       M('DAU (last day)', x.dauEnd, 'count', `Students active on ${W.to} (IST), the last day of the period.`),
       M('Avg. DAU', x.avgDau, 'count', 'Average daily active students over the period.'),

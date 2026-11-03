@@ -43,7 +43,7 @@ h1 span{font:700 clamp(13px,3.4vw,16px)/1 var(--f-display);letter-spacing:.45em;
 h1 b{display:inline-flex;align-items:flex-end;font:900 clamp(52px,14vw,76px)/.95 var(--f-display);letter-spacing:-.05em;background:linear-gradient(180deg,#FFF4CC,#FFD25A 38%,#FFB21E 70%,#E07E06);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 22px rgba(253,230,138,.35))}
 .caret{display:inline-block;width:.09em;height:.8em;margin:0 0 .08em .06em;border-radius:2px;background:var(--cy);box-shadow:0 0 12px var(--cy);animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
-.term{font:600 14px var(--f-mono);color:var(--tx2)}.term b{color:var(--cy)}
+.term{margin:0;max-width:34ch;font:600 15px/1.45 var(--f-body);color:var(--tx2)}
 .card{position:relative;width:100%;padding:24px;border-radius:20px;background:var(--hud);border:1px solid var(--hl);box-shadow:0 20px 60px -20px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.05);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;flex-direction:column;gap:14px;text-align:left}
 .card::after{content:"";position:absolute;inset:6px;pointer-events:none;border-radius:inherit;opacity:.75;background:
  linear-gradient(var(--cy),var(--cy)) top left/14px 1.5px,linear-gradient(var(--cy),var(--cy)) top left/1.5px 14px,
@@ -74,14 +74,15 @@ small{color:var(--tx2);font-size:13px;line-height:1.5}
 <main class="box">
   <div class="emb" aria-hidden="true"><i class="ring"></i><i class="ring b"></i><span class="coin">{ }</span></div>
   <h1><span>Kaun Banega</span><b>Coder<i class="caret" aria-hidden="true"></i></b></h1>
-  <p class="term" aria-hidden="true"><b>&gt;&gt;&gt;</b> login(niat_id, name)</p>
+  <p class="term">The Python quiz show for first-years. Answer, climb the board, win the prize.</p>
   <form class="card" id="f" novalidate>
-    <label>NIAT ID<input id="roll" autocomplete="username" autocapitalize="characters" spellcheck="false" placeholder="Your NIAT ID" required></label>
-    <label>Your name<input id="name" autocomplete="name" placeholder="As on the student list" aria-describedby="namehint" required></label>
+    <label>NIAT ID<input id="roll" autocomplete="username" autocapitalize="characters" spellcheck="false" placeholder="e.g. N26H01A0001" aria-describedby="rollhint" required></label>
+    <small id="rollhint" style="margin-top:-6px">It's on your NIAT ID card. Capitals and spaces don't matter.</small>
+    <label>Your name<input id="name" autocomplete="name" placeholder="e.g. Asha" aria-describedby="namehint" required></label>
     <small id="namehint" style="margin-top:-6px">Your first name is enough. If a classmate shares it, type your full name.</small>
     <div class="err" id="err" role="alert"></div>
-    <button type="submit" id="go">Enter the studio →</button>
-    <small>Not on the list, or your name doesn't match? Ask your mentor.</small>
+    <button type="submit" id="go">Start playing →</button>
+    <small>No password needed. Still can't get in? Show this screen to your mentor.</small>
   </form>
 </main>
 <script>

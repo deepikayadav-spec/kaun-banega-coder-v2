@@ -49,11 +49,21 @@ The app follows the same pattern as Saturday Sprint: one Express app running as 
   - `transitions`: R up/down, level up, type switch, skill done and unlock.
   - `game_progress`: wallet and streaks.
   - `events`, `feedback`, `audit_log`.
+  - `login_failures`: every refused student login and why (`not_on_list`, `inactive`, `name_mismatch`, `first_name_shared`). Shown in Admin → Analytics → **Getting in**.
   - `presence`: when each student's game page last pinged, for the "N live" count.
 
 ## Students and universities
 
 Students log in with their **NIAT ID and name**, matched against the master list. The name match is forgiving about case, word order and small typos. The university comes from the master list, or from the NIAT ID prefix (`server/universities.js`, the same table as Saturday Sprint).
+
+The NIAT ID check is forgiving: spaces, dashes, dots and slashes are ignored, and in the number part after the prefix the letter O is read as 0 and I or L as 1.
+
+### First-run flow
+
+A new student goes from login to their first Python question in about three clicks:
+- The intro film does not play by itself. It plays from **▶ Watch intro** on the home screen (`/?intro`).
+- The product tour does not start before the first game. It offers itself once the student has played.
+- The first game skips Fastest Finger and opens the hot seat straight away (event `fff_free_pass`). From the second game on, Fastest Finger guards the seat as before.
 
 The Hall of Fame has two boards: **Overall** (every university) and **University** (the student's own by default, or any other picked from a list). An admin can be limited to one university and then sees only that university's students and numbers.
 

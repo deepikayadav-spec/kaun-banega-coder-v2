@@ -62,6 +62,17 @@ test('login with the first name alone works only when it is unique at the univer
   assert.equal((await call('f3', 'POST', '/api/auth/login', { roll: 'N26P02A0103', name: 'Rahman' })).status, 401, 'only the first name counts');
 });
 
+test('login forgives dashes, spaces and an O typed for a zero, and records refused logins', async () => {
+  assert.equal((await call('g1', 'POST', '/api/auth/login', { roll: ' n26-p02a 0001 ', name: 'Asha Rao' })).status, 200, 'dashes and spaces');
+  assert.equal((await call('g2', 'POST', '/api/auth/login', { roll: 'N26P02AOOO1', name: 'Asha Rao' })).status, 200, 'O for 0');
+  const miss = await call('g3', 'POST', '/api/auth/login', { roll: 'N26P02A7777', name: 'Nobody' });
+  assert.equal(miss.status, 404);
+  assert.match(miss.body.error, /N26P02A7777/);
+  const { all } = await import('../server/db.js');
+  const rows = await all("SELECT reason FROM login_failures WHERE roll_no = 'N26P02A7777'");
+  assert.deepEqual(rows.map((r) => r.reason), ['not_on_list']);
+});
+
 test('play: next is stable until answered; answers are graded and stored; S1 can be finished', async () => {
   const n1 = await call('s', 'GET', '/api/play/next?mode=hotseat');
   const n2 = await call('s', 'GET', '/api/play/next?mode=hotseat');
@@ -274,8 +285,10 @@ test('student analytics: overview, student rows and detail; logins and live ping
   const o = await call('a', 'GET', '/api/admin/stats/overview?days=30');
   assert.equal(o.status, 200, JSON.stringify(o.body));
   const names = o.body.groups.map((g) => g.name);
-  assert.deepEqual(names, ['Reach', 'Activity', 'Gameplay', 'Progress', 'Retention', 'Feedback']);
+  assert.deepEqual(names, ['Reach', 'Getting in', 'Activity', 'Gameplay', 'Progress', 'Retention', 'Feedback']);
   const m = Object.fromEntries(o.body.groups.flatMap((g) => g.metrics).map((x) => [x.label, x.value]));
+  assert.ok(m['Refused logins'] >= 1, 'refused logins recorded');
+  assert.ok(m['ID not found'] >= 1);
   assert.ok(m['Questions answered'] > 0, 'answers counted');
   assert.ok(m['Logins'] >= 1, 'logins recorded');
   assert.ok(m['DAU (last day)'] >= 1);

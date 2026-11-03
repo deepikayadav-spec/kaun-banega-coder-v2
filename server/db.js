@@ -148,6 +148,14 @@ CREATE TABLE IF NOT EXISTS student_logins (     -- one row per student login (an
 );
 CREATE INDEX IF NOT EXISTS student_logins_at ON student_logins(at);
 CREATE INDEX IF NOT EXISTS student_logins_roll ON student_logins(roll_no, at);
+CREATE TABLE IF NOT EXISTS login_failures (      -- one row per refused student login, so admins can see who can't get in (analytics)
+  id          BIGSERIAL PRIMARY KEY,
+  roll_no     TEXT NOT NULL,                    -- as typed (normalised)
+  reason      TEXT NOT NULL,                    -- not_on_list | inactive | name_mismatch | first_name_shared
+  university  TEXT,
+  at          BIGINT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS login_failures_at ON login_failures(at);
 CREATE TABLE IF NOT EXISTS activity (            -- visible time with the game open, per student per IST day (analytics)
   roll_no     TEXT NOT NULL,
   day         TEXT NOT NULL,

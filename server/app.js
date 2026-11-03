@@ -9,7 +9,7 @@ import * as stats from './analytics.js';
 import { content, loadQuestion, questionById, uploadBank, uploadGraph, activateGraph, graphHistory, seedIfEmpty } from './bank.js';
 import { newState, upgradeState, activeSkill, address, applyAnswer, view as engineView, ladderFor, VARIANTS } from './engine.js';
 import { present, grade, fifty } from './grade.js';
-import { universityOf, normRoll, setPrefixes } from './universities.js';
+import { universityOf, normRoll, rollLookAlike, setPrefixes } from './universities.js';
 import { testRules, saveTestRules, realStudentsSql } from './settings.js';
 import {
   createSession, endSession, requireStudent, requireAdmin, requireSuper, namesMatch, firstName, isFirstNameOnly, tooManyFails, addFail, clearFails,
@@ -76,11 +76,18 @@ async function firstNameUnique(st, typed) {
   const others = await all('SELECT roll_no, name FROM students_master WHERE university = ? AND active = 1 AND roll_no <> ?', uni, st.roll_no);
   return !others.some((o) => firstName(o.name) === fn);
 }
+// A refused login is recorded so Admin → Analytics can show who is stuck at the door, and why.
+const loginFail = (roll, reason, university) =>
+  run('INSERT INTO login_failures (roll_no, reason, university, at) VALUES (?, ?, ?, ?)', roll.slice(0, 40), reason, university || universityOf(roll) || null, Date.now()).catch(() => {});
 app.post('/api/auth/login', jsonBody, wrap(async (req, res) => {
-  const roll = normRoll(req.body?.roll), name = String(req.body?.name || '').trim().slice(0, 80);
+  let roll = normRoll(req.body?.roll);
+  const name = String(req.body?.name || '').trim().slice(0, 80);
   if (!roll || !name) return res.status(400).json({ error: 'Enter your NIAT ID and your name.' });
   if (tooManyFails(roll)) return res.status(429).json({ error: 'Too many tries. Wait 15 minutes and try again.' });
   let st = await one('SELECT roll_no, name, university, active FROM students_master WHERE roll_no = ?', roll);
+  // an O typed for a zero (or I/L for a one) in the number part still finds the student
+  const alike = !st && rollLookAlike(roll);
+  if (alike) { st = await one('SELECT roll_no, name, university, active FROM students_master WHERE roll_no = ?', alike); if (st) roll = alike; }
   const TR = config.allowTestLogin && !st ? await testRules() : null;
   if (TR && TR.rollPrefixes.some((p) => roll.startsWith(p.toUpperCase()))) {
     // test logins (when enabled) are tagged with the first test university from Admin > Settings, so analytics leaves them out
@@ -89,13 +96,18 @@ app.post('/api/auth/login', jsonBody, wrap(async (req, res) => {
       roll, name, TR.universities[0] || 'Test', now, now);
     st = await one('SELECT roll_no, name, university, active FROM students_master WHERE roll_no = ?', roll);
   }
-  if (!st) return res.status(404).json({ error: 'This NIAT ID is not on the list. Check it, or ask your mentor to add you.' });
-  if (!st.active) return res.status(403).json({ error: 'This NIAT ID is not active. Ask your mentor.' });
+  if (!st) {
+    await loginFail(roll, 'not_on_list');
+    return res.status(404).json({ error: `We couldn't find NIAT ID ${roll}. Check it against your NIAT ID card (it looks like N26H01A0001), or ask your mentor to add you.` });
+  }
+  if (!st.active) { await loginFail(roll, 'inactive', st.university); return res.status(403).json({ error: 'This NIAT ID is not active. Ask your mentor.' }); }
   if (!namesMatch(st.name, name) && !(await firstNameUnique(st, name))) {
     addFail(roll);
-    return res.status(401).json({ error: isFirstNameOnly(st.name, name)
+    const shared = isFirstNameOnly(st.name, name);
+    await loginFail(roll, shared ? 'first_name_shared' : 'name_mismatch', st.university);
+    return res.status(401).json({ error: shared
       ? 'Another student at your university has the same first name. Type your full name.'
-      : 'The name does not match our list for this NIAT ID. Type your full name.' });
+      : 'The name does not match our list for this NIAT ID. Type your full name as your college has it.' });
   }
   clearFails(roll);
   await run('UPDATE students_master SET last_login_at = ? WHERE roll_no = ?', Date.now(), roll);

@@ -1,4 +1,4 @@
-/* Kaun Banega Coder: the intro, shown once per student on this device, before the game.
+/* Kaun Banega Coder: the intro film, played on request (home → "▶ Watch intro", i.e. /?intro).
    The intro is built in HTML (not a video): a 1280×720 stage scaled to the screen, with the same storyboard, timings
    and soundtrack as KBC_Intro_Video.mp4. Text stays sharp at any size and the whole thing weighs about 2 MB.
    - It starts playing at once, like the film. Browsers only allow sound after a click, so if sound is blocked the
@@ -16,9 +16,10 @@
   try { roll = String(localStorage.getItem("kbc-roll") || "").trim().toUpperCase(); } catch (e) {}
   var KEY = "kbc-intro-seen-" + (roll || "device");
   var force = /[?&]intro\b/.test(location.search);
-  var seen = false;
-  try { seen = !!localStorage.getItem(KEY); } catch (e) {}
-  if (seen && !force) { window.KBC_INTRO = Promise.resolve(); return; }
+  // The film no longer plays by itself on a first visit: an 87-second film between login and the first question kept
+  // new students from the game (Paradox of the Active User: people start using it right away). "▶ Watch intro" on the
+  // home screen opens it with ?intro.
+  if (!force) { window.KBC_INTRO = Promise.resolve(); return; }
   // a moving film with music must not start by itself for someone who has asked for less motion; "Watch intro" still plays it
   var calm = false;
   try { calm = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}

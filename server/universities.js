@@ -20,4 +20,13 @@ export const universityOf = (roll) => {
   return hit ? hit[1] : '';
 };
 
-export const normRoll = (r) => String(r || '').trim().toUpperCase().replace(/\s+/g, '');
+// Forgiving (Postel's law): spaces, dashes, dots and slashes pasted or typed into a NIAT ID are dropped.
+export const normRoll = (r) => String(r || '').trim().toUpperCase().replace(/[\s\-_./\\]+/g, '');
+// The usual look-alike slips in the digits after the prefix: the letter O for zero, I or L for one.
+// "N26H01AO012" -> "N26H01A0012". Only the tail after the last letter of the prefix is touched.
+export const rollLookAlike = (roll) => {
+  const m = /^([A-Z]\d+[A-Z]+\d*[A-Z])(.+)$/.exec(roll);
+  if (!m) return null;
+  const tail = m[2].replace(/O/g, '0').replace(/[IL]/g, '1');
+  return tail === m[2] ? null : m[1] + tail;
+};

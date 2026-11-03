@@ -2893,3 +2893,92 @@ html[data-theme="light"] .lvbar.big .lb-seg.now b{color:#7C2D12;text-shadow:none
 .lvu-streak{display:inline-flex;gap:8px}.lvu-streak .lp-s{width:26px;height:26px}
 .lvu-streak .lp-s:nth-child(1){animation:fireIgnite .7s .9s cubic-bezier(.2,1.6,.4,1) both}.lvu-streak .lp-s:nth-child(2){animation:fireIgnite .7s 1.15s cubic-bezier(.2,1.6,.4,1) both}
 @media (prefers-reduced-motion:reduce){.lvu-streak .lp-s{animation:none!important}}
+
+/* ===================== Streak moments: fire, ice, shattering ice, the 2-in-a-row blaze (Nov 2026) ===================== */
+/* the layer over the question card; it never takes a click */
+.stkfx{position:fixed;inset:0;z-index:90;pointer-events:none;overflow:hidden}
+.sx-core{position:absolute;left:var(--cx);top:var(--cy);width:0;height:0}
+.sx-glow{position:absolute;left:-110px;top:-110px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,150,0,.55),rgba(255,80,0,.18) 45%,transparent 70%);animation:sxGlow 1.5s ease-out both}
+.sx-flame{position:absolute;left:-46px;top:-80px;width:92px;height:122px;display:grid;place-items:end center;animation:sxFlameIn 1.5s cubic-bezier(.2,1.4,.4,1) both}
+.sx-flame .lvfire{font-size:115px;filter:drop-shadow(0 0 18px rgba(255,110,0,.95)) drop-shadow(0 0 40px rgba(255,60,0,.6))}
+.sx-em{position:absolute;left:0;top:0;width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,#FFF3B0,#FF9100 60%,transparent 70%);
+  transform:rotate(var(--a)) translateY(0);animation:sxEmber var(--t) .15s ease-out both}
+.sx-txt{position:absolute;left:var(--cx);top:calc(var(--cy) + 62px);transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;white-space:nowrap;animation:sxText 1.5s ease-out both}
+.sx-txt b{font:900 clamp(22px,4vw,30px)/1 var(--f-display);letter-spacing:.02em;color:#FFE9B0;text-shadow:0 2px 0 #7C2D12,0 0 22px rgba(255,120,0,.9)}
+.sx-txt small{font:700 13px var(--f-body);color:#E2E8F0;text-shadow:0 1px 6px rgba(0,0,0,.8)}
+/* fire: after the burst the flame shrinks into its streak dot */
+.stkfx.fly .sx-flame{animation:sxFlameIn 1.5s cubic-bezier(.2,1.4,.4,1) both,sxFly .55s 1.1s cubic-bezier(.6,0,.9,.5) forwards}
+@keyframes sxFlameIn{0%{transform:scale(.2) translateY(30px);opacity:0}25%{transform:scale(1.15);opacity:1}40%,100%{transform:scale(1)}}
+@keyframes sxFly{to{transform:translate(var(--fx),var(--fy)) scale(.12);opacity:.2}}
+@keyframes sxGlow{0%{transform:scale(.3);opacity:0}25%{opacity:1}100%{transform:scale(1.4);opacity:0}}
+@keyframes sxEmber{0%{transform:rotate(var(--a)) translateY(0);opacity:1}100%{transform:rotate(var(--a)) translateY(calc(var(--d) * -1));opacity:0}}
+@keyframes sxText{0%{opacity:0;transform:translate(-50%,10px) scale(.8)}20%{opacity:1;transform:translate(-50%,0) scale(1.06)}30%,80%{transform:translate(-50%,0) scale(1);opacity:1}100%{opacity:0}}
+/* ice: the flame turns cold blue inside a block of ice; frost creeps in at the edges */
+.stkfx.sx-ice .sx-flame .lvfire .f1{fill:#3B82F6}.stkfx.sx-ice .sx-flame .lvfire .f2{fill:#93C5FD}.stkfx.sx-ice .sx-flame .lvfire .f3{fill:#F0F9FF}
+.stkfx.sx-ice .sx-flame .lvfire,.stkfx.sx-ice .sx-flame .lvfire path{animation:none}
+.stkfx.sx-ice .sx-flame .lvfire{filter:drop-shadow(0 0 16px rgba(147,197,253,.9))}
+.stkfx.sx-ice .sx-glow{background:radial-gradient(circle,rgba(147,197,253,.5),rgba(59,130,246,.15) 45%,transparent 70%)}
+.sx-ice{position:absolute;left:-62px;top:-92px;width:124px;height:150px;border-radius:26px;
+  background:linear-gradient(150deg,rgba(255,255,255,.55),rgba(186,230,253,.28) 35%,rgba(125,211,252,.18) 65%,rgba(255,255,255,.35));
+  border:2px solid rgba(224,242,254,.85);box-shadow:inset 0 0 22px rgba(255,255,255,.55),0 0 30px rgba(147,197,253,.6);backdrop-filter:blur(1.5px);
+  animation:sxIceIn 2.2s cubic-bezier(.2,1.3,.4,1) both}
+.sx-ice i{position:absolute;background:rgba(255,255,255,.75);border-radius:2px}
+.sx-ice i:nth-child(1){left:16px;top:14px;width:30px;height:5px;transform:rotate(-35deg)}
+.sx-ice i:nth-child(2){left:14px;top:26px;width:14px;height:4px;transform:rotate(-35deg)}
+.sx-ice i:nth-child(3){right:18px;bottom:22px;width:22px;height:3px;transform:rotate(-35deg);opacity:.6}
+.sx-frost{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 55%,rgba(186,230,253,.35) 80%,rgba(224,242,254,.75) 100%);animation:sxFrost 2.2s ease-out both}
+.stkfx.sx-ice .sx-txt b{color:#E0F2FE;text-shadow:0 2px 0 #1E3A8A,0 0 22px rgba(96,165,250,.95)}
+@keyframes sxIceIn{0%{transform:scale(1.6);opacity:0}25%{transform:scale(.95);opacity:1}32%{transform:scale(1.03)}40%,80%{transform:scale(1);opacity:1}100%{opacity:0}}
+@keyframes sxFrost{0%{opacity:0}25%,75%{opacity:1}100%{opacity:0}}
+.stkfx.sx-ice .sx-flame{animation:sxFlameIn 1.5s cubic-bezier(.2,1.4,.4,1) both,sxOut .4s 1.8s ease-in forwards}
+.stkfx.sx-ice .sx-txt{animation:sxText 2.2s ease-out both}
+@keyframes sxOut{to{opacity:0}}
+/* thaw: the ice cracks, shatters into shards, and the flame bursts back up */
+.stkfx.sx-thaw .sx-ice{animation:sxCrack .45s ease-in both}
+.stkfx.sx-thaw .sx-ice::after{content:"";position:absolute;inset:0;border-radius:inherit;
+  background:linear-gradient(115deg,transparent 46%,rgba(255,255,255,.95) 47%,transparent 49%),linear-gradient(35deg,transparent 52%,rgba(255,255,255,.9) 53%,transparent 55%),linear-gradient(160deg,transparent 30%,rgba(255,255,255,.8) 31%,transparent 33%)}
+.sx-sh{position:absolute;left:calc(var(--w) / -2);top:-20px;width:var(--w);height:calc(var(--w) * 1.6);clip-path:polygon(50% 0,100% 40%,70% 100%,0 70%);
+  background:linear-gradient(160deg,#FFFFFF,#BAE6FD 50%,#7DD3FC);opacity:0;animation:sxShard .9s .38s cubic-bezier(.2,.8,.4,1) both}
+.stkfx.sx-thaw .sx-flame{animation:sxFlameIn 1.3s .4s cubic-bezier(.2,1.4,.4,1) both}
+.stkfx.sx-thaw.fly .sx-flame{animation:sxFlameIn 1.3s .4s cubic-bezier(.2,1.4,.4,1) both,sxFly .5s 1.35s cubic-bezier(.6,0,.9,.5) forwards}
+.stkfx.sx-thaw .sx-glow{animation-delay:.38s}
+.stkfx.sx-thaw .sx-em{animation-delay:.45s}
+.stkfx.sx-thaw .sx-txt{animation:sxText 1.6s .3s ease-out both}
+@keyframes sxCrack{0%{transform:scale(1);opacity:1}40%{transform:scale(1.04) rotate(-2deg)}70%{transform:scale(.98) rotate(2deg);opacity:1}100%{transform:scale(1.25);opacity:0}}
+@keyframes sxShard{0%{opacity:1;transform:rotate(var(--a)) translateY(0) rotate(0)}100%{opacity:0;transform:rotate(var(--a)) translateY(calc(var(--d) * -1)) rotate(var(--r))}}
+
+/* the tracker's frozen dot: the flame is cold blue, under an icy cap with a glint; it shivers as it freezes and
+   bursts when it thaws */
+.lp-s.ice{border-color:#BAE6FD;background:radial-gradient(circle at 50% 70%,#1E3A8A,#0B1530 75%);box-shadow:0 0 0 3px rgba(147,197,253,.22),0 0 14px rgba(147,197,253,.7),inset 0 0 6px rgba(224,242,254,.6)}
+.lp-s.ice .lvfire .f1{fill:#3B82F6}.lp-s.ice .lvfire .f2{fill:#93C5FD}.lp-s.ice .lvfire .f3{fill:#F0F9FF}
+.lp-s.ice .lvfire,.lp-s.ice .lvfire path{animation:none;filter:drop-shadow(0 0 4px rgba(147,197,253,.9))}
+.lp-s.ice .lvfire{font-size:13px;margin-top:-2px}
+.lp-icecap{position:absolute;inset:-2px;border-radius:50%;pointer-events:none;
+  background:linear-gradient(140deg,rgba(255,255,255,.75) 0 18%,transparent 30%),linear-gradient(140deg,transparent 60%,rgba(224,242,254,.35));border:1.5px solid rgba(224,242,254,.9)}
+.lp-s.ice.freezing{animation:lvFreeze .9s ease-out both}
+.lp-s.thaw{animation:lvThaw .8s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes lvFreeze{0%{transform:scale(1.25);filter:brightness(2) saturate(.2)}30%{transform:translateX(-2px)}45%{transform:translateX(2px)}60%{transform:translateX(-1px)}100%{transform:none;filter:none}}
+@keyframes lvThaw{0%{transform:scale(.5);box-shadow:0 0 0 6px rgba(224,242,254,.8),0 0 20px rgba(147,197,253,.9)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
+html[data-theme="light"] .lp-s.ice{background:radial-gradient(circle at 50% 70%,#DBEAFE,#93C5FD 80%)}
+
+/* the level-up card's blaze: three big flames roar up behind the badge while embers rise */
+.lvu-blaze{position:absolute;left:50%;top:0;width:220px;height:128px;margin-left:-110px;pointer-events:none;z-index:0}
+.lvu-blaze .bz{position:absolute;bottom:0;left:50%;transform-origin:50% 100%;opacity:0;animation:bzUp 1.1s .1s cubic-bezier(.2,1.3,.4,1) forwards}
+.lvu-blaze .bz .lvfire{filter:drop-shadow(0 0 16px rgba(255,100,0,.95)) drop-shadow(0 0 34px rgba(255,60,0,.6))}
+.lvu-blaze .bz1 .lvfire{font-size:118px}.lvu-blaze .bz1{margin-left:-47px}
+.lvu-blaze .bz2{margin-left:-96px;bottom:6px;animation-delay:.25s}.lvu-blaze .bz2 .lvfire{font-size:74px}
+.lvu-blaze .bz3{margin-left:22px;bottom:6px;animation-delay:.35s}.lvu-blaze .bz3 .lvfire{font-size:74px}
+.bz-em{position:absolute;bottom:10px;left:calc(50% + var(--x));width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,#FFF3B0,#FF8F00 60%,transparent 70%);
+  opacity:0;animation:bzEmber var(--t) var(--dl) ease-out infinite}
+@keyframes bzUp{0%{opacity:0;transform:scale(.2,.1)}60%{opacity:1;transform:scale(1.1,1.2)}100%{opacity:.85;transform:scale(1)}}
+@keyframes bzEmber{0%{opacity:0;transform:translateY(0)}15%{opacity:1}100%{opacity:0;transform:translateY(-170px) translateX(calc(var(--x) * .3))}}
+.mbox.lvup .lvu-badge,.mbox.lvup .lvu-k,.mbox.lvup h2,.mbox.lvup .lvu-from,.mbox.lvup .lvbar{position:relative;z-index:1}
+.mbox.lvup .lvu-badge{box-shadow:0 0 0 0 transparent}
+
+html[data-theme="light"] .sx-txt b{color:#9A3412;text-shadow:0 1px 0 #FFF7ED,0 0 18px rgba(255,150,0,.75)}html[data-theme="light"] .sx-txt small{color:#1E293B;text-shadow:0 1px 4px rgba(255,255,255,.9)}
+html[data-theme="light"] .stkfx.sx-ice .sx-txt b{color:#1E3A8A;text-shadow:0 1px 0 #EFF6FF,0 0 18px rgba(96,165,250,.8)}
+@media (prefers-reduced-motion:reduce){
+  .stkfx{display:none}
+  .lp-s.ice.freezing,.lp-s.thaw,.lvu-blaze .bz,.bz-em{animation:none!important}
+  .lvu-blaze .bz{opacity:.85}.bz-em{display:none}
+}

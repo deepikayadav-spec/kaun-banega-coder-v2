@@ -856,6 +856,12 @@ const SFX={
  start(){ROBO.boot();noise(160,6000,1.15,0,.1,"bandpass");boom(48,.7,1.15,.5);boom(48,.7,1.42,.5);boom(44,1,1.7,.55);[523,659,784,1047].forEach(f=>tone(f,.9,"triangle",1.7,.07));tone(2093,.6,"sine",1.75,.05)},
  coins(n=10){for(let i=0;i<n;i++){const f=2200+Math.random()*1600;tone(f,.15,"sine",.1+i*.07,.045);tone(f*1.5,.1,"sine",.12+i*.07,.025)}},
  fanfare(){[392,523,659,784,659,784,1047].forEach((f,i)=>tone(f,.3,"triangle",i*.13,.07))},
+ /* Streak effects: a flame catching (whoosh + crackle + rising chime), ice forming (glassy shimmer falling),
+    ice shattering (bright crack + tinkles, then the flame catches), and the 2-in-a-row blaze (roar + hit + chord) */
+ ignite(){noise(180,2400,.38,0,.09,"bandpass");for(let i=0;i<6;i++)noise(3000+Math.random()*3000,1800,.03,.12+i*.045,.05,"highpass");[659,880,1175].forEach((f,i)=>tone(f,.22,"sine",.18+i*.07,.05))},
+ freeze(){noise(9000,2500,.5,0,.06,"highpass");[2093,1760,1568,1319,1047].forEach((f,i)=>{tone(f,.5,"sine",i*.07,.035);tone(f*1.5,.3,"sine",i*.07+.01,.015)});slide(520,260,.6,.15,.025)},
+ shatter(){noise(7000,1200,.12,0,.16,"highpass");boom(70,.25,0,.25);for(let i=0;i<9;i++){const f=2600+Math.random()*2600;tone(f,.18,"sine",.05+i*.035,.04)}setTimeout(()=>SFX.ignite(),180)},
+ blaze(){noise(120,3600,.7,0,.12,"bandpass");noise(90,700,.9,.2,.1,"lowpass");boom(46,.9,.55,.45);[523,659,784,1047].forEach(f=>{tone(f,.8,"sawtooth",.6,.03);tone(f*2,.6,"triangle",.6,.03)});tone(2093,.7,"sine",.75,.04)},
  /* Coins dropping on a table: metallic partials, each coin bouncing faster and quieter until it settles */
  coinDrop(n=3){if(!soundOn)return;try{const a=ctx(),t0=a.currentTime+.04;for(let c=0;c<n;c++){const base=2400+Math.random()*1500;let t=t0+c*.11+Math.random()*.05,gap=.17,vol=.085;
   for(let b=0;b<6;b++){[[1,.16],[2.76,.11],[5.4,.07],[8.93,.04]].forEach(([k,d])=>{const o=a.createOscillator(),g=a.createGain();o.type="sine";o.frequency.setValueAtTime(base*k*(1+(Math.random()-.5)*.01),t);g.gain.setValueAtTime(vol/k,t);g.gain.exponentialRampToValueAtTime(.0001,t+d*(1-b*.1));o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d+.02)});t+=gap;gap*=.6;vol*=.62}}}catch(e){}}
@@ -974,6 +980,10 @@ function apply(ok,res){const q=S.q,sk=q.sk,before=res&&res.rungBefore!=null?res.
  info.sk=sk;info.ok=ok;info.tb=trackOf(sk);
  if(res&&res.engine){ENGINE=res.engine;graphCheck(ENGINE)}
  info.ta=trackOf(sk);info.trans=(res&&res.transitions)||[];info.lvup=info.trans.some(t=>t.kind==="level_up"||t.kind==="skill_done");
+ /* streak ice (display only, the engine still resets the streak): a miss that breaks a streak freezes its flame;
+    the next right answer shatters the ice and the flame catches again (at 1 of 2, as the engine counts it) */
+ info.wasFrozen=frozenOf(sk);info.freeze=!ok&&!!info.tb&&info.tb.streak>0;info.thaw=ok&&info.wasFrozen;
+ if(info.freeze)setFrozen(sk,true);else if(ok)setFrozen(sk,false);
  P.answered++;dayTick();comboTick(ok);const after=rungOf();info.after=after;
  if(after>before){info.rungUp=true;if(CK[after-1])info.ck=CK[after-1];logEv({kind:"rung",rung:after});P.paid=P.paid||{};for(let r=before+1;r<=after;r++)if(!P.paid[r]){P.paid[r]=1;const amt=amountOf(r);P.coins=(P.coins||0)+amt;if(S.run)S.run.earned=(S.run.earned||0)+amt}}
  if(res&&res.transitions)info.mastered=res.transitions.some(t=>t.kind==="level_up"||t.kind==="skill_done");
@@ -1023,6 +1033,10 @@ async function reveal(){if(S.phase==="reveal"||S.revealing)return;S.revealing=tr
  render();
  if(ok){SFX.right();setTimeout(()=>SFX.coinDrop(info.rungUp?7:3),260);spotFx("win");window.KB3D&&KB3D.boost();if(info.rungUp){if(info.ck)setTimeout(()=>SFX.fanfare(),900);confetti(info.ck?260:160)}else confetti(50)}
  else{SFX.wrong();flash();spotFx("lose");window.KB3D&&KB3D.alarm()}
+ /* the streak moment on screen: fire for a right answer, ice for a broken streak, shattering ice when it comes back;
+    a level-up gets the big blaze on its card instead */
+ if(!info.lvup){const kind=info.thaw?"thaw":info.freeze?"ice":ok?"fire":null;
+  if(kind)setTimeout(()=>{if(S.screen==="play"&&S.info===info)streakFX(kind,info)},ok?250:350)}
  if(info.lvup)setTimeout(()=>{if(S.screen==="play"&&S.phase==="reveal"&&S.info===info)levelUpFX(info)},reduceMotion?100:info.rungUp?1500:800);
  say(ok?(info.rungUp?"Group cleared! Prize "+fmtR(amountOf(info.after))+" won.":"Correct! "+(info.msg||"")):(S.timeout?"Time is up. ":"Wrong answer. ")+"The answer was "+(q.show||"")+".")}
 function say(t){const e=$("#sr-live");if(e){e.textContent="";setTimeout(()=>e.textContent=t,30)}}
@@ -1230,15 +1244,44 @@ function lvBar(lv,status,streak,o){o=o||{};const L=status==="done"?5:lv||1;
   const f=st==="done"?1:st==="now"?Math.min(1,(streak||0)/2):0;
   return `<span class="lb-seg ${st} ${o.fresh===l?"fresh":""}" style="--f:${f}"><i class="lb-fill"></i><b>${st==="done"?'<em class="lb-ck">✓</em>':""}Level ${l}</b></span>`}).join("")}</span>`}
 /* the steps of the current level: L1 difficulty chevrons (R2…rmax, lit up to the current R), then the two in-a-row slots */
-function lvPips(t,fx){if(!t)return "";fx=fx||{};
+function lvPips(t,fx,frozen){if(!t)return "";fx=fx||{};
  const ch=t.level===1&&t.rmax>1?Array.from({length:t.rmax-1},(_,i)=>i+2).map(r=>`<i class="lp-c ${r<=t.r?"on":""} ${fx.rUp===r?"pop":""}" title="Difficulty R${r} ${RLBL(r)}">R${r}</i>`).join(""):"";
- const st=[0,1].map(i=>`<i class="lp-s ${i<t.streak?"on":""} ${i===1?"hot":""} ${fx.fill===i?"pop":""} ${fx.drain&&i===0?"drain":""}" title="Streak ${i+1} of 2">${i<t.streak?FIRE:`<span>${i+1}</span>`}</i>`).join("");
+ /* a frozen streak: the first dot keeps its flame, locked in ice, until the next right answer shatters it */
+ const ice=i=>i===0&&frozen&&t.streak===0;
+ const st=[0,1].map(i=>`<i class="lp-s ${i<t.streak?"on":""} ${ice(i)?"ice":""} ${i===1?"hot":""} ${fx.fill===i?"pop":""} ${fx.thaw&&i===0?"thaw":""} ${ice(i)&&fx.freeze?"freezing":""}" title="${ice(i)?"Streak frozen: a right answer breaks the ice":`Streak ${i+1} of 2`}">${i<t.streak||ice(i)?FIRE+(ice(i)?'<span class="lp-icecap"></span>':""):`<span>${i+1}</span>`}</i>`).join("");
  return `<span class="lvpips">${ch?`<span class="lp-cs">${ch}</span><i class="lp-sep"></i>`:""}<span class="lp-ss">${st}</span></span>`}
 /* an animated CSS flame: three tongues that flicker (still with reduced motion) */
+/* streak ice, per skill and kept on this device (see apply) */
+const FROZEN=(()=>{const v=store.get("kbc-frozen",{});return v&&typeof v==="object"?v:{}})();
+const frozenOf=sk=>!!FROZEN[sk];
+function setFrozen(sk,v){if(v)FROZEN[sk]=1;else delete FROZEN[sk];store.set("kbc-frozen",FROZEN)}
+/* The streak moment, over the question card (never blocks a click):
+   fire  a flame bursts up, then flies into its streak dot in the tracker
+   ice   the flame is caught in a block of ice, frost creeps in at the screen edges
+   thaw  the ice cracks and shatters into shards, and the flame bursts out again */
+function streakFX(kind,I){const snd={fire:"ignite",ice:"freeze",thaw:"shatter"}[kind];try{SFX[snd]()}catch(e){}
+ if(reduceMotion)return;
+ const card=$(".qcard"),r=card?card.getBoundingClientRect():{left:innerWidth/2-150,top:innerHeight/3,width:300,height:200};
+ const cx=r.left+r.width/2,cy=Math.max(140,Math.min(innerHeight-160,r.top+r.height/2));
+ const T=I.trans||[],up=T.find(x=>x.kind==="r_up");
+ const label=kind==="ice"?"Streak frozen":kind==="thaw"?"Streak back on!":up?`Difficulty up · R${up.detail.to}`:`Streak ${(I.ta&&I.ta.streak)||1}!`;
+ const sub=kind==="ice"?"Your level is safe. Next right answer breaks the ice.":kind==="thaw"?"The ice is broken. Keep it burning!":"";
+ const old=$("#stkfx");if(old)old.remove();
+ const el=document.createElement("div");el.id="stkfx";el.className="stkfx sx-"+kind;el.setAttribute("aria-hidden","true");
+ el.style.setProperty("--cx",cx+"px");el.style.setProperty("--cy",cy+"px");
+ const embers=Array.from({length:14},(_,i)=>`<i class="sx-em" style="--a:${(i*360/14+Math.random()*20).toFixed(0)}deg;--d:${(60+Math.random()*90).toFixed(0)}px;--t:${(.5+Math.random()*.6).toFixed(2)}s;--s:${(3+Math.random()*5).toFixed(1)}px"></i>`).join("");
+ const shards=kind==="thaw"?Array.from({length:12},(_,i)=>`<i class="sx-sh" style="--a:${(i*30+Math.random()*14).toFixed(0)}deg;--d:${(120+Math.random()*120).toFixed(0)}px;--r:${(Math.random()*540-270).toFixed(0)}deg;--w:${(8+Math.random()*14).toFixed(0)}px"></i>`).join(""):"";
+ el.innerHTML=`${kind==="ice"?'<i class="sx-frost"></i>':""}<div class="sx-core"><span class="sx-glow"></span>${kind!=="ice"?embers:""}${shards}
+<span class="sx-flame">${FIRE}</span>${kind!=="fire"?'<span class="sx-ice"><i></i><i></i><i></i></span>':""}</div><div class="sx-txt"><b>${esc(label)}</b>${sub?`<small>${esc(sub)}</small>`:""}</div>`;
+ document.body.appendChild(el);
+ /* the flame flies into its dot in the tracker once it has been seen */
+ const dot=document.querySelectorAll(".lvhud .lp-ss .lp-s")[Math.max(0,((I.ta&&I.ta.streak)||1)-1)];
+ if(dot&&kind!=="ice"&&!up){const d=dot.getBoundingClientRect();el.style.setProperty("--fx",(d.left+d.width/2-cx)+"px");el.style.setProperty("--fy",(d.top+d.height/2-cy)+"px");el.classList.add("fly")}
+ setTimeout(()=>el.remove(),kind==="ice"?2300:1900)}
 const FIRE='<svg class="lvfire" viewBox="0 0 24 32" aria-hidden="true"><path class="f1" d="M12 1c1.2 6 8.5 9.5 8.5 18.5a8.5 8.5 0 0 1-17 0c0-5 2.6-7.6 3.8-11.6.9 2.7 2.2 4 3.4 4.2C10.4 8.4 10.6 4.6 12 1z"/><path class="f2" d="M12.4 11.5c.8 4 5.1 6 5.1 10.6a5.5 5.5 0 0 1-11 0c0-3.2 1.7-4.6 2.4-7 .8 1.8 1.7 2.4 2.6 2.5-.2-2.4.1-4.3.9-6.1z"/><path class="f3" d="M12 19.5c.6 2 3.2 3.2 3.2 5.6a3.2 3.2 0 0 1-6.4 0c0-1.9 1.9-3 3.2-5.6z"/></svg>';
 /* how the last answer moved the track, for the pip animations */
 function lvFx(I){if(!I||!I.tb||!I.ta)return {};const T=I.trans||[],up=T.find(x=>x.kind==="r_up");
- return {rUp:up?up.detail.to:null,fill:I.ok&&I.ta.streak>I.tb.streak?I.ta.streak-1:null,drain:!I.ok&&I.tb.streak>0}}
+ return {rUp:up?up.detail.to:null,fill:I.ok&&I.ta.streak>I.tb.streak?I.ta.streak-1:null,freeze:!!I.freeze,thaw:!!I.thaw}}
 /* Question page: the level tracker in the question card. The skill is the one this question was served for. */
 function levelHUD(q){const sk=q&&q.sk;if(!sk||!SK[sk])return "";const e=engSk(sk),t=e.track;
  const I=S.phase==="reveal"&&S.info&&S.info.sk===sk?S.info:null,fx=lvFx(I);
@@ -1249,7 +1292,7 @@ function levelHUD(q){const sk=q&&q.sk;if(!sk||!SK[sk])return "";const e=engSk(sk
   return `<i class="${l<L?"done":now?"now":""} ${now&&f>0?"lit":""}" style="--f:${f}">${now&&f>0?FIRE:""}</i>`}).join("");
  return `<button type="button" class="lvhud ${I&&I.lvup?"up":""}" data-act="lvinfo" aria-label="${esc(lvAria(e,t))} Show level details" title="${esc(SK[sk].name)}: tap for level details">
 <span class="lvh-lv">${e.status==="done"?"Topic cleared ✓":`Level ${lvl}`}</span><span class="lvticks" aria-hidden="true">${ticks}</span>
-${t?`<i class="lvh-sep" aria-hidden="true"></i>${lvPips(t,fx)}<span class="lvh-i"><i aria-hidden="true">🔥</i>${esc(lvRule(t))}</span>`:""}</button>`}
+${t?`<i class="lvh-sep" aria-hidden="true"></i>${lvPips(t,fx,frozenOf(sk))}<span class="lvh-i"><i aria-hidden="true">🔥</i>${esc(lvRule(t))}</span>`:""}</button>`}
 /* After the answer: one line on what changed, read from the engine's own transitions */
 function progressDelta(){const I=S.info;if(S.phase!=="reveal"||!I||!I.tb)return "";const T=I.trans||[],tb=I.tb,ta=I.ta;
  const has=k=>T.find(x=>x.kind===k);let ic="",h="",p="",cls="";
@@ -1279,11 +1322,14 @@ function levelUpFX(I){const T=I.trans||[],done=T.find(x=>x.kind==="skill_done"),
  const s=SK[I.sk]||{name:""},to=up?up.detail.to.l:4,from=up?up.detail.from.l:4,un=T.filter(x=>x.kind==="unlock").map(x=>SK[x.skill]).filter(Boolean);
  let m=$("#lvupm");if(!m){m=document.createElement("div");m.id="lvupm";m.className="modalx lvupx";document.body.appendChild(m)}
  m.innerHTML=`<div class="mbox lvup" role="dialog" aria-modal="true" aria-labelledby="lvup-h" tabindex="-1" data-act="lvup-close"><span class="lvu-rays" aria-hidden="true"></span>
+<div class="lvu-blaze" aria-hidden="true"><span class="bz bz1">${FIRE}</span><span class="bz bz2">${FIRE}</span><span class="bz bz3">${FIRE}</span>${Array.from({length:16},(_,i)=>`<i class="bz-em" style="--x:${(Math.random()*160-80).toFixed(0)}px;--t:${(1.2+Math.random()*1.4).toFixed(2)}s;--dl:${(Math.random()*1.2).toFixed(2)}s;--s:${(3+Math.random()*4).toFixed(1)}px"></i>`).join("")}</div>
 <div class="lvu-badge ${done?"cleared":""}" aria-hidden="true"><span class="lvu-lock">${LOCKI}</span><b>${done?"✓":to}</b></div>
 <p class="lvu-k">${done?"Topic cleared":"Level unlocked"}</p><h2 id="lvup-h">${done?esc(s.name):`Level ${to}`}</h2>
 <p class="lvu-from"><span class="lvu-streak" aria-hidden="true"><i class="lp-s on">${FIRE}</i><i class="lp-s on hot">${FIRE}</i></span>${done?"All 4 levels done.":`Level ${from} cleared with 2 in a row.`}</p>${lvBar(done?4:to,done?"done":"open",0,{cls:"big",fresh:done?4:to})}</div>`;
  m.hidden=false;
- if(!I.rungUp){confetti(120);setTimeout(()=>SFX.fanfare(),250)}
+ /* the 2-in-a-row milestone: a roaring blaze, then the fanfare (a prize rung brings its own) */
+ try{SFX.blaze()}catch(e){}
+ if(!I.rungUp){confetti(120);setTimeout(()=>SFX.fanfare(),950)}
  try{ROBO.happy()}catch(e){}
  say(done?`Topic cleared: ${s.name}. ${un.length?"Unlocked "+un.map(u=>u.name).join(", ")+".":""}`:`Level ${to} unlocked.`);
  logEv({kind:"level_fx",sk:I.sk,to:done?"done":to});

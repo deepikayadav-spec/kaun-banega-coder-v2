@@ -1249,7 +1249,7 @@ function levelHUD(q){const sk=q&&q.sk;if(!sk||!SK[sk])return "";const e=engSk(sk
   return `<i class="${l<L?"done":now?"now":""} ${now&&f>0?"lit":""}" style="--f:${f}">${now&&f>0?FIRE:""}</i>`}).join("");
  return `<button type="button" class="lvhud ${I&&I.lvup?"up":""}" data-act="lvinfo" aria-label="${esc(lvAria(e,t))} Show level details" title="${esc(SK[sk].name)}: tap for level details">
 <span class="lvh-lv">${e.status==="done"?"Topic cleared ✓":`Level ${lvl}`}</span><span class="lvticks" aria-hidden="true">${ticks}</span>
-${t?`<i class="lvh-sep" aria-hidden="true"></i>${lvPips(t,fx)}<span class="lvh-c">${t.climb.length?`R${t.climb[0]} next`:`<b>${t.streak}</b>/2`}</span><span class="lvh-i"><i aria-hidden="true">🔥</i>${esc(lvRule(t))}</span>`:""}</button>`}
+${t?`<i class="lvh-sep" aria-hidden="true"></i>${lvPips(t,fx)}<span class="lvh-i"><i aria-hidden="true">🔥</i>${esc(lvRule(t))}</span>`:""}</button>`}
 /* After the answer: one line on what changed, read from the engine's own transitions */
 function progressDelta(){const I=S.info;if(S.phase!=="reveal"||!I||!I.tb)return "";const T=I.trans||[],tb=I.tb,ta=I.ta;
  const has=k=>T.find(x=>x.kind===k);let ic="",h="",p="",cls="";

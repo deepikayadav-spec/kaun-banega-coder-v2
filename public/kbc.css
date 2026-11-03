@@ -2729,7 +2729,6 @@ html[data-theme="light"]{--lv-track:rgba(15,23,42,.08);--lv-ring:rgba(15,23,42,.
 .lvhud .lp-sep{height:14px}
 .lvhud .lp-s{width:18px;height:18px;border-width:2px}
 .lvhud .lp-c{padding:3px 5px;font-size:9.5px;border-radius:6px}
-.lvhud .lvh-c{font-size:11.5px}.lvhud .lvh-c b{font-size:13px}
 .lvhud .lvh-i{margin:0;padding:0;border:0;background:none;font:600 11.5px/1.2 var(--f-body);color:var(--tx2);white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
 @media (min-width:761px){.lvhud{flex-wrap:nowrap}}
 html[data-theme="light"] .lvhud .lvh-i{background:none;color:var(--tx2)}
@@ -2766,7 +2765,6 @@ html[data-theme="light"] .lvhud .lvh-i{background:none;color:var(--tx2)}
 .lp-s.drain{animation:lvDrain .8s ease both}
 @keyframes lvPop{0%{transform:scale(.3);filter:brightness(2)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
 @keyframes lvDrain{0%{background:var(--lv-gold);transform:scale(1.1)}30%{transform:translateX(-4px)}50%{transform:translateX(4px)}70%{transform:translateX(-2px)}100%{transform:none}}
-.lvh-c{font:600 13px var(--f-mono);color:var(--tx2)}.lvh-c b{font-size:16px;color:var(--tx)}
 /* ---------- after an answer: what changed ---------- */
 .lvdelta{display:flex;align-items:center;gap:12px;margin:10px 0 0;padding:10px 14px;border-radius:14px;background:var(--hud);border:1px solid var(--hl);animation:rise .4s cubic-bezier(.2,1.2,.3,1) both}
 .lvdelta>i{width:32px;height:32px;flex:none;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:15px;background:rgba(148,163,184,.12);color:var(--tx2)}

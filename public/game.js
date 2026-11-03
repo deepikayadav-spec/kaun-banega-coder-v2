@@ -1065,14 +1065,14 @@ function homeLine(r,st){if(!P.answered)return `Hi! I'm ${buddyName()}, your KBC 
 function vHome(){const best=P.best||0,coins=P.coins||0;
  const greet=esc(quipText("homebubble"));
  return `<div class="wishc" role="note"><b>Happy Diwali!</b></div><section class="home4 enter">
-<div class="h4-bot"><p class="say">${P.answered?greet:esc(!P.runs?`Hi! I'm ${buddyName()}, your KBC buddy. Your first seat is free. Jump straight in!`:`Hi! I'm ${buddyName()}, your KBC buddy. Win Fastest Finger First to take the hot seat!`)}</p>${mascot(ctxPose(),300)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span><button class="btn quiet sm" data-act="buddy">Change buddy</button></div>
+<div class="h4-bot"><p class="say">${P.answered?greet:esc(`Hi! I'm ${buddyName()}, your KBC buddy. Win Fastest Finger First to take the hot seat!`)}</p>${mascot(ctxPose(),300)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span><button class="btn quiet sm" data-act="buddy">Change buddy</button></div>
 <div class="h-hero">
 <span class="emb hlogo" aria-hidden="true"><i class="er"></i><i class="er er2"></i><span class="ec">{ }</span></span>
 <h1 class="ttl"><span>Kaun Banega</span><b class="typed" aria-label="Coder"><em class="tw" aria-hidden="true">Coder</em><i class="caret" aria-hidden="true"></i></b></h1>
 <p class="htag">Code. Climb. Crorepati.</p>
 <div class="ctready" aria-label="Your GRIT Computational Thinking readiness: ${gritReady()} percent"><div class="ct-ring" style="--v:${Math.min(100,parseFloat(gritReady()))}"><b>${gritReady()}<small>%</small></b></div><div class="ct-txt"><span class="ct-k">Your GRIT</span><strong>Computational Thinking readiness</strong><span class="ct-s">Rises with every level you clear</span></div></div>
 <p class="hhey">Hey ${esc(String(S.name||"").split(" ")[0]||"coder")} 👋 Your seat is waiting</p>
-<button class="hplay" type="button" data-act="play"><span>${P.runs?"Play Fastest Finger":"Start your first game"}</span><i aria-hidden="true">→</i></button>
+<button class="hplay" type="button" data-act="play"><span>Play Fastest Finger</span><i aria-hidden="true">→</i></button>
 <div class="hmeta3"><span class="hlive"><i class="ldot"></i><b class="livenum">${LIVE}</b> playing now</span><span class="hdot" aria-hidden="true"></span><button class="hlink" type="button" data-act="tour">Quick tour</button><span class="hdot" aria-hidden="true"></span><button class="hlink" type="button" data-act="intro">▶ Watch intro</button></div>
 
 <div class="h4-stats"><span>Wallet <b>${fmtR(coins)}</b></span><span>Best <b>${best?fmtR(amountOf(best)):"—"}</b></span><span>First prize <b>10</b></span></div>
@@ -1682,7 +1682,7 @@ function fffDemo(mode){
 function seatDemo(){return `<div class="dm dm-seat"><div class="dm-qc">What does this print?<code>print(7 // 2)</code></div><div class="dm-opts"><span>A · 3.5</span><span class="pk">B · 3</span><span>C · 4</span><span>D · 2</span></div><div class="dm-lock">Lock answer</div><div class="dm-sol">💡 Reveal solution</div>${PTR}</div>`}
 /* Between winning Fastest Finger and the first question: what happens in the hot seat, with a demo */
 function vSeat(){const first=!P.runs;
- return `<div class="fffgrid"><aside class="fffbot"><p class="say">${S.pass?"This seat's on the house!":"You made it!"} I'm ${esc(buddyName())}, and I'll be right here with you. Read this, then take your seat.</p>${mascot("finish",200)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span></aside><section class="fffw enter"><div class="qcard card fffhead fintro seatin"><span class="chip gold">The hot seat</span><div class="fi-ic" aria-hidden="true">🪑</div><h2 class="qtext">How the hot seat works</h2>
+ return `<div class="fffgrid"><aside class="fffbot"><p class="say">You made it! I'm ${esc(buddyName())}, and I'll be right here with you. Read this, then take your seat.</p>${mascot("finish",200)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span></aside><section class="fffw enter"><div class="qcard card fffhead fintro seatin"><span class="chip gold">The hot seat</span><div class="fi-ic" aria-hidden="true">🪑</div><h2 class="qtext">How the hot seat works</h2>
 <div class="fi-cols"><div><ol class="fi-steps"><li style="--i:0"><b>1</b><span>Read the question and the code</span></li><li style="--i:1"><b>2</b><span>Answer it the way the question asks: pick, tap, type or put in order</span></li><li style="--i:2"><b>3</b><span>Press <strong>Lock answer</strong>. Then tap <strong>Reveal solution</strong> to see the working</span></li></ol>
 <div class="fi-meta"><span>⏱ ${seatSecsNote()}</span><span>⚡ A miss costs energy; 3 right in a row gives some back</span></div></div>
 <figure class="demo" aria-label="How it looks: a short looping demo"><figcaption>Watch how it works</figcaption>${seatDemo()}</figure></div>
@@ -1762,7 +1762,7 @@ ${inOverlay?"":quipHTML("guide")}
 /* ================= Product tour: spotlights each part of the home screen once, on a student's first visit ================= */
 const TOUR=[
  /* four stops only (Miller's / Hick's law): the things a student needs to come back to. Theme, live count and log out explain themselves. */
- {sel:'.h-hero [data-act="play"]',t:"Start here",d:"Each game starts with Fastest Finger First: a quick maths puzzle. Win it to take the hot seat. (Your first game skips it.)"},
+ {sel:'.h-hero [data-act="play"]',t:"Start here",d:"Play Fastest Finger First: a quick maths puzzle. Win it to take the hot seat."},
  {sel:'header [data-act="path"]',t:"My path",d:"Your journey, topic by topic. Clear topics to win prize money."},
  {sel:'header [data-act="fame"]',t:"Hall of Fame",d:"Top players overall and in your university."},
  {sel:'header [data-act="guide"]',t:"How to play",d:"The rules in pictures. Open it any time, even mid-game."}];
@@ -1847,11 +1847,8 @@ function vBuddy(){return `<section class="buddies"><div class="ghead"><div><h2>C
 <div class="bgrid">${BUDDY_ORDER.map(id=>COSTUMES[id]).map(c=>`<button class="bcard card ${c.id===CHAR?"on":""}" data-act="pick-char" data-c="${c.id}" aria-pressed="${c.id===CHAR}">${mascot(c.id===CHAR?"dance":"idle",104,c.id)}<span class="chip">${esc(c.tag)}</span><b>${esc(c.name)}</b><small>${esc(c.line)}</small>${c.id===CHAR?'<em>Your buddy</em>':""}</button>`).join("")}</div>
 ${quipHTML("buddy")}
 <div class="ractions"><button class="btn gold" data-act="home">Done</button><button class="btn quiet" data-act="guide">How to play</button></div></section>`}
-/* The first game goes straight to the hot seat (a free pass): the first thing a new student meets is Python, not a timed
-   maths puzzle they must win to get in. Fastest Finger guards the seat from the second game on. */
 function goPlay(mode){S.name=ME.name||S.name;
- if(S.screen==="play")endRun("stop");if(mode==="seat")startRun();else if(!P.runs){logEv({kind:"fff_free_pass",why:"first game"});seatScreen(true)}else startFFF()}
-function seatScreen(pass){if(pass)prefetchQ("hotseat");S={screen:"seat",name:S.name,fff:S.fff,pass:pass||null};render();scrollTo({top:0});setTimeout(()=>{const b=$('[data-act="seat-go"]');b&&b.focus({preventScroll:true})},60)}
+ if(S.screen==="play")endRun("stop");if(mode==="seat")startRun();else startFFF()}
 document.addEventListener("click",e=>{const bl=e.target.closest(".bill3d");if(bl)bl.classList.toggle("flip")},SIG);
 /* Leaving mid-game ends the game (the hot seat needs a fresh Fastest Finger win), so header links ask first */
 let PEND=null,LEAVE_OK=false;
@@ -1914,7 +1911,8 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="hp"){const el=$("#pname");if(el)S.name=el.value.trim();S.hp=S.hp===b.dataset.p?"":b.dataset.p;render();return}
  if(a==="play"||a==="fffgo"){goPlay("fff");return}
  if(a==="seat"){goPlay("seat");return}
- if(a==="hotseat"){seatScreen(null);return} if(a==="seat-go"){startRun(true);return}
+ if(a==="hotseat"){S={screen:"seat",name:S.name,fff:S.fff};render();scrollTo({top:0});setTimeout(()=>{const b=$('[data-act="seat-go"]');b&&b.focus({preventScroll:true})},60);return}
+ if(a==="seat-go"){startRun(true);return}
  if(a==="board-min"){store.set("kbc-board-min",!boardMin());const y=scrollY;render();scrollTo({top:y});return}
  if(a==="fff-next"){startFFF(S.fff?S.fff.idx+1:null);return}
  if(a==="collect"){endRun("win");return}

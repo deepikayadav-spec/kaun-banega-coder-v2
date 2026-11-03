@@ -1262,7 +1262,7 @@ function streakFX(kind,I){const T=I.trans||[],up=T.some(x=>x.kind==="r_up");if(k
  const snd={fire:"ignite",warm:"ignite",ice:"freeze",thaw:"shatter"}[kind];try{SFX[snd]()}catch(e){}
  if(reduceMotion)return;
  const card=$(".qcard"),r=card?card.getBoundingClientRect():{left:innerWidth/2-150,top:innerHeight/3,width:300,height:200};
- const cx=r.left+r.width/2,cy=Math.max(170,Math.min(innerHeight-190,r.top+r.height/2));
+ const cx=r.left+r.width/2;let cy=Math.min(innerHeight-170,r.top+r.height/2+40);
  const now=(I.ta&&I.ta.streak)||0,was=(I.tb&&I.tb.streak)||0,lv=I.ta&&!I.ta.next.skillDone?I.ta.next.level:null;
  const num=kind==="ice"?`<span class="dl-n frozen">${was}</span>`:kind==="warm"?"":`<span class="dl-roll"><span class="dl-n old">${kind==="thaw"?"❄":was}</span><span class="dl-n new">${now}</span></span>`;
  const label={fire:"in a row!",warm:"warming up!",ice:"streak frozen",thaw:"streak back on!"}[kind];
@@ -1279,6 +1279,10 @@ function streakFX(kind,I){const T=I.trans||[],up=T.some(x=>x.kind==="r_up");if(k
  el.innerHTML=`<div class="dl-pop"><div class="dl-art">${sparks}<span class="dl-flame">${FIRE}</span>${kind==="ice"||kind==="thaw"?'<span class="dl-cube"><i></i><i></i></span>':""}${shards}</div>
 ${num?`<div class="dl-num">${num}</div>`:""}<div class="dl-lbl">${label}</div>${kind!=="warm"?`<div class="dl-dots">${dots}</div>`:""}${sub?`<div class="dl-sub">${esc(sub)}</div>`:""}</div>`;
  document.body.appendChild(el);
+ /* keep the whole animation below the timer and the top bar: measure the flame's top and push everything down */
+ /* (layout sizes, not the animated ones: the pop starts scaled down) */
+ const pop=el.querySelector(".dl-pop"),art=el.querySelector(".dl-art"),clk=$("#clock")||$(".hud");
+ if(pop&&art&&clk){const top=cy-pop.offsetHeight/2+art.offsetTop,need=clk.getBoundingClientRect().bottom+14-top;if(need>0){cy=Math.min(innerHeight-pop.offsetHeight/2-8,cy+need);el.style.setProperty("--cy",cy+"px")}}
  setTimeout(()=>el.classList.add("out"),kind==="ice"?2000:1650);
  setTimeout(()=>el.remove(),kind==="ice"?2400:2050)}
 /* the flame: flat and chunky (Duolingo-like): an orange body, a yellow core and a soft highlight */

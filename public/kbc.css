@@ -3026,3 +3026,15 @@ html[data-theme="light"]{--dl-card:#FFFFFF;--dl-line:#E5E5E5;--dl-txt:#3C3C3C;--
   .lvfire,.lvfire path,.lp-s.on.pop,.lp-s.ice.freezing,.lp-s.thaw,.lvu-blaze .bz,.bz-em{animation:none!important}
   .lvu-blaze .bz{opacity:1}.bz-em{display:none}
 }
+
+/* the streak moment is the animation only: no card behind it. The text carries its own outline so it reads over
+   the question underneath. */
+.dl-pop{background:none!important;border:0!important;padding:0!important;min-width:0!important;border-radius:0!important}
+.dl-lbl{text-shadow:0 2px 0 rgba(0,0,0,.55),0 0 2px rgba(0,0,0,.9),0 0 14px rgba(0,0,0,.75)}
+.dl-sub{color:#F1F5F9!important;padding:4px 12px;border-radius:999px;background:rgba(2,6,23,.72)}
+.dl-n{-webkit-text-stroke:2px rgba(0,0,0,.35)}
+.dl-d{box-shadow:inset 0 -3px 0 rgba(0,0,0,.18),0 0 0 3px rgba(2,6,23,.55)}
+html[data-theme="light"] .dl-lbl{text-shadow:0 2px 0 #FFFFFF,0 0 2px #FFFFFF,0 0 14px rgba(255,255,255,.95)}
+html[data-theme="light"] .dl-sub{color:#3C3C3C!important;background:rgba(255,255,255,.9)}
+html[data-theme="light"] .dl-n{-webkit-text-stroke:2px rgba(255,255,255,.6)}
+html[data-theme="light"] .dl-d{box-shadow:inset 0 -3px 0 rgba(0,0,0,.12),0 0 0 3px rgba(255,255,255,.85)}

@@ -1241,10 +1241,11 @@ function lvFx(I){if(!I||!I.tb||!I.ta)return {};const T=I.trans||[],up=T.find(x=>
 function levelHUD(q){const sk=q&&q.sk;if(!sk||!SK[sk])return "";const e=engSk(sk),t=e.track;
  const I=S.phase==="reveal"&&S.info&&S.info.sk===sk?S.info:null,fx=lvFx(I),head=I?lvHead(I):"";
  const lvl=t?t.level:e.status==="done"?4:e.level||1;
- return `<button type="button" class="lvhud ${I&&I.lvup?"up":""}" data-act="lvinfo" aria-label="${esc(lvAria(e,t))} Show level details">
-<span class="lvh-top"><span class="lvh-k">${esc(SK[sk].short||SK[sk].name)}</span><span class="lvh-x">${e.status==="done"?"Topic cleared ✓":"Details ›"}</span></span>
-${lvBar(lvl,e.status,t?t.streak:0,{fresh:I&&I.lvup?lvl:null})}
-${t?`<span class="lvh-s">${lvPips(t,fx)}<span class="lvh-c">${t.climb.length?`R${t.climb[0]} next`:`<b>${t.streak}</b>/2`}</span>${head?`<span class="lvh-d ${I.ok?"ok":"no"}">${esc(head)}</span>`:""}<span class="lvh-i"><i aria-hidden="true">🔥</i>${esc(lvRule(t))}</span></span>`:""}</button>`}
+ /* one slim line beside the "Question N" chip: Level N, a 4-tick mini bar, the streak dots and the rule. Tap for details. */
+ const L=e.status==="done"?5:lvl,ticks=[1,2,3,4].map(l=>`<i class="${l<L?"done":l===L&&e.status==="open"?"now":""}" style="--f:${l===L&&t?Math.min(1,t.streak/2):l<L?1:0}"></i>`).join("");
+ return `<button type="button" class="lvhud ${I&&I.lvup?"up":""}" data-act="lvinfo" aria-label="${esc(lvAria(e,t))} Show level details" title="${esc(SK[sk].name)}: tap for level details">
+<span class="lvh-lv">${e.status==="done"?"Topic cleared ✓":`Level ${lvl}`}</span><span class="lvticks" aria-hidden="true">${ticks}</span>
+${t?`<i class="lvh-sep" aria-hidden="true"></i>${lvPips(t,fx)}<span class="lvh-c">${t.climb.length?`R${t.climb[0]} next`:`<b>${t.streak}</b>/2`}</span>${head?`<span class="lvh-d ${I.ok?"ok":"no"}">${esc(head)}</span>`:""}<span class="lvh-i"><i aria-hidden="true">🔥</i>${esc(lvRule(t))}</span>`:""}<span class="lvh-x" aria-hidden="true">›</span></button>`}
 /* after an answer, a short tag next to the pips says what changed (the full line is under the answer) */
 function lvHead(I){const T=I.trans||[],k=x=>T.some(t=>t.kind===x);
  return k("level_up")?"Level up!":k("skill_done")?"Topic cleared!":k("r_up")?"Difficulty up!":k("r_drop")?"Back to R1":I.ok&&I.ta&&I.tb&&I.ta.streak>I.tb.streak?"Streak +1":!I.ok&&I.tb&&I.tb.streak>0?"Streak reset":""}

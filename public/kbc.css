@@ -2717,15 +2717,30 @@ html[data-theme="light"] #menu #themebtn .i-moon{display:block!important}
    (--hud, --hl2, --tx, --tx2, --au gold, --cy teal) plus three local ones, so the light theme follows. */
 :root{--lv-gold:#FFC83D;--lv-gold-hi:#FFF1B8;--lv-ink:#1A1205;--lv-track:rgba(148,163,184,.16);--lv-ring:rgba(226,232,240,.78)}
 html[data-theme="light"]{--lv-track:rgba(15,23,42,.08);--lv-ring:rgba(15,23,42,.35)}
-/* ---------- the tracker (question card) ---------- */
-.lvhud{all:unset;box-sizing:border-box;flex:1 1 100%;display:flex;flex-direction:column;gap:10px;padding:12px 14px 12px;border-radius:16px;cursor:pointer;
-  background:linear-gradient(135deg,rgba(94,234,212,.08),rgba(255,200,61,.05) 60%,rgba(94,234,212,.03));border:1px solid var(--hl2);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 8px 24px -12px rgba(0,0,0,.6);transition:border-color .2s,box-shadow .2s}
-.lvhud:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 0 0 1px var(--hl2),0 0 24px rgba(94,234,212,.18)}
+/* ---------- the tracker (question card): one slim line beside the Question chip ---------- */
+.lvhud{all:unset;box-sizing:border-box;flex:0 1 auto;min-width:0;margin-left:auto;display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:5px 10px 5px 12px;border-radius:999px;cursor:pointer;
+  background:rgba(148,163,184,.07);border:1px solid var(--hl);transition:border-color .2s,background .2s}
+.lvhud:hover{border-color:var(--hl2);background:rgba(94,234,212,.07)}
 .lvhud:focus-visible{outline:2px solid var(--au);outline-offset:3px}
-.lvh-top{display:flex;justify-content:space-between;align-items:center;gap:10px;min-width:0}
-.lvh-k{font:800 11px/1.2 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lvh-x{flex:none;font:700 11.5px var(--f-body);color:var(--cy)}
+.lvh-lv{font:800 12.5px/1 var(--f-body);color:var(--tx);white-space:nowrap}
+.lvticks{display:inline-flex;gap:3px}
+.lvticks i{position:relative;width:14px;height:6px;border-radius:3px;overflow:hidden;background:var(--lv-track);border:1px solid var(--hl)}
+.lvticks i::after{content:"";position:absolute;inset:0;transform-origin:left;transform:scaleX(var(--f,0));transition:transform .6s cubic-bezier(.2,1,.3,1)}
+.lvticks i.done{border-color:transparent}.lvticks i.done::after{background:var(--lv-gold)}
+.lvticks i.now{border-color:var(--cy);box-shadow:0 0 8px rgba(94,234,212,.45)}.lvticks i.now::after{background:var(--cy)}
+.lvhud.up .lvticks i.now{animation:lvSegPop .8s cubic-bezier(.2,1.6,.4,1) both}
+.lvh-sep{width:1px;height:16px;background:var(--hl)}
+.lvhud .lvpips,.lvhud .lp-ss,.lvhud .lp-cs{gap:6px}
+.lvhud .lp-sep{height:14px}
+.lvhud .lp-s{width:18px;height:18px;border-width:2px}
+.lvhud .lp-s span{font-size:9.5px}.lvhud .lp-s.on span{font-size:10px}
+.lvhud .lp-s.on{box-shadow:0 0 0 2px rgba(255,200,61,.2),0 0 10px rgba(255,200,61,.65)}
+.lvhud .lp-c{padding:3px 5px;font-size:9.5px;border-radius:6px}
+.lvhud .lvh-c{font-size:11.5px}.lvhud .lvh-c b{font-size:13px}
+.lvhud .lvh-d{padding:2px 8px;font-size:11px}
+.lvhud .lvh-i{margin:0;padding:0;border:0;background:none;font:600 11.5px/1.2 var(--f-body);color:var(--tx2);white-space:nowrap}
+html[data-theme="light"] .lvhud .lvh-i{background:none;color:var(--tx2)}
+.lvh-x{font:700 15px/1 var(--f-body);color:var(--tx2)}
 /* ---------- the level bar: four labelled segments ---------- */
 .lvbar{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:100%}
 .lb-seg{position:relative;height:30px;border-radius:9px;overflow:hidden;display:grid;place-items:center;background:var(--lv-track);border:1px solid var(--hl)}
@@ -2763,9 +2778,6 @@ html[data-theme="light"]{--lv-track:rgba(15,23,42,.08);--lv-ring:rgba(15,23,42,.
 .lvh-d{padding:4px 10px;border-radius:999px;font:800 12px var(--f-body);animation:lvPop .6s cubic-bezier(.2,1.6,.4,1) both}
 .lvh-d.ok{background:rgba(255,200,61,.16);color:var(--au);border:1px solid rgba(255,200,61,.45)}
 .lvh-d.no{background:rgba(148,163,184,.14);color:var(--tx2);border:1px solid var(--hl)}
-.lvh-i{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font:700 12.5px/1.25 var(--f-body);color:var(--tx);
-  background:rgba(255,200,61,.08);border:1px solid rgba(255,200,61,.35)}
-.lvh-i i{font-style:normal}
 /* ---------- after an answer: what changed ---------- */
 .lvdelta{display:flex;align-items:center;gap:12px;margin:10px 0 0;padding:10px 14px;border-radius:14px;background:var(--hud);border:1px solid var(--hl);animation:rise .4s cubic-bezier(.2,1.2,.3,1) both}
 .lvdelta>i{width:32px;height:32px;flex:none;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:15px;background:rgba(148,163,184,.12);color:var(--tx2)}
@@ -2804,7 +2816,6 @@ html[data-theme="light"] .lvu-badge::before{background:#fff}html[data-theme="lig
 html[data-theme="light"] .lvu-next{background:#F0FDFA}html[data-theme="light"] .lvu-next small{color:#0F766E}html[data-theme="light"] .lvu-next small.lvu-rule{color:#B45309}
 html[data-theme="light"] .lvu-ty li,html[data-theme="light"] .lvu-un li{background:#F8FAFC;color:#0F172A;border-color:#CBD5E1}
 html[data-theme="light"] .lp-s{background:#fff;box-shadow:inset 0 1px 3px rgba(15,23,42,.15)}
-html[data-theme="light"] .lvh-i{background:#FFFBEB;border-color:#F59E0B;color:#78350F}
 /* ---------- level milestones (My path sheet and the level details dialog) ---------- */
 .lvbox{width:min(520px,100%)}.lvbox-k{font:700 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--cy)}
 .mbox.lvbox{text-align:left}.mbox.lvbox h3,.mbox.lvbox .lvbox-k{text-align:center;display:block}.mbox.lvbox .lvrec{text-align:center}
@@ -2834,13 +2845,12 @@ html[data-theme="light"] .lvh-i{background:#FFFBEB;border-color:#F59E0B;color:#7
 .mnode .mb .mdots i.on{background:#FFC83D!important;border-color:#FFF4C2!important;box-shadow:0 0 6px rgba(255,200,61,.9)!important}
 /* ---------- phones ---------- */
 @media (max-width:760px){
-  .lvhud{padding:10px 11px;gap:8px;border-radius:14px}
   .lvbar{gap:4px}.lb-seg{height:26px;border-radius:7px}.lb-seg b{font-size:10.5px;gap:3px}.lb-ck{font-size:10px}
-  .lp-s{width:24px;height:24px}.lp-cs,.lp-ss,.lvpips{gap:8px}
-  .lvh-i{margin-left:0;flex-basis:100%;justify-content:center;font-size:11px;letter-spacing:-.1px;padding:4px 8px;white-space:nowrap}
+  .lvhud{margin-left:0;flex-basis:100%;border-radius:12px;padding:6px 10px}.lvhud .lvh-i{flex-basis:100%;order:9;font-size:11px}.lvh-x{margin-left:auto}.lvhud .lvh-d{display:none}
 }
 @media (max-width:420px){.mbox.lvup{padding:24px 16px 18px}.lvu-badge{width:80px;height:80px}.lb-seg b{font-size:10px}}
 @media (prefers-reduced-motion:reduce){
   .lb-seg.now,.lb-seg.now::after,.lb-seg.fresh,.lvbar.big .lb-seg.fresh,.lb-fill,.lvh-d,.lp-s.pop,.lp-c.pop,.lp-s.drain,.mbox.lvup,.lvu-rays,.lvu-badge,.lvu-k,.mbox.lvup h2,.lvu-from,.lvbar.big,.lvu-next,.lvu-ty li,.lvu-un li,.lvdelta{animation:none!important;transition:none!important}
   .lvu-lock{display:none}
 }
+.lvh-i i{font-style:normal}

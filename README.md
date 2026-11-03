@@ -39,7 +39,7 @@ The app follows the same pattern as Saturday Sprint: one Express app running as 
 
 `levelTrack()` in `server/engine.js` turns a skill's state into what moves the student up from where they are: the L1 difficulty climb still to go, the two-in-a-row slots, the right answers remaining, and what a miss does there. It is display only and comes with every engine view as `skills[id].track`, so the game never re-decides the rules. A test plays random answers and checks the track against what `applyAnswer` actually does.
 
-- **Question page:** a level tracker in the question card: a bar of four segments labelled Level 1 … Level 4 (the current one fills with the streak), two large streak dots with a 0/2 count, and the rule "2 consecutive streaks to unlock the next level". Tap it for the topic's level milestones.
+- **Question page:** one slim line beside the "Question N" chip: "Level N", a 4-tick mini bar (the current tick fills with the streak), the two streak dots with a 0/2 count, and the rule "2 consecutive streaks to unlock the next level". Tap it for the topic's level milestones (the full Level 1 … Level 4 bar).
 - **After each answer:** one line on what changed, read from the engine's transitions: a step filled, difficulty up, streak reset, back to R1, level up or topic cleared.
 - **Level up / topic cleared:** a dialog with an unlock badge, the new level and what to expect there (the level's line plus real question formats from `question-types.json`), and any topics it unlocked.
 - **My path:** the current topic's sheet shows the four level milestones, and map nodes carry four level dots.

@@ -2718,29 +2718,21 @@ html[data-theme="light"] #menu #themebtn .i-moon{display:block!important}
 :root{--lv-gold:#FFC83D;--lv-gold-hi:#FFF1B8;--lv-ink:#1A1205;--lv-track:rgba(148,163,184,.16);--lv-ring:rgba(226,232,240,.78)}
 html[data-theme="light"]{--lv-track:rgba(15,23,42,.08);--lv-ring:rgba(15,23,42,.35)}
 /* ---------- the tracker (question card): one slim line beside the Question chip ---------- */
-.lvhud{all:unset;box-sizing:border-box;flex:0 1 auto;min-width:0;margin-left:auto;display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:5px 10px 5px 12px;border-radius:999px;cursor:pointer;
+.lvhud{all:unset;box-sizing:border-box;flex:0 1 auto;min-width:0;margin-left:auto;display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;padding:5px 10px 5px 12px;border-radius:999px;cursor:pointer;
   background:rgba(148,163,184,.07);border:1px solid var(--hl);transition:border-color .2s,background .2s}
 .lvhud:hover{border-color:var(--hl2);background:rgba(94,234,212,.07)}
 .lvhud:focus-visible{outline:2px solid var(--au);outline-offset:3px}
 .lvh-lv{font:800 12.5px/1 var(--f-body);color:var(--tx);white-space:nowrap}
-.lvticks{display:inline-flex;gap:3px}
-.lvticks i{position:relative;width:14px;height:6px;border-radius:3px;overflow:hidden;background:var(--lv-track);border:1px solid var(--hl)}
-.lvticks i::after{content:"";position:absolute;inset:0;transform-origin:left;transform:scaleX(var(--f,0));transition:transform .6s cubic-bezier(.2,1,.3,1)}
-.lvticks i.done{border-color:transparent}.lvticks i.done::after{background:var(--lv-gold)}
-.lvticks i.now{border-color:var(--cy);box-shadow:0 0 8px rgba(94,234,212,.45)}.lvticks i.now::after{background:var(--cy)}
 .lvhud.up .lvticks i.now{animation:lvSegPop .8s cubic-bezier(.2,1.6,.4,1) both}
 .lvh-sep{width:1px;height:16px;background:var(--hl)}
 .lvhud .lvpips,.lvhud .lp-ss,.lvhud .lp-cs{gap:6px}
 .lvhud .lp-sep{height:14px}
 .lvhud .lp-s{width:18px;height:18px;border-width:2px}
-.lvhud .lp-s span{font-size:9.5px}.lvhud .lp-s.on span{font-size:10px}
-.lvhud .lp-s.on{box-shadow:0 0 0 2px rgba(255,200,61,.2),0 0 10px rgba(255,200,61,.65)}
 .lvhud .lp-c{padding:3px 5px;font-size:9.5px;border-radius:6px}
 .lvhud .lvh-c{font-size:11.5px}.lvhud .lvh-c b{font-size:13px}
-.lvhud .lvh-d{padding:2px 8px;font-size:11px}
-.lvhud .lvh-i{margin:0;padding:0;border:0;background:none;font:600 11.5px/1.2 var(--f-body);color:var(--tx2);white-space:nowrap}
+.lvhud .lvh-i{margin:0;padding:0;border:0;background:none;font:600 11.5px/1.2 var(--f-body);color:var(--tx2);white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+@media (min-width:761px){.lvhud{flex-wrap:nowrap}}
 html[data-theme="light"] .lvhud .lvh-i{background:none;color:var(--tx2)}
-.lvh-x{font:700 15px/1 var(--f-body);color:var(--tx2)}
 /* ---------- the level bar: four labelled segments ---------- */
 .lvbar{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:100%}
 .lb-seg{position:relative;height:30px;border-radius:9px;overflow:hidden;display:grid;place-items:center;background:var(--lv-track);border:1px solid var(--hl)}
@@ -2775,9 +2767,6 @@ html[data-theme="light"] .lvhud .lvh-i{background:none;color:var(--tx2)}
 @keyframes lvPop{0%{transform:scale(.3);filter:brightness(2)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
 @keyframes lvDrain{0%{background:var(--lv-gold);transform:scale(1.1)}30%{transform:translateX(-4px)}50%{transform:translateX(4px)}70%{transform:translateX(-2px)}100%{transform:none}}
 .lvh-c{font:600 13px var(--f-mono);color:var(--tx2)}.lvh-c b{font-size:16px;color:var(--tx)}
-.lvh-d{padding:4px 10px;border-radius:999px;font:800 12px var(--f-body);animation:lvPop .6s cubic-bezier(.2,1.6,.4,1) both}
-.lvh-d.ok{background:rgba(255,200,61,.16);color:var(--au);border:1px solid rgba(255,200,61,.45)}
-.lvh-d.no{background:rgba(148,163,184,.14);color:var(--tx2);border:1px solid var(--hl)}
 /* ---------- after an answer: what changed ---------- */
 .lvdelta{display:flex;align-items:center;gap:12px;margin:10px 0 0;padding:10px 14px;border-radius:14px;background:var(--hud);border:1px solid var(--hl);animation:rise .4s cubic-bezier(.2,1.2,.3,1) both}
 .lvdelta>i{width:32px;height:32px;flex:none;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:15px;background:rgba(148,163,184,.12);color:var(--tx2)}
@@ -2801,11 +2790,6 @@ html[data-theme="light"] .lvhud .lvh-i{background:none;color:var(--tx2)}
 .lvu-from{font-size:13.5px!important;color:#94A3B8!important;animation:rise .5s .75s both}
 .lvbar.big{margin:4px 0;animation:rise .5s .85s both}.lvbar.big .lb-seg{height:34px}
 .lvbar.big .lb-seg.fresh{animation:lvSegPop .8s 1.1s cubic-bezier(.2,1.6,.4,1) both,lvGlow 2.4s 2s ease-in-out infinite}
-.lvu-next{width:100%;text-align:left;padding:12px 14px;border-radius:14px;background:rgba(94,234,212,.06);border:1px solid rgba(94,234,212,.3);display:flex;flex-direction:column;gap:6px;animation:rise .5s 1s both}
-.lvu-next small{font:700 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:#5EEAD4}
-.lvu-next small.lvu-rule{text-transform:none;letter-spacing:0;font:700 12.5px var(--f-body);color:#FDE68A}
-.lvu-ty,.lvu-un{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
-.lvu-ty li,.lvu-un li{padding:4px 10px;border-radius:999px;background:rgba(148,163,184,.1);border:1px solid rgba(148,163,184,.25);font:600 12.5px var(--f-body);color:#E2E8F0;animation:rise .4s calc(1.15s + var(--i)*.12s) both}
 @keyframes lvIn{from{opacity:0;transform:scale(.85) translateY(20px)}}
 @keyframes lvSpin{to{transform:rotate(360deg)}}
 @keyframes lvBadge{0%{transform:scale(0) rotate(-30deg)}100%{transform:none}}
@@ -2813,8 +2797,6 @@ html[data-theme="light"] .lvhud .lvh-i{background:none;color:var(--tx2)}
 html[data-theme="light"] .mbox.lvup{background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(245,158,11,.15),transparent 70%),#fff}
 html[data-theme="light"] .mbox.lvup h2{color:#0F172A}html[data-theme="light"] .lvu-from{color:#475569!important}
 html[data-theme="light"] .lvu-badge::before{background:#fff}html[data-theme="light"] .lvu-badge b{color:#B45309;text-shadow:none}html[data-theme="light"] .lvu-lock{color:#B45309}
-html[data-theme="light"] .lvu-next{background:#F0FDFA}html[data-theme="light"] .lvu-next small{color:#0F766E}html[data-theme="light"] .lvu-next small.lvu-rule{color:#B45309}
-html[data-theme="light"] .lvu-ty li,html[data-theme="light"] .lvu-un li{background:#F8FAFC;color:#0F172A;border-color:#CBD5E1}
 html[data-theme="light"] .lp-s{background:#fff;box-shadow:inset 0 1px 3px rgba(15,23,42,.15)}
 /* ---------- level milestones (My path sheet and the level details dialog) ---------- */
 .lvbox{width:min(520px,100%)}.lvbox-k{font:700 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--cy)}
@@ -2846,11 +2828,70 @@ html[data-theme="light"] .lp-s{background:#fff;box-shadow:inset 0 1px 3px rgba(1
 /* ---------- phones ---------- */
 @media (max-width:760px){
   .lvbar{gap:4px}.lb-seg{height:26px;border-radius:7px}.lb-seg b{font-size:10.5px;gap:3px}.lb-ck{font-size:10px}
-  .lvhud{margin-left:0;flex-basis:100%;border-radius:12px;padding:6px 10px}.lvhud .lvh-i{flex-basis:100%;order:9;font-size:11px}.lvh-x{margin-left:auto}.lvhud .lvh-d{display:none}
-}
+  .lvhud{margin-left:0;flex-basis:100%;border-radius:12px;padding:6px 10px}.lvhud .lvh-i{flex-basis:100%;order:9;font-size:11px}}
 @media (max-width:420px){.mbox.lvup{padding:24px 16px 18px}.lvu-badge{width:80px;height:80px}.lb-seg b{font-size:10px}}
 @media (prefers-reduced-motion:reduce){
-  .lb-seg.now,.lb-seg.now::after,.lb-seg.fresh,.lvbar.big .lb-seg.fresh,.lb-fill,.lvh-d,.lp-s.pop,.lp-c.pop,.lp-s.drain,.mbox.lvup,.lvu-rays,.lvu-badge,.lvu-k,.mbox.lvup h2,.lvu-from,.lvbar.big,.lvu-next,.lvu-ty li,.lvu-un li,.lvdelta{animation:none!important;transition:none!important}
+  .lb-seg.now,.lb-seg.now::after,.lb-seg.fresh,.lvbar.big .lb-seg.fresh,.lb-fill,.lp-s.pop,.lp-c.pop,.lp-s.drain,.mbox.lvup,.lvu-rays,.lvu-badge,.lvu-k,.mbox.lvup h2,.lvu-from,.lvbar.big,.lvdelta{animation:none!important;transition:none!important}
   .lvu-lock{display:none}
 }
 .lvh-i i{font-style:normal}
+
+/* ===================== Fire: streak dots, the burning level bar, premium segments (Nov 2026) ===================== */
+/* the flame: an SVG with three layers (red, orange, yellow core) that lick and flicker; size follows font-size */
+.lvfire{display:inline-block;width:.8em;height:1.07em;font-size:14px;vertical-align:bottom;overflow:visible;pointer-events:none;transform-origin:50% 100%;
+  filter:drop-shadow(0 0 .22em rgba(255,100,0,.9));animation:fireY .45s ease-in-out infinite alternate}
+.lvfire path{transform-box:fill-box;transform-origin:50% 100%}
+.lvfire .f1{fill:#FF3D00;animation:fireLick 1s ease-in-out infinite alternate}
+.lvfire .f2{fill:#FF9800;animation:fireLick .7s ease-in-out infinite alternate-reverse}
+.lvfire .f3{fill:#FFE57F;animation:fireY .35s ease-in-out infinite alternate}
+@keyframes fireY{0%{transform:scale(1,1)}100%{transform:scale(.93,1.1)}}
+@keyframes fireLick{0%{transform:skewX(0) scaleY(1)}50%{transform:skewX(5deg) scaleY(1.06)}100%{transform:skewX(-5deg) scaleY(.95)}}
+
+/* streak dots: empty = a dark socket with its number; earned = an ember with a live flame; the second burns hotter */
+.lp-s.on{border-color:#FF8A00;background:radial-gradient(circle at 50% 75%,#8A2A00,#2B0B00 70%);box-shadow:0 0 0 3px rgba(255,120,0,.22),0 0 18px rgba(255,100,0,.75),inset 0 -3px 6px rgba(255,140,0,.45)}
+.lp-s.on .lvfire{font-size:17px;margin-top:-2px}
+.lp-s.hot.on{border-color:#FFC400;box-shadow:0 0 0 3px rgba(255,170,0,.3),0 0 24px rgba(255,120,0,.95),inset 0 -3px 8px rgba(255,170,0,.55)}
+.lp-s.hot.on .lvfire{font-size:21px;margin-top:-6px;animation-duration:.3s}
+.lp-s.on.pop{animation:fireIgnite .8s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes fireIgnite{0%{transform:scale(.4);filter:brightness(2.4)}55%{transform:scale(1.35);filter:brightness(1.5)}100%{transform:scale(1);filter:none}}
+html[data-theme="light"] .lp-s.on{background:radial-gradient(circle at 50% 75%,#FFB74D,#FF7043 75%)}
+/* in the slim tracker the dots are small, so is the flame */
+.lvhud .lp-s.on .lvfire{font-size:13px;margin-top:-2px}
+.lvhud .lp-s.hot.on .lvfire{font-size:15px;margin-top:-5px}
+.lvhud .lp-s span{font-size:9.5px}
+
+/* the slim tracker's bar: four glassy cells; cleared = molten gold with a sheen; the current one burns as the streak grows */
+.lvticks{display:inline-flex;align-items:center;gap:4px;padding:3px;border-radius:999px;background:rgba(2,6,23,.55);box-shadow:inset 0 1px 3px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06)}
+.lvticks i{position:relative;width:16px;height:7px;border-radius:999px;background:rgba(148,163,184,.18)}
+.lvticks i::after{content:"";position:absolute;inset:0;border-radius:inherit;transform-origin:left;transform:scaleX(var(--f,0));transition:transform .6s cubic-bezier(.2,1,.3,1)}
+.lvticks i.done::after{background:linear-gradient(180deg,#FFF1B8,#FFC83D 45%,#D98A0B);box-shadow:0 0 6px rgba(255,200,61,.55)}
+.lvticks i.done::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:1;background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.75) 50%,transparent 65%);background-size:250% 100%;animation:lvShine 3.2s ease-in-out infinite}
+.lvticks i.now{box-shadow:0 0 0 1.5px rgba(94,234,212,.75),0 0 8px rgba(94,234,212,.45)}
+.lvticks i.now.lit{box-shadow:0 0 0 1.5px #FF9100,0 0 12px rgba(255,110,0,.8)}
+.lvticks i.now.lit::after{background:linear-gradient(90deg,#FF2A00,#FF8F00,#FFD54F,#FF8F00,#FF2A00);background-size:200% 100%;animation:fireFlow 1.1s linear infinite}
+.lvticks i .lvfire{position:absolute;z-index:2;font-size:12px;bottom:1px;left:calc(var(--f,0) * 100% - .4em)}
+@keyframes fireFlow{to{background-position:-200% 0}}
+@keyframes lvShine{0%,55%{background-position:150% 0}100%{background-position:-100% 0}}
+html[data-theme="light"] .lvticks{background:rgba(15,23,42,.08);box-shadow:inset 0 1px 2px rgba(15,23,42,.2)}
+
+/* the big Level 1 … Level 4 bar (level-up card, level details): molten-gold cleared cells, the new level on fire */
+.lb-seg.done .lb-fill{background:linear-gradient(180deg,#FFF1B8 0%,#FFD34D 35%,#FFB300 70%,#C77700 100%)}
+.lb-seg.done::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);background-size:250% 100%;animation:lvShine 3.2s ease-in-out infinite}
+.lb-seg.done{box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -2px 0 rgba(120,60,0,.35),0 4px 14px -6px rgba(255,170,0,.7)}
+.lvbar.big .lb-seg.now{border-color:#FF9100;box-shadow:0 0 0 3px rgba(255,120,0,.2),0 0 22px rgba(255,100,0,.65);animation:fireGlow 1.4s ease-in-out infinite alternate}
+.lvbar.big .lb-seg.now .lb-fill{transform:none;opacity:.32;background:linear-gradient(90deg,#FF2A00,#FF8F00,#FFD54F,#FF8F00,#FF2A00);background-size:200% 100%;animation:fireFlow 1.4s linear infinite}
+.lvbar.big .lb-seg.now b{color:#FFF3E0;text-shadow:0 0 10px rgba(255,140,0,.9)}
+@keyframes fireGlow{to{box-shadow:0 0 0 4px rgba(255,140,0,.28),0 0 30px rgba(255,120,0,.9)}}
+html[data-theme="light"] .lvbar.big .lb-seg.now b{color:#7C2D12;text-shadow:none}
+
+/* the level-up card is now just the moment: tap anywhere to close */
+.mbox.lvup{cursor:pointer;padding-bottom:26px}
+.mbox.lvup:focus{outline:none}
+
+@media (prefers-reduced-motion:reduce){
+  .lvfire,.lvfire path,.lp-s.on.pop,.lvticks i.done::before,.lvticks i.now.lit::after,.lb-seg.done::after,.lvbar.big .lb-seg.now,.lvbar.big .lb-seg.now .lb-fill{animation:none!important}
+}
+.lvu-from{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.lvu-streak{display:inline-flex;gap:8px}.lvu-streak .lp-s{width:26px;height:26px}
+.lvu-streak .lp-s:nth-child(1){animation:fireIgnite .7s .9s cubic-bezier(.2,1.6,.4,1) both}.lvu-streak .lp-s:nth-child(2){animation:fireIgnite .7s 1.15s cubic-bezier(.2,1.6,.4,1) both}
+@media (prefers-reduced-motion:reduce){.lvu-streak .lp-s{animation:none!important}}

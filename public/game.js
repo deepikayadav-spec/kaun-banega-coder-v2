@@ -885,7 +885,7 @@ let saveT=null;
 function dayTick(){const d=new Date(),k=d.toDateString(),y=new Date(d-864e5).toDateString();if(P.lastDay!==k){P.day=(P.lastDay===y?(P.day||0):0)+1;P.lastDay=k}}
 function liveDay(){const k=new Date().toDateString(),y=new Date(Date.now()-864e5).toDateString();return (P.lastDay===k||P.lastDay===y)?(P.day||0):0}
 let COMBO=0;
-function comboTick(ok){if(!ok){COMBO=0;return}COMBO++;if(COMBO<2)return;const w=["","","Double!","Triple!","On fire!","Unstoppable!","Legendary!"];const el=document.createElement("div");el.className="combo";el.setAttribute("aria-hidden","true");el.innerHTML=`${COMBO}x combo<small>${w[Math.min(COMBO,6)]}</small>`;const big=COMBO>=5;if(big)el.classList.add("big");document.body.appendChild(el);requestAnimationFrame(()=>el.classList.add("go"));setTimeout(()=>el.remove(),big?2400:1400)}
+function comboTick(ok){if(!ok){COMBO=0;return}COMBO++;if(COMBO<2||S.screen==="play")return;const w=["","","Double!","Triple!","On fire!","Unstoppable!","Legendary!"];const el=document.createElement("div");el.className="combo";el.setAttribute("aria-hidden","true");el.innerHTML=`${COMBO}x combo<small>${w[Math.min(COMBO,6)]}</small>`;const big=COMBO>=5;if(big)el.classList.add("big");document.body.appendChild(el);requestAnimationFrame(()=>el.classList.add("go"));setTimeout(()=>el.remove(),big?2400:1400)}
 const FLAME='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3-1-3 0-7 1-9.5z" fill="#FF7A1A" stroke="#2B1A0E" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 12c.6 1.6 2.4 2.4 2.4 4.4a2.4 2.4 0 0 1-4.8 0c0-1.2.8-2 1.4-2.6.2 1 .6 1.4 1 1.4-.4-1.2-.2-2.2 0-3.2z" fill="#FFD23F"/></svg>';
 function syncFire(){const c=$("#wchip");if(!c)return;let f=$("#fire");if(!f){f=document.createElement("span");f.id="fire";c.parentNode.insertBefore(f,c)}const n=liveDay();f.className="fire "+(n?(n>=3?"hot":""):"cold");f.title=n?`${n}-day streak. Play tomorrow to keep it.`:"Play today to start a streak";f.setAttribute("aria-label",f.title);f.innerHTML=FLAME+n}
 function saveP(){P.t=Date.now();syncChip();clearTimeout(saveT);saveT=setTimeout(pushP,1200)}
@@ -1225,8 +1225,6 @@ function skillDetail(s){const e=engSk(s.id),cells=e.cells||{};
    next, onMiss) with every engine view, so nothing here re-decides when a student moves up. */
 const LVINFO=GR.levelsInfo||{};
 const LVDO=l=>(LVINFO[l]&&LVINFO[l].do)||"";
-const RLBL=r=>["","Low","Medium","Hard"][r]||"";
-const RDESC=r=>{const d=(GR.difficulty||{})[r]||"";return d.includes(":")?d.split(":").slice(1).join(":").trim():""};
 const trackOf=sk=>engSk(sk).track||null;
 /* question formats a student can meet at a level in the hot seat (real types from question-types.json) */
 const lvTypes=(l,n)=>GR.types.filter(t=>t.level===l&&(t.modes||[]).includes("hotseat")).slice(0,n).map(t=>t.name);
@@ -1234,9 +1232,9 @@ const lvTo=t=>t.next.skillDone?"clear this topic":`reach Level ${t.next.level}`;
 /* the short rule shown under the tracker (L4 has no next level: two in a row clears the topic) */
 const lvRule=t=>t&&t.next.skillDone?"2 consecutive streaks to clear this topic":"2 consecutive streaks to unlock the next level";
 function lvGoal(t){if(!t)return "";
- if(t.climb.length)return `A right answer takes difficulty up to R${t.climb[0]}. Then 2 right in a row to ${lvTo(t)}.`;
+ if(t.climb.length)return `Warm-up: ${t.climb.length} more right answer${t.climb.length>1?"s":""}, then 2 in a row to ${lvTo(t)}.`;
  return t.streak?`1 more right answer to ${lvTo(t)}!`:`2 right answers in a row to ${lvTo(t)}.`}
-const lvAria=(e,t)=>t?`Level ${t.level} of 4. ${t.climb.length?`Difficulty R${t.r} of ${t.rmax}.`:`${t.streak} of 2 right in a row.`} ${lvGoal(t)}`:e.status==="done"?"Topic cleared: all 4 levels done.":"";
+const lvAria=(e,t)=>t?`Level ${t.level} of 4. ${t.climb.length?"Warming up.":`${t.streak} of 2 right in a row.`} ${lvGoal(t)}`:e.status==="done"?"Topic cleared: all 4 levels done.":"";
 /* The level bar: four segments labelled Level 1 … Level 4. Cleared ones are gold, the current one glows and fills with
    the two-in-a-row streak, later ones are dim. `fresh` marks the segment just reached (level-up animation). */
 function lvBar(lv,status,streak,o){o=o||{};const L=status==="done"?5:lv||1;
@@ -1245,43 +1243,49 @@ function lvBar(lv,status,streak,o){o=o||{};const L=status==="done"?5:lv||1;
   return `<span class="lb-seg ${st} ${o.fresh===l?"fresh":""}" style="--f:${f}"><i class="lb-fill"></i><b>${st==="done"?'<em class="lb-ck">✓</em>':""}Level ${l}</b></span>`}).join("")}</span>`}
 /* the steps of the current level: L1 difficulty chevrons (R2…rmax, lit up to the current R), then the two in-a-row slots */
 function lvPips(t,fx,frozen){if(!t)return "";fx=fx||{};
- const ch=t.level===1&&t.rmax>1?Array.from({length:t.rmax-1},(_,i)=>i+2).map(r=>`<i class="lp-c ${r<=t.r?"on":""} ${fx.rUp===r?"pop":""}" title="Difficulty R${r} ${RLBL(r)}">R${r}</i>`).join(""):"";
  /* a frozen streak: the first dot keeps its flame, locked in ice, until the next right answer shatters it */
  const ice=i=>i===0&&frozen&&t.streak===0;
  const st=[0,1].map(i=>`<i class="lp-s ${i<t.streak?"on":""} ${ice(i)?"ice":""} ${i===1?"hot":""} ${fx.fill===i?"pop":""} ${fx.thaw&&i===0?"thaw":""} ${ice(i)&&fx.freeze?"freezing":""}" title="${ice(i)?"Streak frozen: a right answer breaks the ice":`Streak ${i+1} of 2`}">${i<t.streak||ice(i)?FIRE+(ice(i)?'<span class="lp-icecap"></span>':""):`<span>${i+1}</span>`}</i>`).join("");
- return `<span class="lvpips">${ch?`<span class="lp-cs">${ch}</span><i class="lp-sep"></i>`:""}<span class="lp-ss">${st}</span></span>`}
+ return `<span class="lvpips"><span class="lp-ss">${st}</span></span>`}
 /* an animated CSS flame: three tongues that flicker (still with reduced motion) */
 /* streak ice, per skill and kept on this device (see apply) */
 const FROZEN=(()=>{const v=store.get("kbc-frozen",{});return v&&typeof v==="object"?v:{}})();
 const frozenOf=sk=>!!FROZEN[sk];
 function setFrozen(sk,v){if(v)FROZEN[sk]=1;else delete FROZEN[sk];store.set("kbc-frozen",FROZEN)}
-/* The streak moment, over the question card (never blocks a click):
-   fire  a flame bursts up, then flies into its streak dot in the tracker
-   ice   the flame is caught in a block of ice, frost creeps in at the screen edges
-   thaw  the ice cracks and shatters into shards, and the flame bursts out again */
-function streakFX(kind,I){const snd={fire:"ignite",ice:"freeze",thaw:"shatter"}[kind];try{SFX[snd]()}catch(e){}
+/* The streak moment, Duolingo style (a chunky flat flame, a rolling counter, "IN A ROW!" and the two check circles),
+   over the question card; it never blocks a click.
+   fire  the flame bounces in, the count rolls up (0 → 1), the next circle fills with a check
+   warm  a right answer on the Level 1 warm-up: the flame bounces, "WARMING UP!" (the in-a-row count doesn't move yet)
+   ice   the flame turns icy blue inside an ice cube, "STREAK FROZEN", the circle frosts over
+   thaw  the ice cube cracks and bursts into shards, the flame bounces back orange, "STREAK BACK ON!" */
+function streakFX(kind,I){const T=I.trans||[],up=T.some(x=>x.kind==="r_up");if(kind==="fire"&&up)kind="warm";
+ const snd={fire:"ignite",warm:"ignite",ice:"freeze",thaw:"shatter"}[kind];try{SFX[snd]()}catch(e){}
  if(reduceMotion)return;
  const card=$(".qcard"),r=card?card.getBoundingClientRect():{left:innerWidth/2-150,top:innerHeight/3,width:300,height:200};
- const cx=r.left+r.width/2,cy=Math.max(140,Math.min(innerHeight-160,r.top+r.height/2));
- const T=I.trans||[],up=T.find(x=>x.kind==="r_up");
- const label=kind==="ice"?"Streak frozen":kind==="thaw"?"Streak back on!":up?`Difficulty up · R${up.detail.to}`:`Streak ${(I.ta&&I.ta.streak)||1}!`;
- const sub=kind==="ice"?"Your level is safe. Next right answer breaks the ice.":kind==="thaw"?"The ice is broken. Keep it burning!":"";
- const old=$("#stkfx");if(old)old.remove();
- const el=document.createElement("div");el.id="stkfx";el.className="stkfx sx-"+kind;el.setAttribute("aria-hidden","true");
+ const cx=r.left+r.width/2,cy=Math.max(170,Math.min(innerHeight-190,r.top+r.height/2));
+ const now=(I.ta&&I.ta.streak)||0,was=(I.tb&&I.tb.streak)||0,lv=I.ta&&!I.ta.next.skillDone?I.ta.next.level:null;
+ const num=kind==="ice"?`<span class="dl-n frozen">${was}</span>`:kind==="warm"?"":`<span class="dl-roll"><span class="dl-n old">${kind==="thaw"?"❄":was}</span><span class="dl-n new">${now}</span></span>`;
+ const label={fire:"in a row!",warm:"warming up!",ice:"streak frozen",thaw:"streak back on!"}[kind];
+ const sub=kind==="ice"?"Your level is safe. Next right answer breaks the ice."
+  :kind==="warm"?"Nice! A little more warm-up, then 2 in a row."
+  :now>=1&&lv?`1 more in a row for Level ${lv}`:now>=1?"1 more in a row clears this topic":"";
+ const dots=[0,1].map(i=>{const st=kind==="ice"&&i===0?"ice":i<now&&kind!=="ice"?"on":"";const fresh=st==="on"&&i===now-1?"fresh":"";
+  return `<i class="dl-d ${st} ${fresh}">${st==="on"?'<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>':st==="ice"?"❄":""}</i>`}).join("");
+ const shards=kind==="thaw"?Array.from({length:10},(_,i)=>`<i class="dl-sh" style="--a:${(i*36+Math.random()*16).toFixed(0)}deg;--d:${(90+Math.random()*90).toFixed(0)}px;--r:${(Math.random()*400-200).toFixed(0)}deg"></i>`).join(""):"";
+ const sparks=kind!=="ice"?Array.from({length:8},(_,i)=>`<i class="dl-sp" style="--a:${i*45+20}deg"></i>`).join(""):"";
+ const old=$("#stkfx");if(old)old.remove();document.querySelectorAll(".combo").forEach(x=>x.remove());
+ const el=document.createElement("div");el.id="stkfx";el.className="stkfx dl-"+kind;el.setAttribute("aria-hidden","true");
  el.style.setProperty("--cx",cx+"px");el.style.setProperty("--cy",cy+"px");
- const embers=Array.from({length:14},(_,i)=>`<i class="sx-em" style="--a:${(i*360/14+Math.random()*20).toFixed(0)}deg;--d:${(60+Math.random()*90).toFixed(0)}px;--t:${(.5+Math.random()*.6).toFixed(2)}s;--s:${(3+Math.random()*5).toFixed(1)}px"></i>`).join("");
- const shards=kind==="thaw"?Array.from({length:12},(_,i)=>`<i class="sx-sh" style="--a:${(i*30+Math.random()*14).toFixed(0)}deg;--d:${(120+Math.random()*120).toFixed(0)}px;--r:${(Math.random()*540-270).toFixed(0)}deg;--w:${(8+Math.random()*14).toFixed(0)}px"></i>`).join(""):"";
- el.innerHTML=`${kind==="ice"?'<i class="sx-frost"></i>':""}<div class="sx-core"><span class="sx-glow"></span>${kind!=="ice"?embers:""}${shards}
-<span class="sx-flame">${FIRE}</span>${kind!=="fire"?'<span class="sx-ice"><i></i><i></i><i></i></span>':""}</div><div class="sx-txt"><b>${esc(label)}</b>${sub?`<small>${esc(sub)}</small>`:""}</div>`;
+ el.innerHTML=`<div class="dl-pop"><div class="dl-art">${sparks}<span class="dl-flame">${FIRE}</span>${kind==="ice"||kind==="thaw"?'<span class="dl-cube"><i></i><i></i></span>':""}${shards}</div>
+${num?`<div class="dl-num">${num}</div>`:""}<div class="dl-lbl">${label}</div>${kind!=="warm"?`<div class="dl-dots">${dots}</div>`:""}${sub?`<div class="dl-sub">${esc(sub)}</div>`:""}</div>`;
  document.body.appendChild(el);
- /* the flame flies into its dot in the tracker once it has been seen */
- const dot=document.querySelectorAll(".lvhud .lp-ss .lp-s")[Math.max(0,((I.ta&&I.ta.streak)||1)-1)];
- if(dot&&kind!=="ice"&&!up){const d=dot.getBoundingClientRect();el.style.setProperty("--fx",(d.left+d.width/2-cx)+"px");el.style.setProperty("--fy",(d.top+d.height/2-cy)+"px");el.classList.add("fly")}
- setTimeout(()=>el.remove(),kind==="ice"?2300:1900)}
-const FIRE='<svg class="lvfire" viewBox="0 0 24 32" aria-hidden="true"><path class="f1" d="M12 1c1.2 6 8.5 9.5 8.5 18.5a8.5 8.5 0 0 1-17 0c0-5 2.6-7.6 3.8-11.6.9 2.7 2.2 4 3.4 4.2C10.4 8.4 10.6 4.6 12 1z"/><path class="f2" d="M12.4 11.5c.8 4 5.1 6 5.1 10.6a5.5 5.5 0 0 1-11 0c0-3.2 1.7-4.6 2.4-7 .8 1.8 1.7 2.4 2.6 2.5-.2-2.4.1-4.3.9-6.1z"/><path class="f3" d="M12 19.5c.6 2 3.2 3.2 3.2 5.6a3.2 3.2 0 0 1-6.4 0c0-1.9 1.9-3 3.2-5.6z"/></svg>';
+ setTimeout(()=>el.classList.add("out"),kind==="ice"?2000:1650);
+ setTimeout(()=>el.remove(),kind==="ice"?2400:2050)}
+/* the flame: flat and chunky (Duolingo-like): an orange body, a yellow core and a soft highlight */
+const FIRE='<svg class="lvfire" viewBox="0 0 32 40" aria-hidden="true"><path class="f1" d="M16 1.5c1.6 6.4 12.5 11 12.5 23.5a12.5 12.5 0 0 1-25 0c0-6.4 3.1-9.6 5.2-13.4 1.1 3 3 5 5.1 5.3C13.2 12 13.6 6.6 16 1.5z"/><path class="f2" d="M16.3 17.5c1 3.6 6.4 6 6.4 11.2a6.7 6.7 0 0 1-13.4 0c0-3.5 2-5.3 3-7.6 1 1.8 2.1 2.6 3.1 2.7-.2-2.4 0-4.4.9-6.3z"/><path class="f3" d="M9.6 23.5c-1.3 2.3-1.9 4.6-1.4 6.9.3 1.2 1.8 1.2 2.1.1.5-2.3.4-4.6-.7-7z"/></svg>';
 /* how the last answer moved the track, for the pip animations */
-function lvFx(I){if(!I||!I.tb||!I.ta)return {};const T=I.trans||[],up=T.find(x=>x.kind==="r_up");
- return {rUp:up?up.detail.to:null,fill:I.ok&&I.ta.streak>I.tb.streak?I.ta.streak-1:null,freeze:!!I.freeze,thaw:!!I.thaw}}
+function lvFx(I){if(!I||!I.tb||!I.ta)return {};
+ return {fill:I.ok&&I.ta.streak>I.tb.streak?I.ta.streak-1:null,freeze:!!I.freeze,thaw:!!I.thaw}}
 /* Question page: the level tracker in the question card. The skill is the one this question was served for. */
 function levelHUD(q){const sk=q&&q.sk;if(!sk||!SK[sk])return "";const e=engSk(sk),t=e.track;
  const I=S.phase==="reveal"&&S.info&&S.info.sk===sk?S.info:null,fx=lvFx(I);
@@ -1298,8 +1302,8 @@ function progressDelta(){const I=S.info;if(S.phase!=="reveal"||!I||!I.tb)return 
  const has=k=>T.find(x=>x.kind===k);let ic="",h="",p="",cls="";
  if(has("skill_done")){ic="🏆";cls="big";h="Topic cleared!";const un=T.filter(x=>x.kind==="unlock").map(x=>SK[x.skill]).filter(Boolean);p=un.length?`Unlocked: ${un.slice(0,3).map(s=>esc(s.name)).join(", ")}${un.length>3?` and ${un.length-3} more`:""}.`:"All 4 levels of this topic done."}
  else if(has("level_up")){const to=has("level_up").detail.to.l;ic="⬆";cls="big";h=`Level up! Welcome to Level ${to}`;p=esc(LVDO(to)||"New question types start now.")}
- else if(has("r_up")){const r=has("r_up").detail.to;ic="▲";cls="up";h=`Difficulty up: R${r} ${RLBL(r)}`;p=`${RDESC(r)?esc(RDESC(r).replace(/^./,c=>c.toUpperCase()))+". ":""}${ta?esc(lvGoal(ta)):""}`}
- else if(has("r_drop")){ic="↺";cls="soft";h="Back to R1 Low to warm up";p="Each right answer climbs the difficulty again, then 2 in a row moves you up."}
+ else if(has("r_up")){ic="▲";cls="up";h="Warming up";p=ta?esc(lvGoal(ta)):""}
+ else if(has("r_drop")){ic="↺";cls="soft";h="Back to warm-up";p="A couple of right answers warm you up again, then 2 in a row moves you up."}
  else if(I.ok&&ta&&ta.streak>tb.streak){ic="⚡";cls="up";h="1 of 2 in a row";p=esc(lvGoal(ta))}
  else if(!I.ok&&tb.streak>0){ic="↺";cls="soft";h="Streak reset";p=`Your level is safe: 2 right in a row will still ${lvTo(tb)}.`}
  else if(!I.ok){ic="•";cls="soft";h=`Still Level ${tb.level}`;p="A miss never takes a level away. 2 right in a row moves you up."}

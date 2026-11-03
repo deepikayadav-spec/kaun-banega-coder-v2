@@ -2728,7 +2728,6 @@ html[data-theme="light"]{--lv-track:rgba(15,23,42,.08);--lv-ring:rgba(15,23,42,.
 .lvhud .lvpips,.lvhud .lp-ss,.lvhud .lp-cs{gap:6px}
 .lvhud .lp-sep{height:14px}
 .lvhud .lp-s{width:18px;height:18px;border-width:2px}
-.lvhud .lp-c{padding:3px 5px;font-size:9.5px;border-radius:6px}
 .lvhud .lvh-i{margin:0;padding:0;border:0;background:none;font:600 11.5px/1.2 var(--f-body);color:var(--tx2);white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
 @media (min-width:761px){.lvhud{flex-wrap:nowrap}}
 html[data-theme="light"] .lvhud .lvh-i{background:none;color:var(--tx2)}
@@ -2754,14 +2753,12 @@ html[data-theme="light"] .lvhud .lvh-i{background:none;color:var(--tx2)}
 .lvpips{display:inline-flex;align-items:center;gap:10px;flex:none}
 .lp-cs,.lp-ss{display:inline-flex;gap:10px}
 .lp-sep{width:1.5px;height:22px;border-radius:1px;background:var(--hl)}
-.lp-c{font:800 11px/1 var(--f-mono);font-style:normal;padding:6px 8px;border-radius:8px;border:1.5px dashed var(--lv-ring);color:var(--tx2)}
-.lp-c.on{border-style:solid;border-color:var(--lv-gold);color:var(--lv-ink);background:var(--lv-gold);box-shadow:0 0 12px rgba(255,200,61,.5)}
 .lp-s{position:relative;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-style:normal;
   background:rgba(2,6,23,.55);border:2.5px solid var(--lv-ring);box-shadow:inset 0 2px 4px rgba(0,0,0,.45)}
 .lp-s span{font:800 12px/1 var(--f-mono);color:var(--tx)}
 .lp-s.on{border-color:var(--lv-gold-hi);background:radial-gradient(circle at 35% 30%,#FFF6CF,var(--lv-gold) 55%,#D98A0B);box-shadow:0 0 0 3px rgba(255,200,61,.22),0 0 16px rgba(255,200,61,.7)}
 .lp-s.on span{color:var(--lv-ink);font-size:14px}
-.lp-s.pop,.lp-c.pop{animation:lvPop .7s cubic-bezier(.2,1.6,.4,1) both}
+.lp-s.pop{animation:lvPop .7s cubic-bezier(.2,1.6,.4,1) both}
 .lp-s.drain{animation:lvDrain .8s ease both}
 @keyframes lvPop{0%{transform:scale(.3);filter:brightness(2)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
 @keyframes lvDrain{0%{background:var(--lv-gold);transform:scale(1.1)}30%{transform:translateX(-4px)}50%{transform:translateX(4px)}70%{transform:translateX(-2px)}100%{transform:none}}
@@ -2829,7 +2826,7 @@ html[data-theme="light"] .lp-s{background:#fff;box-shadow:inset 0 1px 3px rgba(1
   .lvhud{margin-left:0;flex-basis:100%;border-radius:12px;padding:6px 10px}.lvhud .lvh-i{flex-basis:100%;order:9;font-size:11px}}
 @media (max-width:420px){.mbox.lvup{padding:24px 16px 18px}.lvu-badge{width:80px;height:80px}.lb-seg b{font-size:10px}}
 @media (prefers-reduced-motion:reduce){
-  .lb-seg.now,.lb-seg.now::after,.lb-seg.fresh,.lvbar.big .lb-seg.fresh,.lb-fill,.lp-s.pop,.lp-c.pop,.lp-s.drain,.mbox.lvup,.lvu-rays,.lvu-badge,.lvu-k,.mbox.lvup h2,.lvu-from,.lvbar.big,.lvdelta{animation:none!important;transition:none!important}
+  .lb-seg.now,.lb-seg.now::after,.lb-seg.fresh,.lvbar.big .lb-seg.fresh,.lb-fill,.lp-s.pop,.lp-s.drain,.mbox.lvup,.lvu-rays,.lvu-badge,.lvu-k,.mbox.lvup h2,.lvu-from,.lvbar.big,.lvdelta{animation:none!important;transition:none!important}
   .lvu-lock{display:none}
 }
 .lvh-i i{font-style:normal}
@@ -2894,91 +2891,138 @@ html[data-theme="light"] .lvbar.big .lb-seg.now b{color:#7C2D12;text-shadow:none
 .lvu-streak .lp-s:nth-child(1){animation:fireIgnite .7s .9s cubic-bezier(.2,1.6,.4,1) both}.lvu-streak .lp-s:nth-child(2){animation:fireIgnite .7s 1.15s cubic-bezier(.2,1.6,.4,1) both}
 @media (prefers-reduced-motion:reduce){.lvu-streak .lp-s{animation:none!important}}
 
-/* ===================== Streak moments: fire, ice, shattering ice, the 2-in-a-row blaze (Nov 2026) ===================== */
-/* the layer over the question card; it never takes a click */
+/* ===================== Streak moments, Duolingo style (Nov 2026) =====================
+   Flat, chunky and bouncy: a cartoon flame, a big rolling counter, "IN A ROW!", two check circles. Rounded heavy type
+   (Nunito 900), solid colours with a darker "lip" underneath instead of glows. Orange #FF9600 / yellow #FFC800 /
+   ice blue #1CB0F6. */
+:root{--dl-or:#FF9600;--dl-or-d:#E07B00;--dl-ye:#FFC800;--dl-ye-d:#E6A800;--dl-bl:#1CB0F6;--dl-bl-d:#1899D6;--dl-ice:#DDF4FF;
+  --dl-card:#131F24;--dl-line:#37464F;--dl-txt:#F1F7FB;--dl-mute:#9AA8B1;--dl-f:"Nunito","Plus Jakarta Sans",system-ui,sans-serif}
+html[data-theme="light"]{--dl-card:#FFFFFF;--dl-line:#E5E5E5;--dl-txt:#3C3C3C;--dl-mute:#777777}
+
+/* the flame everywhere (dots, bar, cards): flat body, yellow core, soft highlight; it bounces, it doesn't glow */
+.lvfire{display:inline-block;width:.8em;height:1em;font-size:14px;vertical-align:bottom;overflow:visible;pointer-events:none;transform-origin:50% 100%;filter:none;animation:dlBob 1.2s ease-in-out infinite}
+.lvfire path{transform-box:fill-box;transform-origin:50% 100%}
+.lvfire .f1{fill:var(--dl-or);animation:dlLick 1.6s ease-in-out infinite alternate}
+.lvfire .f2{fill:var(--dl-ye);animation:dlLick 1.1s ease-in-out infinite alternate-reverse}
+.lvfire .f3{fill:#FFE8B0;opacity:.85}
+@keyframes dlBob{0%,100%{transform:scale(1,1)}50%{transform:scale(1.05,.95)}}
+@keyframes dlLick{0%{transform:skewX(0)}50%{transform:skewX(3deg) scaleY(1.04)}100%{transform:skewX(-3deg) scaleY(.97)}}
+
+/* ---------- the pop ---------- */
 .stkfx{position:fixed;inset:0;z-index:90;pointer-events:none;overflow:hidden}
-.sx-core{position:absolute;left:var(--cx);top:var(--cy);width:0;height:0}
-.sx-glow{position:absolute;left:-110px;top:-110px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,150,0,.55),rgba(255,80,0,.18) 45%,transparent 70%);animation:sxGlow 1.5s ease-out both}
-.sx-flame{position:absolute;left:-46px;top:-80px;width:92px;height:122px;display:grid;place-items:end center;animation:sxFlameIn 1.5s cubic-bezier(.2,1.4,.4,1) both}
-.sx-flame .lvfire{font-size:115px;filter:drop-shadow(0 0 18px rgba(255,110,0,.95)) drop-shadow(0 0 40px rgba(255,60,0,.6))}
-.sx-em{position:absolute;left:0;top:0;width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,#FFF3B0,#FF9100 60%,transparent 70%);
-  transform:rotate(var(--a)) translateY(0);animation:sxEmber var(--t) .15s ease-out both}
-.sx-txt{position:absolute;left:var(--cx);top:calc(var(--cy) + 62px);transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;white-space:nowrap;animation:sxText 1.5s ease-out both}
-.sx-txt b{font:900 clamp(22px,4vw,30px)/1 var(--f-display);letter-spacing:.02em;color:#FFE9B0;text-shadow:0 2px 0 #7C2D12,0 0 22px rgba(255,120,0,.9)}
-.sx-txt small{font:700 13px var(--f-body);color:#E2E8F0;text-shadow:0 1px 6px rgba(0,0,0,.8)}
-/* fire: after the burst the flame shrinks into its streak dot */
-.stkfx.fly .sx-flame{animation:sxFlameIn 1.5s cubic-bezier(.2,1.4,.4,1) both,sxFly .55s 1.1s cubic-bezier(.6,0,.9,.5) forwards}
-@keyframes sxFlameIn{0%{transform:scale(.2) translateY(30px);opacity:0}25%{transform:scale(1.15);opacity:1}40%,100%{transform:scale(1)}}
-@keyframes sxFly{to{transform:translate(var(--fx),var(--fy)) scale(.12);opacity:.2}}
-@keyframes sxGlow{0%{transform:scale(.3);opacity:0}25%{opacity:1}100%{transform:scale(1.4);opacity:0}}
-@keyframes sxEmber{0%{transform:rotate(var(--a)) translateY(0);opacity:1}100%{transform:rotate(var(--a)) translateY(calc(var(--d) * -1));opacity:0}}
-@keyframes sxText{0%{opacity:0;transform:translate(-50%,10px) scale(.8)}20%{opacity:1;transform:translate(-50%,0) scale(1.06)}30%,80%{transform:translate(-50%,0) scale(1);opacity:1}100%{opacity:0}}
-/* ice: the flame turns cold blue inside a block of ice; frost creeps in at the edges */
-.stkfx.sx-ice .sx-flame .lvfire .f1{fill:#3B82F6}.stkfx.sx-ice .sx-flame .lvfire .f2{fill:#93C5FD}.stkfx.sx-ice .sx-flame .lvfire .f3{fill:#F0F9FF}
-.stkfx.sx-ice .sx-flame .lvfire,.stkfx.sx-ice .sx-flame .lvfire path{animation:none}
-.stkfx.sx-ice .sx-flame .lvfire{filter:drop-shadow(0 0 16px rgba(147,197,253,.9))}
-.stkfx.sx-ice .sx-glow{background:radial-gradient(circle,rgba(147,197,253,.5),rgba(59,130,246,.15) 45%,transparent 70%)}
-.sx-ice{position:absolute;left:-62px;top:-92px;width:124px;height:150px;border-radius:26px;
-  background:linear-gradient(150deg,rgba(255,255,255,.55),rgba(186,230,253,.28) 35%,rgba(125,211,252,.18) 65%,rgba(255,255,255,.35));
-  border:2px solid rgba(224,242,254,.85);box-shadow:inset 0 0 22px rgba(255,255,255,.55),0 0 30px rgba(147,197,253,.6);backdrop-filter:blur(1.5px);
-  animation:sxIceIn 2.2s cubic-bezier(.2,1.3,.4,1) both}
-.sx-ice i{position:absolute;background:rgba(255,255,255,.75);border-radius:2px}
-.sx-ice i:nth-child(1){left:16px;top:14px;width:30px;height:5px;transform:rotate(-35deg)}
-.sx-ice i:nth-child(2){left:14px;top:26px;width:14px;height:4px;transform:rotate(-35deg)}
-.sx-ice i:nth-child(3){right:18px;bottom:22px;width:22px;height:3px;transform:rotate(-35deg);opacity:.6}
-.sx-frost{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 55%,rgba(186,230,253,.35) 80%,rgba(224,242,254,.75) 100%);animation:sxFrost 2.2s ease-out both}
-.stkfx.sx-ice .sx-txt b{color:#E0F2FE;text-shadow:0 2px 0 #1E3A8A,0 0 22px rgba(96,165,250,.95)}
-@keyframes sxIceIn{0%{transform:scale(1.6);opacity:0}25%{transform:scale(.95);opacity:1}32%{transform:scale(1.03)}40%,80%{transform:scale(1);opacity:1}100%{opacity:0}}
-@keyframes sxFrost{0%{opacity:0}25%,75%{opacity:1}100%{opacity:0}}
-.stkfx.sx-ice .sx-flame{animation:sxFlameIn 1.5s cubic-bezier(.2,1.4,.4,1) both,sxOut .4s 1.8s ease-in forwards}
-.stkfx.sx-ice .sx-txt{animation:sxText 2.2s ease-out both}
-@keyframes sxOut{to{opacity:0}}
-/* thaw: the ice cracks, shatters into shards, and the flame bursts back up */
-.stkfx.sx-thaw .sx-ice{animation:sxCrack .45s ease-in both}
-.stkfx.sx-thaw .sx-ice::after{content:"";position:absolute;inset:0;border-radius:inherit;
-  background:linear-gradient(115deg,transparent 46%,rgba(255,255,255,.95) 47%,transparent 49%),linear-gradient(35deg,transparent 52%,rgba(255,255,255,.9) 53%,transparent 55%),linear-gradient(160deg,transparent 30%,rgba(255,255,255,.8) 31%,transparent 33%)}
-.sx-sh{position:absolute;left:calc(var(--w) / -2);top:-20px;width:var(--w);height:calc(var(--w) * 1.6);clip-path:polygon(50% 0,100% 40%,70% 100%,0 70%);
-  background:linear-gradient(160deg,#FFFFFF,#BAE6FD 50%,#7DD3FC);opacity:0;animation:sxShard .9s .38s cubic-bezier(.2,.8,.4,1) both}
-.stkfx.sx-thaw .sx-flame{animation:sxFlameIn 1.3s .4s cubic-bezier(.2,1.4,.4,1) both}
-.stkfx.sx-thaw.fly .sx-flame{animation:sxFlameIn 1.3s .4s cubic-bezier(.2,1.4,.4,1) both,sxFly .5s 1.35s cubic-bezier(.6,0,.9,.5) forwards}
-.stkfx.sx-thaw .sx-glow{animation-delay:.38s}
-.stkfx.sx-thaw .sx-em{animation-delay:.45s}
-.stkfx.sx-thaw .sx-txt{animation:sxText 1.6s .3s ease-out both}
-@keyframes sxCrack{0%{transform:scale(1);opacity:1}40%{transform:scale(1.04) rotate(-2deg)}70%{transform:scale(.98) rotate(2deg);opacity:1}100%{transform:scale(1.25);opacity:0}}
-@keyframes sxShard{0%{opacity:1;transform:rotate(var(--a)) translateY(0) rotate(0)}100%{opacity:0;transform:rotate(var(--a)) translateY(calc(var(--d) * -1)) rotate(var(--r))}}
+.dl-pop{position:absolute;left:var(--cx);top:var(--cy);transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px;
+  min-width:250px;padding:18px 28px 18px;border-radius:24px;background:var(--dl-card);border:2px solid var(--dl-line);border-bottom-width:5px;
+  font-family:var(--dl-f);animation:dlPopIn .55s cubic-bezier(.2,1.6,.4,1) both}
+.stkfx.out .dl-pop{animation:dlPopOut .35s ease-in both}
+@keyframes dlPopIn{0%{transform:translate(-50%,-50%) scale(.4);opacity:0}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}
+@keyframes dlPopOut{to{transform:translate(-50%,-44%) scale(.85);opacity:0}}
+.dl-art{position:relative;width:110px;height:118px;display:grid;place-items:end center;margin-top:-62px}
+.dl-flame{display:block;animation:dlFlameIn .8s .05s cubic-bezier(.2,1.7,.4,1) both}
+.dl-flame .lvfire{font-size:118px;animation:dlBob .9s ease-in-out infinite}
+@keyframes dlFlameIn{0%{transform:translateY(40px) scale(.2,.4)}55%{transform:translateY(-6px) scale(1.12,.92)}75%{transform:scale(.95,1.06)}100%{transform:none}}
+/* little 4-point sparkles burst out around the flame */
+.dl-sp{position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px;background:var(--dl-ye);
+  clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);opacity:0;animation:dlSpark .7s .25s ease-out both}
+.dl-sp:nth-child(even){background:#FFFFFF;width:9px;height:9px}
+@keyframes dlSpark{0%{opacity:1;transform:rotate(var(--a)) translateY(0) scale(.4)}100%{opacity:0;transform:rotate(var(--a)) translateY(-78px) scale(1)}}
+/* the counter: a big chunky number that rolls from the old value to the new one */
+.dl-num{height:78px;overflow:hidden;margin-top:2px}
+.dl-roll{display:flex;flex-direction:column;animation:dlRoll .55s .45s cubic-bezier(.3,1.5,.5,1) both}
+.dl-n{display:block;height:78px;font:900 72px/78px var(--dl-f);text-align:center;color:var(--dl-or);text-shadow:0 5px 0 var(--dl-or-d)}
+.dl-n.old{color:var(--dl-mute);text-shadow:0 5px 0 rgba(0,0,0,.25)}
+@keyframes dlRoll{from{transform:translateY(0)}to{transform:translateY(-78px)}}
+.dl-lbl{font:900 24px/1.1 var(--dl-f);letter-spacing:.02em;text-transform:uppercase;color:var(--dl-or);animation:dlRise .4s .55s both}
+.dl-dots{display:flex;gap:12px;margin-top:10px;animation:dlRise .4s .6s both}
+.dl-d{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-style:normal;background:var(--dl-line);box-shadow:inset 0 -3px 0 rgba(0,0,0,.18);color:#fff;font:900 16px var(--dl-f)}
+.dl-d svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:3.6;stroke-linecap:round;stroke-linejoin:round}
+.dl-d.on{background:var(--dl-or);box-shadow:inset 0 -4px 0 var(--dl-or-d)}
+.dl-d.on.fresh{animation:dlCheck .5s .75s cubic-bezier(.2,1.8,.4,1) both}
+.dl-d.ice{background:var(--dl-bl);box-shadow:inset 0 -4px 0 var(--dl-bl-d)}
+@keyframes dlCheck{0%{transform:scale(0)}100%{transform:scale(1)}}
+.dl-sub{margin-top:10px;font:800 14px/1.3 var(--dl-f);color:var(--dl-mute);text-align:center;max-width:260px;animation:dlRise .4s .7s both}
+@keyframes dlRise{from{opacity:0;transform:translateY(8px)}}
+/* warm-up: no counter, a smaller pop */
+.dl-warm .dl-lbl{font-size:22px}
+/* ice: the flame goes blue inside a flat ice cube, everything else turns blue */
+.dl-ice .lvfire .f1{fill:#84D8FF}.dl-ice .lvfire .f2{fill:var(--dl-ice)}.dl-ice .lvfire .f3{fill:#FFFFFF}
+.dl-ice .dl-flame .lvfire,.dl-ice .lvfire path{animation:none}
+.dl-cube{position:absolute;left:50%;bottom:-6px;width:112px;height:120px;margin-left:-56px;border-radius:22px;
+  background:linear-gradient(160deg,rgba(221,244,255,.75),rgba(132,216,255,.45));border:3px solid #BDEBFF;box-shadow:inset 0 -6px 0 rgba(28,176,246,.35);
+  animation:dlCube .5s .2s cubic-bezier(.2,1.6,.4,1) both}
+.dl-cube i{position:absolute;background:#FFFFFF;border-radius:4px;opacity:.9}
+.dl-cube i:nth-child(1){left:16px;top:14px;width:8px;height:30px}
+.dl-cube i:nth-child(2){left:16px;top:52px;width:8px;height:10px}
+@keyframes dlCube{0%{transform:scale(1.5);opacity:0}100%{transform:none;opacity:1}}
+.dl-ice .dl-n.frozen{color:var(--dl-bl);text-shadow:0 5px 0 var(--dl-bl-d)}
+.dl-ice .dl-lbl{color:var(--dl-bl)}
+.dl-ice .dl-pop{border-color:#84D8FF}
+/* thaw: the cube shakes, cracks, and bursts into flat shards; the flame pops back up orange */
+.dl-thaw .dl-cube{animation:dlShake .45s both,dlBurst .25s .45s ease-in forwards}
+.dl-thaw .dl-cube::after{content:"";position:absolute;inset:0;border-radius:inherit;background:
+  linear-gradient(120deg,transparent 47%,#FFFFFF 48%,#FFFFFF 51%,transparent 52%),linear-gradient(40deg,transparent 55%,#FFFFFF 56%,#FFFFFF 58%,transparent 59%)}
+.dl-thaw .dl-flame{animation:dlFlameIn .8s .5s cubic-bezier(.2,1.7,.4,1) both}
+.dl-sh{position:absolute;left:50%;top:55%;width:18px;height:22px;margin:-11px -9px;background:#BDEBFF;border:2px solid #FFFFFF;
+  clip-path:polygon(50% 0,100% 35%,75% 100%,0 75%);opacity:0;animation:dlShard .7s .5s cubic-bezier(.2,.8,.4,1) both}
+@keyframes dlShake{0%,100%{transform:none}20%{transform:rotate(-5deg)}40%{transform:rotate(5deg)}60%{transform:rotate(-4deg)}80%{transform:rotate(3deg)}}
+@keyframes dlBurst{to{transform:scale(1.3);opacity:0}}
+@keyframes dlShard{0%{opacity:1;transform:rotate(var(--a)) translateY(0) rotate(0)}100%{opacity:0;transform:rotate(var(--a)) translateY(calc(var(--d) * -1)) rotate(var(--r))}}
+.dl-thaw .dl-sp{animation-delay:.6s}
+.dl-thaw .dl-roll{animation-delay:.7s}
 
-/* the tracker's frozen dot: the flame is cold blue, under an icy cap with a glint; it shivers as it freezes and
-   bursts when it thaws */
-.lp-s.ice{border-color:#BAE6FD;background:radial-gradient(circle at 50% 70%,#1E3A8A,#0B1530 75%);box-shadow:0 0 0 3px rgba(147,197,253,.22),0 0 14px rgba(147,197,253,.7),inset 0 0 6px rgba(224,242,254,.6)}
-.lp-s.ice .lvfire .f1{fill:#3B82F6}.lp-s.ice .lvfire .f2{fill:#93C5FD}.lp-s.ice .lvfire .f3{fill:#F0F9FF}
-.lp-s.ice .lvfire,.lp-s.ice .lvfire path{animation:none;filter:drop-shadow(0 0 4px rgba(147,197,253,.9))}
-.lp-s.ice .lvfire{font-size:13px;margin-top:-2px}
-.lp-icecap{position:absolute;inset:-2px;border-radius:50%;pointer-events:none;
-  background:linear-gradient(140deg,rgba(255,255,255,.75) 0 18%,transparent 30%),linear-gradient(140deg,transparent 60%,rgba(224,242,254,.35));border:1.5px solid rgba(224,242,254,.9)}
-.lp-s.ice.freezing{animation:lvFreeze .9s ease-out both}
-.lp-s.thaw{animation:lvThaw .8s cubic-bezier(.2,1.6,.4,1) both}
-@keyframes lvFreeze{0%{transform:scale(1.25);filter:brightness(2) saturate(.2)}30%{transform:translateX(-2px)}45%{transform:translateX(2px)}60%{transform:translateX(-1px)}100%{transform:none;filter:none}}
-@keyframes lvThaw{0%{transform:scale(.5);box-shadow:0 0 0 6px rgba(224,242,254,.8),0 0 20px rgba(147,197,253,.9)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
-html[data-theme="light"] .lp-s.ice{background:radial-gradient(circle at 50% 70%,#DBEAFE,#93C5FD 80%)}
+/* ---------- the tracker's streak dots, flat: grey sockets, orange with a flame when earned, blue when frozen ---------- */
+.lvhud .lp-s,.lvm-now .lp-s,.lvu-streak .lp-s{border:0;background:var(--dl-line);box-shadow:inset 0 -3px 0 rgba(0,0,0,.2)}
+.lp-s span{font-family:var(--dl-f);font-weight:900;color:var(--dl-mute)}
+.lp-s.on{background:var(--dl-or)!important;box-shadow:inset 0 -3px 0 var(--dl-or-d)!important;border:0!important}
+.lp-s.on .lvfire .f1{fill:var(--dl-ye)}.lp-s.on .lvfire .f2{fill:#FFF3C4}.lp-s.on .lvfire .f3{fill:#FFFFFF}
+.lp-s.on .lvfire{font-size:15px;margin-top:-1px}
+.lp-s.hot.on .lvfire{font-size:15px;margin-top:-1px;animation-duration:.8s}
+.lvhud .lp-s.on .lvfire,.lvhud .lp-s.hot.on .lvfire{font-size:12px;margin-top:0}
+.lp-s.on.pop{animation:dlCheck .5s cubic-bezier(.2,1.8,.4,1) both}
+.lp-s.ice{background:var(--dl-bl)!important;box-shadow:inset 0 -3px 0 var(--dl-bl-d)!important;border:0!important}
+.lp-s.ice .lvfire .f1{fill:var(--dl-ice)}.lp-s.ice .lvfire .f2{fill:#FFFFFF}.lp-s.ice .lvfire .f3{fill:#FFFFFF}
+.lp-s.ice .lvfire,.lp-s.ice .lvfire path{animation:none}
+.lvhud .lp-s.ice .lvfire{font-size:12px}
+.lp-icecap{display:none}
+.lp-s.ice.freezing{animation:dlShake .5s both}
+.lp-s.thaw{animation:dlCheck .5s cubic-bezier(.2,1.8,.4,1) both}
 
-/* the level-up card's blaze: three big flames roar up behind the badge while embers rise */
+/* ---------- the level bar, flat Duolingo-style: grey track, chunky fills with a light stripe on top ---------- */
+.lvticks{gap:4px;padding:0;background:none;box-shadow:none}
+.lvticks i{width:18px;height:10px;border-radius:6px;background:var(--dl-line);box-shadow:none!important}
+.lvticks i::after{border-radius:6px}
+.lvticks i.done::after{background:linear-gradient(var(--dl-ye),var(--dl-ye)) ,var(--dl-ye);box-shadow:none}
+.lvticks i.done::before{background:linear-gradient(180deg,transparent 22%,rgba(255,255,255,.45) 22%,rgba(255,255,255,.45) 44%,transparent 44%);background-size:auto;margin:0 3px;animation:none}
+.lvticks i.now{box-shadow:none!important;outline:2px solid var(--dl-or);outline-offset:1px}
+.lvticks i.now.lit::after{background:var(--dl-or);animation:none}
+.lvticks i.now.lit::before{content:"";position:absolute;inset:0 3px;z-index:1;background:linear-gradient(180deg,transparent 22%,rgba(255,255,255,.45) 22%,rgba(255,255,255,.45) 44%,transparent 44%);transform-origin:left;transform:scaleX(var(--f,0))}
+.lvticks i .lvfire{font-size:13px;bottom:2px;left:calc(var(--f,0) * 100% - .45em)}
+/* the big Level 1 … Level 4 bar on the level-up card and in the level details */
+.lb-seg{border-radius:12px;border:0;background:var(--dl-line);box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
+.lb-seg b{font-family:var(--dl-f);font-weight:900}
+.lb-seg.done{box-shadow:inset 0 -4px 0 var(--dl-ye-d)}
+.lb-seg.done .lb-fill{background:var(--dl-ye)}
+.lb-seg.done::after{background:linear-gradient(180deg,transparent 14%,rgba(255,255,255,.4) 14%,rgba(255,255,255,.4) 30%,transparent 30%);margin:0 8px;animation:none}
+.lb-seg.done b{color:#7A4B00}
+.lb-seg.now,.lvbar.big .lb-seg.now{border:0;background:var(--dl-or);box-shadow:inset 0 -4px 0 var(--dl-or-d);animation:none}
+.lb-seg.now .lb-fill,.lvbar.big .lb-seg.now .lb-fill{display:none}
+.lb-seg.now::after{background:linear-gradient(180deg,transparent 14%,rgba(255,255,255,.35) 14%,rgba(255,255,255,.35) 30%,transparent 30%);margin:0 8px;transform:none;animation:none}
+.lb-seg.now b,.lvbar.big .lb-seg.now b{color:#FFFFFF;text-shadow:none}
+
+/* ---------- the level-up card's blaze: three flat flames hop up behind the badge ---------- */
 .lvu-blaze{position:absolute;left:50%;top:0;width:220px;height:128px;margin-left:-110px;pointer-events:none;z-index:0}
-.lvu-blaze .bz{position:absolute;bottom:0;left:50%;transform-origin:50% 100%;opacity:0;animation:bzUp 1.1s .1s cubic-bezier(.2,1.3,.4,1) forwards}
-.lvu-blaze .bz .lvfire{filter:drop-shadow(0 0 16px rgba(255,100,0,.95)) drop-shadow(0 0 34px rgba(255,60,0,.6))}
+.lvu-blaze .bz{position:absolute;bottom:0;left:50%;transform-origin:50% 100%;opacity:0;animation:bzUp .7s .1s cubic-bezier(.2,1.7,.4,1) forwards}
 .lvu-blaze .bz1 .lvfire{font-size:118px}.lvu-blaze .bz1{margin-left:-47px}
 .lvu-blaze .bz2{margin-left:-96px;bottom:6px;animation-delay:.25s}.lvu-blaze .bz2 .lvfire{font-size:74px}
 .lvu-blaze .bz3{margin-left:22px;bottom:6px;animation-delay:.35s}.lvu-blaze .bz3 .lvfire{font-size:74px}
-.bz-em{position:absolute;bottom:10px;left:calc(50% + var(--x));width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,#FFF3B0,#FF8F00 60%,transparent 70%);
-  opacity:0;animation:bzEmber var(--t) var(--dl) ease-out infinite}
-@keyframes bzUp{0%{opacity:0;transform:scale(.2,.1)}60%{opacity:1;transform:scale(1.1,1.2)}100%{opacity:.85;transform:scale(1)}}
-@keyframes bzEmber{0%{opacity:0;transform:translateY(0)}15%{opacity:1}100%{opacity:0;transform:translateY(-170px) translateX(calc(var(--x) * .3))}}
+.bz-em{position:absolute;bottom:10px;left:calc(50% + var(--x));width:10px;height:10px;background:var(--dl-ye);
+  clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);opacity:0;animation:bzEmber var(--t) var(--dl) ease-out infinite}
+@keyframes bzUp{0%{opacity:0;transform:scale(.2,.1)}60%{opacity:1;transform:scale(1.1,1.15)}100%{opacity:1;transform:scale(1)}}
+@keyframes bzEmber{0%{opacity:0;transform:translateY(0) rotate(0)}15%{opacity:1}100%{opacity:0;transform:translateY(-150px) rotate(180deg)}}
 .mbox.lvup .lvu-badge,.mbox.lvup .lvu-k,.mbox.lvup h2,.mbox.lvup .lvu-from,.mbox.lvup .lvbar{position:relative;z-index:1}
-.mbox.lvup .lvu-badge{box-shadow:0 0 0 0 transparent}
 
-html[data-theme="light"] .sx-txt b{color:#9A3412;text-shadow:0 1px 0 #FFF7ED,0 0 18px rgba(255,150,0,.75)}html[data-theme="light"] .sx-txt small{color:#1E293B;text-shadow:0 1px 4px rgba(255,255,255,.9)}
-html[data-theme="light"] .stkfx.sx-ice .sx-txt b{color:#1E3A8A;text-shadow:0 1px 0 #EFF6FF,0 0 18px rgba(96,165,250,.8)}
+@media (max-width:760px){.dl-pop{min-width:220px;padding:16px 20px}.dl-n{font-size:62px}}
 @media (prefers-reduced-motion:reduce){
   .stkfx{display:none}
-  .lp-s.ice.freezing,.lp-s.thaw,.lvu-blaze .bz,.bz-em{animation:none!important}
-  .lvu-blaze .bz{opacity:.85}.bz-em{display:none}
+  .lvfire,.lvfire path,.lp-s.on.pop,.lp-s.ice.freezing,.lp-s.thaw,.lvu-blaze .bz,.bz-em{animation:none!important}
+  .lvu-blaze .bz{opacity:1}.bz-em{display:none}
 }

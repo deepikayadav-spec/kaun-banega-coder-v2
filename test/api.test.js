@@ -317,6 +317,18 @@ test('student analytics: overview, student rows and detail; logins and live ping
   const csvR = await call('a', 'GET', '/api/admin/stats/students.csv?days=30');
   assert.match(csvR.body, /^roll_no,name,university,last_active_ist/);
   assert.match(csvR.body.split(String.fromCharCode(10))[0], /prize_rupees,wallet_rupees/);
+  // copy guard: blocked tries and leaving the tab during a question show up per student
+  await call('s', 'POST', '/api/events', { events: [{ kind: 'guard', what: 'paste', screen: 'play', skill: 'S1', t: Date.now() },
+    { kind: 'guard', what: 'tab', screen: 'play', skill: 'S1', t: Date.now() }, { kind: 'guard', what: 'keys', key: 'Ctrl+C', screen: 'fff', mode: 'order', t: Date.now() }] });
+  const fl = (await call('a', 'GET', '/api/admin/stats/students?days=30&sort=flags')).body;
+  assert.equal(fl.rows[0].roll_no, 'N26P02A0001');
+  assert.equal(fl.rows[0].flags, 3);
+  const g = (await call('a', 'GET', '/api/admin/stats/student/N26P02A0001?days=30')).body.guard;
+  assert.equal(g.total, 3);
+  assert.deepEqual(g.by.map((b) => b.what).sort(), ['keys', 'paste', 'tab']);
+  assert.ok(g.recent.some((x) => x.what === 'keys' && x.key === 'Ctrl+C' && x.label === 'Blocked shortcut'));
+  assert.ok(g.recent.some((x) => x.what === 'paste' && x.skillName && x.skillName !== 'S1'), JSON.stringify(g.recent));
+  assert.match((await call('a', 'GET', '/api/admin/stats/students.csv?days=30')).body.split(String.fromCharCode(10))[0], /,flags$/);
   // a university-scoped admin only sees that university
   const mr = await call('m', 'GET', '/api/admin/stats/students?days=30');
   assert.ok(mr.body.rows.every((r) => r.university === 'Malla Reddy University - Hyderabad'));

@@ -243,7 +243,7 @@ export async function studentRows(F, G, { q = '', sort = 'recent', limit = 2000 
   if (q) { where += ' AND (m.roll_no ILIKE ? OR m.name ILIKE ?)'; args.push('%' + q + '%', '%' + q + '%'); }
   const rows = await all(`SELECT m.roll_no, m.name, m.university, m.batch, m.last_login_at,
       a.ms, a.days_active, a.last_day, l.logins, t.answers, t.right_n, t.hot, t.last_answer,
-      g.best, g.coins, g.data AS gp, e.state
+      g.best, g.coins, g.data AS gp, e.state, v.flags
     FROM students_master m
     LEFT JOIN (SELECT roll_no, SUM(ms) AS ms, COUNT(*) AS days_active, MAX(day) AS last_day FROM activity WHERE day >= ? AND day <= ? GROUP BY roll_no) a ON a.roll_no = m.roll_no
     LEFT JOIN (SELECT roll_no, COUNT(*) AS logins FROM student_logins WHERE at >= ? AND at < ? GROUP BY roll_no) l ON l.roll_no = m.roll_no
@@ -251,7 +251,8 @@ export async function studentRows(F, G, { q = '', sort = 'recent', limit = 2000 
                FROM attempts WHERE at >= ? AND at < ? GROUP BY roll_no) t ON t.roll_no = m.roll_no
     LEFT JOIN game_progress g ON g.roll_no = m.roll_no
     LEFT JOIN engine_state e ON e.roll_no = m.roll_no
-    WHERE ${where} LIMIT ?`, W.from, W.to, W.fromMs, W.toMs, W.fromMs, W.toMs, ...args, Math.min(5000, limit));
+    LEFT JOIN (SELECT roll_no, COUNT(*) AS flags FROM events WHERE kind = 'guard' AND at >= ? AND at < ? GROUP BY roll_no) v ON v.roll_no = m.roll_no
+    WHERE ${where} LIMIT ?`, W.from, W.to, W.fromMs, W.toMs, W.fromMs, W.toMs, W.fromMs, W.toMs, ...args, Math.min(5000, limit));
   const starters = new Set(G ? G.skills.filter((s) => s.starter).map((s) => s.id) : []);
   const ladder = G ? ladderFor(G.groups.length) : [];
   const out = rows.map((r) => {
@@ -264,26 +265,37 @@ export async function studentRows(F, G, { q = '', sort = 'recent', limit = 2000 
       ms: Number(r.ms) || 0, daysActive: Number(r.days_active) || 0, logins: Number(r.logins) || 0,
       answers: Number(r.answers) || 0, accuracy: pct(Number(r.right_n) || 0, Number(r.answers) || 0), hot: Number(r.hot) || 0,
       skillsDone: done, nowAt: cur ? { id: cur.id, name: cur.name, level: sk[cur.id].level } : null,
-      prizes: Number(r.best) || 0, prizeRupees: Number(r.best) ? ladder[Number(r.best) - 1] || 0 : 0, coins: Number(r.coins) || 0, games: Number((r.gp && r.gp.runs) || 0), totalMs: Number((r.gp && r.gp.tOn) || 0)
+      prizes: Number(r.best) || 0, prizeRupees: Number(r.best) ? ladder[Number(r.best) - 1] || 0 : 0, coins: Number(r.coins) || 0, games: Number((r.gp && r.gp.runs) || 0), totalMs: Number((r.gp && r.gp.tOn) || 0), flags: Number(r.flags) || 0
     };
   });
   const S = { recent: (a, b) => (b.lastActive || 0) - (a.lastActive || 0), time: (a, b) => b.ms - a.ms, answers: (a, b) => b.answers - a.answers,
-    accuracy: (a, b) => (b.accuracy ?? -1) - (a.accuracy ?? -1), skills: (a, b) => b.skillsDone - a.skillsDone, wallet: (a, b) => b.coins - a.coins || b.prizes - a.prizes, prize: (a, b) => b.prizes - a.prizes || b.coins - a.coins, least: (a, b) => (a.lastActive || 0) - (b.lastActive || 0),
+    accuracy: (a, b) => (b.accuracy ?? -1) - (a.accuracy ?? -1), skills: (a, b) => b.skillsDone - a.skillsDone, flags: (a, b) => b.flags - a.flags || (b.lastActive || 0) - (a.lastActive || 0), wallet: (a, b) => b.coins - a.coins || b.prizes - a.prizes, prize: (a, b) => b.prizes - a.prizes || b.coins - a.coins, least: (a, b) => (a.lastActive || 0) - (b.lastActive || 0),
     name: (a, b) => String(a.name).localeCompare(String(b.name)), university: (a, b) => a.university.localeCompare(b.university) || String(a.name).localeCompare(String(b.name)) }[sort] || (() => 0);
   out.sort(S);
   return { days: W.days, from: W.from, to: W.to, total: out.length, ladder, rows: out };
 }
 
+// ---------- copy guard: blocked copy / paste / shortcut tries and leaving the window or tab mid-question (events kind 'guard')
+export const GUARD_WHAT = { copy: 'Copy', cut: 'Cut', paste: 'Paste', drop: 'Drag-and-drop into answer', rightclick: 'Right-click', keys: 'Blocked shortcut',
+  printscreen: 'Print Screen key', print: 'Print', tab: 'Switched tab / app', window: 'Left the window' };
+function guardSummary(rows, name) {
+  const by = {};
+  const list = rows.map((r) => { const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data || {}; by[d.what] = (by[d.what] || 0) + 1;
+    return { at: Number(r.at), what: d.what, label: GUARD_WHAT[d.what] || d.what, key: d.key || null, screen: d.screen, skill: d.skill || null, skillName: d.skill ? name(d.skill) : null, mode: d.mode || null }; });
+  return { total: rows.length, capped: rows.length >= 500, by: Object.entries(by).map(([what, n]) => ({ what, label: GUARD_WHAT[what] || what, n })).sort((a, b) => b.n - a.n), recent: list.slice(0, 30) };
+}
+
 // ---------- one student
 export async function studentDetail(roll, F, G) {
   const W = windowOf(F);
-  const [daily, ansDays, logins, recent, bySkill, tr] = await Promise.all([
+  const [daily, ansDays, logins, recent, bySkill, tr, guard] = await Promise.all([
     all('SELECT day, ms FROM activity WHERE roll_no = ? AND day >= ? AND day <= ? ORDER BY day', roll, W.from, W.to),
     all(`SELECT ${DAY_SQL('at')} AS day, COUNT(*)::int AS n, SUM(correct)::int AS right_n FROM attempts WHERE roll_no = ? AND at >= ? AND at < ? GROUP BY 1 ORDER BY 1`, roll, W.fromMs, W.toMs),
     all('SELECT at FROM student_logins WHERE roll_no = ? ORDER BY at DESC LIMIT 50', roll),
     all('SELECT skill, level, type, r, variant, mode, correct, timeout, ms, at FROM attempts WHERE roll_no = ? ORDER BY at DESC LIMIT 40', roll),
     all('SELECT skill, COUNT(*)::int AS n, SUM(correct)::int AS right_n FROM attempts WHERE roll_no = ? GROUP BY skill', roll),
-    all("SELECT skill, kind, at FROM transitions WHERE roll_no = ? AND kind IN ('level_up', 'skill_done', 'unlock') ORDER BY at DESC LIMIT 40", roll)
+    all("SELECT skill, kind, at FROM transitions WHERE roll_no = ? AND kind IN ('level_up', 'skill_done', 'unlock') ORDER BY at DESC LIMIT 40", roll),
+    all("SELECT data, at FROM events WHERE roll_no = ? AND kind = 'guard' AND at >= ? AND at < ? ORDER BY at DESC LIMIT 500", roll, W.fromMs, W.toMs)
   ]);
   const name = (id) => (G && G.idx[id] != null ? G.skills[G.idx[id]].name : id);
   const dayMap = {};
@@ -294,7 +306,8 @@ export async function studentDetail(roll, F, G) {
     logins: logins.map((l) => Number(l.at)),
     recent: recent.map((a) => ({ ...a, name: name(a.skill), at: Number(a.at) })),
     skills: bySkill.map((s) => ({ id: s.skill, name: name(s.skill), n: s.n, acc: pct(s.right_n, s.n) })).sort((a, b) => b.n - a.n),
-    steps: tr.map((t) => ({ ...t, name: name(t.skill), at: Number(t.at) }))
+    steps: tr.map((t) => ({ ...t, name: name(t.skill), at: Number(t.at) })),
+    guard: guardSummary(guard, name)
   };
 }
 

@@ -603,7 +603,7 @@ admin.get('/stats/students.csv', wrap(async (req, res) => {
   const c = await content(), d = await stats.studentRows(await filters(req), c.G, { sort: String(req.query.sort || 'recent') }), pos = skillPos(c.G);
   const rows = d.rows.map((r) => ({ ...r, prize_rupees: r.prizeRupees, wallet_rupees: r.coins, minutes: Math.round(r.ms / 60000), total_minutes: Math.round(r.totalMs / 60000), now_at: r.nowAt ? `#${pos[r.nowAt.id] || '?'} ${r.nowAt.id} ${r.nowAt.name} L${r.nowAt.level}` : '',
     last_active_ist: r.lastActive ? new Date(r.lastActive + 5.5 * 36e5).toISOString().slice(0, 16).replace('T', ' ') : '' }));
-  res.type('text/csv').attachment(`kbc-student-analytics-${d.from}-to-${d.to}.csv`).send(csv(rows, ['roll_no', 'name', 'university', 'last_active_ist', 'batch', 'daysActive', 'minutes', 'logins', 'answers', 'accuracy', 'hot', 'skillsDone', 'now_at', 'prizes', 'prize_rupees', 'wallet_rupees', 'games', 'total_minutes']));
+  res.type('text/csv').attachment(`kbc-student-analytics-${d.from}-to-${d.to}.csv`).send(csv(rows, ['roll_no', 'name', 'university', 'last_active_ist', 'batch', 'daysActive', 'minutes', 'logins', 'answers', 'accuracy', 'hot', 'skillsDone', 'now_at', 'prizes', 'prize_rupees', 'wallet_rupees', 'games', 'total_minutes', 'flags']));
 }));
 admin.get('/stats/student/:roll', wrap(async (req, res) => {
   const roll = normRoll(req.params.roll), c = await content();

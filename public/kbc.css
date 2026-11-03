@@ -3043,3 +3043,8 @@ html[data-theme="light"] .dl-d{box-shadow:inset 0 -3px 0 rgba(0,0,0,.12),0 0 0 3
 .lvu-blaze .bz1{margin-left:-68px!important}
 .lvu-blaze .bz1 .lvfire{font-size:170px!important}
 .lvu-rays{top:118px!important}
+/* ---------- Copy guard (see "Copy guard" in game.js): no selecting or printing a question; answer boxes still type */
+body.guard #app,body.guard #app *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important}
+body.guard #app input,body.guard #app textarea,body.guard #app [contenteditable]:not([contenteditable=false]){-webkit-user-select:text!important;user-select:text!important}
+body.guard #app img,body.guard #app svg{-webkit-user-drag:none}
+@media print{body.guard>*{display:none!important}body.guard::after{content:"Printing is turned off during questions.";display:block;padding:40px;font:600 18px sans-serif;color:#000}}

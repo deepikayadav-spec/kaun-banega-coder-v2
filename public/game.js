@@ -1258,16 +1258,17 @@ function setFrozen(sk,v){if(v)FROZEN[sk]=1;else delete FROZEN[sk];store.set("kbc
    warm  a right answer on the Level 1 warm-up: the flame bounces, "WARMING UP!" (the in-a-row count doesn't move yet)
    ice   the flame turns icy blue inside an ice cube, "STREAK FROZEN", the circle frosts over
    thaw  the ice cube cracks and bursts into shards, the flame bounces back orange, "STREAK BACK ON!" */
-function streakFX(kind,I){const T=I.trans||[],up=T.some(x=>x.kind==="r_up");if(kind==="fire"&&up)kind="warm";
+function streakFX(kind,I){const T=I.trans||[],up=T.some(x=>x.kind==="r_up");if(kind==="fire"&&up)kind="warm";const wt=kind==="thaw"&&up;
  const snd={fire:"ignite",warm:"ignite",ice:"freeze",thaw:"shatter"}[kind];try{SFX[snd]()}catch(e){}
  if(reduceMotion)return;
  const card=$(".qcard"),r=card?card.getBoundingClientRect():{left:innerWidth/2-150,top:innerHeight/3,width:300,height:200};
  const cx=r.left+r.width/2;let cy=Math.min(innerHeight-170,r.top+r.height/2+40);
  const now=(I.ta&&I.ta.streak)||0,was=(I.tb&&I.tb.streak)||0,lv=I.ta&&!I.ta.next.skillDone?I.ta.next.level:null;
- const num=kind==="ice"?`<span class="dl-n frozen">${was}</span>`:kind==="warm"?"":`<span class="dl-roll"><span class="dl-n old">${kind==="thaw"?"❄":was}</span><span class="dl-n new">${now}</span></span>`;
- const label={fire:"in a row!",warm:"warming up!",ice:"streak frozen",thaw:"streak back on!"}[kind];
+ const num=kind==="ice"?`<span class="dl-n frozen">${was}</span>`:kind==="warm"||wt?"":`<span class="dl-roll"><span class="dl-n old">${kind==="thaw"?"❄":was}</span><span class="dl-n new">${now}</span></span>`;
+ const label=wt?"ice broken!":{fire:"in a row!",warm:"warming up!",ice:"streak frozen",thaw:"streak back on!"}[kind];
  const sub=kind==="ice"?"Your level is safe. Next right answer breaks the ice."
   :kind==="warm"?"Nice! A little more warm-up, then 2 in a row."
+  :wt?"Warming up again. Then 2 in a row moves you up."
   :now>=1&&lv?`1 more in a row for Level ${lv}`:now>=1?"1 more in a row clears this topic":"";
  const dots=[0,1].map(i=>{const st=kind==="ice"&&i===0?"ice":i<now&&kind!=="ice"?"on":"";const fresh=st==="on"&&i===now-1?"fresh":"";
   return `<i class="dl-d ${st} ${fresh}">${st==="on"?'<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>':st==="ice"?"❄":""}</i>`}).join("");
@@ -1277,7 +1278,7 @@ function streakFX(kind,I){const T=I.trans||[],up=T.some(x=>x.kind==="r_up");if(k
  const el=document.createElement("div");el.id="stkfx";el.className="stkfx dl-"+kind;el.setAttribute("aria-hidden","true");
  el.style.setProperty("--cx",cx+"px");el.style.setProperty("--cy",cy+"px");
  el.innerHTML=`<div class="dl-pop"><div class="dl-art">${sparks}<span class="dl-flame">${FIRE}</span>${kind==="ice"||kind==="thaw"?'<span class="dl-cube"><i></i><i></i></span>':""}${shards}</div>
-${num?`<div class="dl-num">${num}</div>`:""}<div class="dl-lbl">${label}</div>${kind!=="warm"?`<div class="dl-dots">${dots}</div>`:""}${sub?`<div class="dl-sub">${esc(sub)}</div>`:""}</div>`;
+${num?`<div class="dl-num">${num}</div>`:""}<div class="dl-lbl">${label}</div>${kind!=="warm"&&!wt?`<div class="dl-dots">${dots}</div>`:""}${sub?`<div class="dl-sub">${esc(sub)}</div>`:""}</div>`;
  document.body.appendChild(el);
  /* keep the whole animation below the timer and the top bar: measure the flame's top and push everything down */
  /* (layout sizes, not the animated ones: the pop starts scaled down) */
@@ -1330,7 +1331,7 @@ function levelUpFX(I){const T=I.trans||[],done=T.find(x=>x.kind==="skill_done"),
  const s=SK[I.sk]||{name:""},to=up?up.detail.to.l:4,from=up?up.detail.from.l:4,un=T.filter(x=>x.kind==="unlock").map(x=>SK[x.skill]).filter(Boolean);
  let m=$("#lvupm");if(!m){m=document.createElement("div");m.id="lvupm";m.className="modalx lvupx";document.body.appendChild(m)}
  m.innerHTML=`<div class="mbox lvup" role="dialog" aria-modal="true" aria-labelledby="lvup-h" tabindex="-1" data-act="lvup-close"><span class="lvu-rays" aria-hidden="true"></span>
-<div class="lvu-blaze" aria-hidden="true"><span class="bz bz1">${FIRE}</span><span class="bz bz2">${FIRE}</span><span class="bz bz3">${FIRE}</span>${Array.from({length:16},(_,i)=>`<i class="bz-em" style="--x:${(Math.random()*160-80).toFixed(0)}px;--t:${(1.2+Math.random()*1.4).toFixed(2)}s;--dl:${(Math.random()*1.2).toFixed(2)}s;--s:${(3+Math.random()*4).toFixed(1)}px"></i>`).join("")}</div>
+<div class="lvu-blaze" aria-hidden="true"><span class="bz bz1">${FIRE}</span>${Array.from({length:16},(_,i)=>`<i class="bz-em" style="--x:${(Math.random()*160-80).toFixed(0)}px;--t:${(1.2+Math.random()*1.4).toFixed(2)}s;--dl:${(Math.random()*1.2).toFixed(2)}s;--s:${(3+Math.random()*4).toFixed(1)}px"></i>`).join("")}</div>
 <div class="lvu-badge ${done?"cleared":""}" aria-hidden="true"><span class="lvu-lock">${LOCKI}</span><b>${done?"✓":to}</b></div>
 <p class="lvu-k">${done?"Topic cleared":"Level unlocked"}</p><h2 id="lvup-h">${done?esc(s.name):`Level ${to}`}</h2>
 <p class="lvu-from"><span class="lvu-streak" aria-hidden="true"><i class="lp-s on">${FIRE}</i><i class="lp-s on hot">${FIRE}</i></span>${done?"All 4 levels done.":`Level ${from} cleared with 2 in a row.`}</p>${lvBar(done?4:to,done?"done":"open",0,{cls:"big",fresh:done?4:to})}</div>`;

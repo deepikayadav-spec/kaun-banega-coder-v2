@@ -3012,8 +3012,6 @@ html[data-theme="light"]{--dl-card:#FFFFFF;--dl-line:#E5E5E5;--dl-txt:#3C3C3C;--
 .lvu-blaze{position:absolute;left:50%;top:0;width:220px;height:128px;margin-left:-110px;pointer-events:none;z-index:0}
 .lvu-blaze .bz{position:absolute;bottom:0;left:50%;transform-origin:50% 100%;opacity:0;animation:bzUp .7s .1s cubic-bezier(.2,1.7,.4,1) forwards}
 .lvu-blaze .bz1 .lvfire{font-size:118px}.lvu-blaze .bz1{margin-left:-47px}
-.lvu-blaze .bz2{margin-left:-96px;bottom:6px;animation-delay:.25s}.lvu-blaze .bz2 .lvfire{font-size:74px}
-.lvu-blaze .bz3{margin-left:22px;bottom:6px;animation-delay:.35s}.lvu-blaze .bz3 .lvfire{font-size:74px}
 .bz-em{position:absolute;bottom:10px;left:calc(50% + var(--x));width:10px;height:10px;background:var(--dl-ye);
   clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);opacity:0;animation:bzEmber var(--t) var(--dl) ease-out infinite}
 @keyframes bzUp{0%{opacity:0;transform:scale(.2,.1)}60%{opacity:1;transform:scale(1.1,1.15)}100%{opacity:1;transform:scale(1)}}
@@ -3038,3 +3036,10 @@ html[data-theme="light"] .dl-lbl{text-shadow:0 2px 0 #FFFFFF,0 0 2px #FFFFFF,0 0
 html[data-theme="light"] .dl-sub{color:#3C3C3C!important;background:rgba(255,255,255,.9)}
 html[data-theme="light"] .dl-n{-webkit-text-stroke:2px rgba(255,255,255,.6)}
 html[data-theme="light"] .dl-d{box-shadow:inset 0 -3px 0 rgba(0,0,0,.12),0 0 0 3px rgba(255,255,255,.85)}
+
+/* one big flame behind the level-up badge, tall enough to show around and above it */
+.mbox.lvup{padding-top:64px!important}
+.lvu-blaze{top:4px!important;height:166px!important;width:180px!important;margin-left:-90px!important}
+.lvu-blaze .bz1{margin-left:-68px!important}
+.lvu-blaze .bz1 .lvfire{font-size:170px!important}
+.lvu-rays{top:118px!important}

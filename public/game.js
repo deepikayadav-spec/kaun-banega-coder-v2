@@ -1621,7 +1621,7 @@ function noteZoomMaybe(){if(S.screen!=="play"||!S.run||S.phase!=="ask")return;co
   a.onfinish=()=>{o.remove();t.classList.remove("wait");t.classList.add("land");setTimeout(()=>t.classList.remove("land"),600)}},1500)}
 function resultCountUp(){if(S.screen!=="result"||!S.res||S.res.counted)return;S.res.counted=true;const el=$(".res .ramt"),to=S.res.payout||0;if(!el||!to||reduceMotion)return;
  const t0=performance.now(),d=1200,st=n=>{const k=Math.min(1,(n-t0)/d),e=1-Math.pow(1-k,3);el.textContent=fmtR(Math.round(to*e));if(k<1)requestAnimationFrame(st)};requestAnimationFrame(st)}
-function render(){const prev=render.scr;render.scr=S.screen;if(prev&&prev!==S.screen&&pingLive.at&&Date.now()-pingLive.at>8000)pingLive();const r=render0();screenH1();setTimeout(()=>{noteZoomMaybe();resultCountUp();if(prev!==S.screen)pxRest()},60);
+function render(){const prev=render.scr;render.scr=S.screen;if(prev&&prev!==S.screen&&pingLive.at&&Date.now()-pingLive.at>8000)pingLive();const r=render0();guardSync();screenH1();setTimeout(()=>{noteZoomMaybe();resultCountUp();if(prev!==S.screen)pxRest()},60);
  if(prev!==S.screen){const app=$("#app");if(app&&prev){app.classList.remove("scr-in");void app.offsetWidth;app.classList.add("scr-in")}
   if(S.screen==="path")requestAnimationFrame(pauseOffscreen)}
  return r}
@@ -2109,6 +2109,38 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden)return;if(
 function syncSound(){const b=$("#soundbtn");if(b){b.setAttribute("aria-pressed",soundOn);const l=b.querySelector(".lbl");if(l)l.textContent=soundOn?"Sound on":"Sound off"}}
 syncSound();addEventListener("pointerdown",()=>{if(soundOn)ctx()},SIG);
 KBCQ.onRerender(()=>{if(S.screen==="play"){const y=scrollY;render();scrollTo({top:y})}});
+/* ================= Copy guard. While a question is on screen (hot seat and Fastest Finger): the question can't be
+   selected, copied, cut, dragged out or printed, nothing can be pasted or dropped into the answer boxes, and the
+   right-click menu and the copy / paste / select-all / print / save / view-source / dev-tools keys are off. Typing,
+   Backspace, arrows and Ctrl+Z in the answer boxes work as normal. Each blocked try, and leaving the window or tab
+   while a question is running, is logged as a "guard" event (one per kind every 2 s) for the admin portal.
+   The feedback pop-up is left alone. ================= */
+var GUARD_LAST={};
+function guardOn(){return S.screen==="play"&&!!S.q||S.screen==="fff"&&!!S.fff&&!S.fff.done}
+function guardLive(){return S.screen==="play"&&S.phase==="ask"&&!!S.q||S.screen==="fff"&&!!S.fff&&!S.fff.done&&!S.fff.intro}
+function guardSync(){document.body.classList.toggle("guard",guardOn())}
+function guardLog(what,extra){const now=Date.now();if(now-(GUARD_LAST[what]||0)<2000)return;GUARD_LAST[what]=now;
+ const ctx=S.screen==="play"?{screen:"play",skill:S.q&&S.q.sk||null,qkind:S.q&&S.q.kind||null,phase:S.phase||null}:{screen:"fff",mode:S.fff&&S.fff.mode||null};
+ logEv(Object.assign({kind:"guard",what},ctx,extra||{}))}
+const guardSkip=t=>!!(t&&t.closest&&t.closest("#fbm"));
+const guardEdit=t=>!!(t&&t.closest&&t.closest("input,textarea,[contenteditable]:not([contenteditable=false])"));
+const GUARD_MSG={copy:"Copying is turned off during questions.",cut:"Copying is turned off during questions.",paste:"Pasting is turned off during questions. Type your answer.",
+ drop:"Pasting is turned off during questions. Type your answer.",rightclick:"Right-click is turned off during questions.",keys:"That shortcut is turned off during questions.",print:"Printing is turned off during questions."};
+function guardBlock(e,what,extra){if(!guardOn()||guardSkip(e.target))return false;e.preventDefault();e.stopPropagation();guardLog(what,extra);if(GUARD_MSG[what])fsToast(GUARD_MSG[what]);return true}
+for(const k of ["copy","cut","paste"])document.addEventListener(k,e=>guardBlock(e,k),Object.assign({capture:true},SIG));
+document.addEventListener("beforeinput",e=>{if(/^insertFrom(Paste|Drop|PasteAsQuotation)$/.test(e.inputType||""))guardBlock(e,e.inputType==="insertFromDrop"?"drop":"paste")},Object.assign({capture:true},SIG));
+document.addEventListener("drop",e=>{if(guardEdit(e.target))guardBlock(e,"drop")},Object.assign({capture:true},SIG));
+document.addEventListener("dragstart",e=>{if(guardOn()&&!guardSkip(e.target)&&!(e.target.closest&&e.target.closest("[draggable=true]")))e.preventDefault()},Object.assign({capture:true},SIG));
+document.addEventListener("selectstart",e=>{if(guardOn()&&!guardSkip(e.target)&&!guardEdit(e.target))e.preventDefault()},Object.assign({capture:true},SIG));
+document.addEventListener("contextmenu",e=>guardBlock(e,"rightclick"),Object.assign({capture:true},SIG));
+addEventListener("keydown",e=>{if(!guardOn()||guardSkip(e.target))return;const k=(e.key||"").toLowerCase(),mod=e.ctrlKey||e.metaKey;
+ const hit=k==="f12"||mod&&e.shiftKey&&["i","j","c"].includes(k)||mod&&!e.shiftKey&&!e.altKey&&(["c","x","v","p","s","u"].includes(k)||k==="a"&&!guardEdit(e.target))||e.shiftKey&&k==="insert"||mod&&k==="insert";
+ if(hit)guardBlock(e,"keys",{key:(mod?(e.metaKey?"Cmd+":"Ctrl+"):"")+(e.shiftKey?"Shift+":"")+(k.length===1?k.toUpperCase():e.key)})},Object.assign({capture:true},SIG));
+addEventListener("keyup",e=>{if(e.key==="PrintScreen"&&guardOn())guardLog("printscreen")},SIG);
+addEventListener("beforeprint",()=>{if(guardOn()){guardLog("print");fsToast(GUARD_MSG.print)}},SIG);
+addEventListener("blur",()=>{if(!guardLive())return;setTimeout(()=>{if(!guardLive())return;if(document.hidden)guardLog("tab");else if(!document.hasFocus())guardLog("window")},400)},SIG);
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&guardLive())guardLog("tab")},SIG);
+
 render();initOnline();syncXtime();setInterval(fbTick,10000);setTimeout(()=>{if(!document.hidden&&(Number(ME.timeOnMs)||0)>(P.tOn||0)){P.tOn=Number(ME.timeOnMs);saveP()}fbCheck()},1500);
 setTimeout(()=>M3D.warm(COSTUMES[CHAR]||COSTUMES.byte,BYTE_POSES),1500);
 })();

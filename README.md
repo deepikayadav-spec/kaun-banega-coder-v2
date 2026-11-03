@@ -47,6 +47,11 @@ The app follows the same pattern as Saturday Sprint: one Express app running as 
 
 The one-line "what you'll do" for each level lives in `levels_info` in `question-types.json`.
 
+### Copy guard (questions)
+While a question is on screen (hot seat and Fastest Finger), the question text can't be selected, copied, cut, dragged or printed; nothing can be pasted or dropped into the answer boxes; and right-click plus Ctrl/Cmd + C, X, V, A (outside an answer box), P, S, U, Ctrl+Shift+I/J/C and F12 are off. Typing, Backspace, arrows and Ctrl+Z in the answer boxes work as normal, and the feedback pop-up is untouched. A short toast tells the student why.
+
+Each blocked try, plus switching tab/app or leaving the window mid-question (which can't be blocked), is logged as an `events` row with kind `guard` (at most one per kind every 2 s). Admin → Analytics → Students shows a **Copy flags** column (sortable, `flags` in the CSV) and, per student, a Copy guard breakdown with the latest 30 moments. This deters casual copying; it can't stop a phone camera or an OS screenshot tool.
+
 ### Data (Postgres)
 
 - **Students and access:**

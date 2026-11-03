@@ -16,6 +16,7 @@ import {
   checkPassword, hashPassword, tempPassword
 } from './auth.js';
 import { parseStudents } from './students.js';
+import { mountStudentAuth, authOf, accountView } from './studentAuth.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const app = express();
@@ -76,33 +77,7 @@ async function firstNameUnique(st, typed) {
   const others = await all('SELECT roll_no, name FROM students_master WHERE university = ? AND active = 1 AND roll_no <> ?', uni, st.roll_no);
   return !others.some((o) => firstName(o.name) === fn);
 }
-app.post('/api/auth/login', jsonBody, wrap(async (req, res) => {
-  const roll = normRoll(req.body?.roll), name = String(req.body?.name || '').trim().slice(0, 80);
-  if (!roll || !name) return res.status(400).json({ error: 'Enter your NIAT ID and your name.' });
-  if (tooManyFails(roll)) return res.status(429).json({ error: 'Too many tries. Wait 15 minutes and try again.' });
-  let st = await one('SELECT roll_no, name, university, active FROM students_master WHERE roll_no = ?', roll);
-  const TR = config.allowTestLogin && !st ? await testRules() : null;
-  if (TR && TR.rollPrefixes.some((p) => roll.startsWith(p.toUpperCase()))) {
-    // test logins (when enabled) are tagged with the first test university from Admin > Settings, so analytics leaves them out
-    const now = Date.now();
-    await run("INSERT INTO students_master (roll_no, name, university, source, created_at, updated_at) VALUES (?, ?, ?, 'test', ?, ?) ON CONFLICT (roll_no) DO NOTHING",
-      roll, name, TR.universities[0] || 'Test', now, now);
-    st = await one('SELECT roll_no, name, university, active FROM students_master WHERE roll_no = ?', roll);
-  }
-  if (!st) return res.status(404).json({ error: 'This NIAT ID is not on the list. Check it, or ask your mentor to add you.' });
-  if (!st.active) return res.status(403).json({ error: 'This NIAT ID is not active. Ask your mentor.' });
-  if (!namesMatch(st.name, name) && !(await firstNameUnique(st, name))) {
-    addFail(roll);
-    return res.status(401).json({ error: isFirstNameOnly(st.name, name)
-      ? 'Another student at your university has the same first name. Type your full name.'
-      : 'The name does not match our list for this NIAT ID. Type your full name.' });
-  }
-  clearFails(roll);
-  await run('UPDATE students_master SET last_login_at = ? WHERE roll_no = ?', Date.now(), roll);
-  await stats.recordLogin(run, roll, st.university || universityOf(roll));
-  await createSession(res, 'student', roll);
-  res.json({ ok: true });
-}));
+// POST /api/auth/login (NIAT ID + name or password), Google sign-in, account settings and reset links: server/studentAuth.js
 app.post('/api/auth/logout', wrap(async (req, res) => { await endSession(req, res, 'student'); res.json({ ok: true }); }));
 
 // ---------- engine state helpers
@@ -149,8 +124,9 @@ app.get('/api/boot', requireStudent, wrap(async (req, res) => {
   // visible time on the portal so far, from the 30 s live pings: lets the mandatory feedback pop-up reach students who
   // passed the 13 minutes before the game tracked it in their progress
   const on = await one('SELECT COALESCE(SUM(ms), 0) AS ms FROM activity WHERE roll_no = ?', req.student.roll_no);
+  const acct = accountView(await authOf(req.student.roll_no));
   res.json({
-    me: { roll: req.student.roll_no, name: req.student.name, university: req.student.university || universityOf(req.student.roll_no), feedbackGiven: fb, gameRated: kinds.includes('game'), timeOnMs: Number(on?.ms) || 0 },
+    me: { roll: req.student.roll_no, name: req.student.name, university: req.student.university || universityOf(req.student.roll_no), feedbackGiven: fb, gameRated: kinds.includes('game'), timeOnMs: Number(on?.ms) || 0, secured: acct.secured, account: acct },
     graph: graphForClient(c), engine: view(c, st), progress: gp ? gp.data : null, epoch: await progressEpoch()
   });
 }));
@@ -294,7 +270,7 @@ async function liveCount() {
   liveCache = { at: Date.now(), n: r.n };
   return r.n;
 }
-const SCREENS = new Set(['home', 'play', 'result', 'fame', 'team', 'path', 'fff', 'seat', 'guide', 'wallet', 'buddy']);
+const SCREENS = new Set(['home', 'play', 'result', 'fame', 'team', 'path', 'fff', 'seat', 'guide', 'wallet', 'buddy', 'account']);
 app.post('/api/live', requireStudent, jsonBody, wrap(async (req, res) => {
   const was = await one('SELECT last_seen, since FROM presence WHERE roll_no = ?', req.student.roll_no), now = Date.now();
   const screen = SCREENS.has(req.body?.screen) ? req.body.screen : null;
@@ -362,6 +338,7 @@ app.post('/api/admin/logout', wrap(async (req, res) => { await endSession(req, r
 const admin = express.Router();
 admin.use(requireAdmin);
 app.use('/api/admin', admin);
+mountStudentAuth(app, admin, { firstNameUnique, testRules, wrap });
 // University filter: a university-scoped admin always sees only their own.
 const scope = (req) => req.admin.university || (req.query.university ? String(req.query.university) : null);
 
@@ -408,7 +385,8 @@ admin.get('/students/:roll', wrap(async (req, res) => {
   const attempts = await all('SELECT question_id, skill, level, type, r, variant, mode, correct, timeout, ms, lifelines, at FROM attempts WHERE roll_no = ? ORDER BY at DESC LIMIT 500', roll);
   const transitions = await all('SELECT skill, kind, detail, at FROM transitions WHERE roll_no = ? ORDER BY at DESC LIMIT 500', roll);
   const gp = await one('SELECT data, coins, best FROM game_progress WHERE roll_no = ?', roll);
-  res.json({ student: m, engine: view(c, st), pending: pending ? { qid: pending.qid, mode: pending.mode, servedAt: pending.servedAt } : null,
+  const la = await authOf(roll);
+  res.json({ student: m, login: { ...accountView(la), recovery: la && la.recovery_email ? { email: la.recovery_email, verified: !!la.recovery_verified_at } : null }, engine: view(c, st), pending: pending ? { qid: pending.qid, mode: pending.mode, servedAt: pending.servedAt } : null,
     attempts, transitions, progress: gp });
 }));
 

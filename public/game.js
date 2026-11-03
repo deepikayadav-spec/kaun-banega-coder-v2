@@ -910,7 +910,7 @@ async function loadFame(scope,uni,quiet){FQ={scope:scope||"all",uni:uni||""};con
  catch(e){if(S.screen==="fame"&&e.status!==401){FAMEC={rows:[],err:e.message};render()}}}
 function initOnline(){loadFame("all");pingLive();setInterval(pingLive,30000);addEventListener("pagehide",()=>{flushEv(true);pushP(true)},SIG);
  /* the product tour waits for the intro film (intro.js) to finish */
- (window.KBC_INTRO||Promise.resolve()).then(()=>{if(!store.get("kbc-tour-"+ME.roll,false))setTimeout(()=>{if(S.screen==="home"&&TI<0)tourStart()},900)})}
+ (window.KBC_INTRO||Promise.resolve()).then(()=>acctGate()).then(()=>{if(!store.get("kbc-tour-"+ME.roll,false))setTimeout(()=>{if(S.screen==="home"&&TI<0)tourStart()},900)})}
 function syncTeam(){const l=$("#teamlink");if(l)l.hidden=true}
 function saveFame(){pushP()}
 async function logout(){if(S.screen==="play")endRun("stop");await Promise.all([pushP(true),flushEv(true)]);try{await KBCQ.api("POST","/api/auth/logout")}catch(e){}
@@ -934,7 +934,7 @@ const blankQ=()=>({enLoss:0,enGain:0,thinkLong:false,pick:null,gone:[],hint:fals
 /* The admin can upload a new skill graph at any time. Every engine view names the live graph; when it differs from the
    one this page was built from, the page reloads at the next safe screen (never mid-question) to show the new path. */
 function graphCheck(e){if(e&&e.graphVersion&&GR.version&&e.graphVersion!==GR.version)S.graphChanged=1}
-const SAFE_SCREENS=["home","path","result","fame","wallet","buddy","guide","team"];
+const SAFE_SCREENS=["home","path","result","fame","wallet","buddy","guide","team","account"];
 function pathReload(){if(pathReload.on)return;pathReload.on=1;try{clearTimeout(saveT);pushP()}catch(e){}
  document.body.insertAdjacentHTML("beforeend",`<div role="status" style="position:fixed;left:50%;top:24px;transform:translateX(-50%);z-index:99999;background:#FFC83D;color:#241500;font:800 15px var(--f-body,system-ui);padding:12px 20px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.4)">Your path has been updated. Loading it…</div>`);
  setTimeout(()=>location.reload(),1200)}
@@ -1575,7 +1575,7 @@ let FB={trigger:"",must:false,form:"m",score:0};
    across sessions and devices. After FB_MUST minutes the feedback pop-up becomes mandatory: it waits until no question
    or puzzle is running, then stays until the student sends feedback (and comes back after a reload until they do). */
 const FB_MUST=13;
-function fbSafe(){if(TI>=0)return false;if(document.getElementById("kintro"))return false;if(document.querySelector(".modalx:not([hidden])"))return false;
+function fbSafe(){if(TI>=0||ACCT_GATE)return false;if(document.getElementById("kintro"))return false;if(document.querySelector(".modalx:not([hidden])"))return false;
  if(S.screen==="play"&&S.phase!=="reveal"&&S.phase!=="none")return false;if(S.screen==="fff"&&S.fff&&!S.fff.done&&!S.fff.intro)return false;return true}
 function fbLock(on){for(const el of document.body.children)if(el.id!=="fbm"&&el.tagName!=="SCRIPT")el.inert=on}
 /* students who passed the 13 minutes before this was tracked in their progress: the server's activity total counts too */
@@ -1636,11 +1636,11 @@ function render0(){if(SAFE_SCREENS.includes(S.screen)){if(S.graphChanged)return 
  if(ow&&ow.dataset.r===S.fff.idx+"-"+S.fff.t0){const t=document.createElement("div");t.innerHTML=vFFF();const nw=t.querySelector(".fffw");nw.classList.remove("enter");ow.replaceWith(nw);
   const ob=$(".fffbot"),nb=t.querySelector(".fffbot");if(ob&&nb&&ob.dataset.m!==nb.dataset.m)ob.replaceWith(nb);
   const nf=nw.querySelector('[data-act="fff-add"]:not([disabled])')||nw.querySelector('[data-act="fff-submit"]:not([disabled])')||nw.querySelector("[data-act=hotseat],[data-act=fff-next]");nf&&nf.focus({preventScroll:true})}
- else app.innerHTML=S.screen==="home"?vHome():S.screen==="play"?vPlay():S.screen==="result"?vResult():S.screen==="fame"?vFame():S.screen==="team"?vTeam():S.screen==="path"?vPath():S.screen==="fff"?vFFF():S.screen==="seat"?vSeat():S.screen==="guide"?vGuide():S.screen==="wallet"?vWallet():S.screen==="buddy"?vBuddy():vHome();
+ else app.innerHTML=S.screen==="home"?vHome():S.screen==="play"?vPlay():S.screen==="result"?vResult():S.screen==="fame"?vFame():S.screen==="team"?vTeam():S.screen==="path"?vPath():S.screen==="fff"?vFFF():S.screen==="seat"?vSeat():S.screen==="guide"?vGuide():S.screen==="wallet"?vWallet():S.screen==="buddy"?vBuddy():S.screen==="account"?vAccount():vHome();
  if(S.screen==="play"&&S.phase==="ask")startQ();syncChip();syncTeam();setTimeout(botTalk,250);
  document.body.classList.toggle("qscreen",S.screen==="play"||S.screen==="fff");if(S.screen!=="home")document.body.classList.remove("homespot");if(S.screen!=="fff")clearInterval(fInt);requestAnimationFrame(placeSpot);
  document.body.classList.toggle("inplay",S.screen==="play"||S.screen==="result");document.body.classList.toggle("inteam",S.screen==="team");document.body.classList.toggle("rscreen",S.screen==="result");
- window.KB3D&&KB3D.mode(S.screen==="result"||S.screen==="fff"||S.screen==="play"||S.screen==="guide"||S.screen==="buddy"||S.screen==="wallet"?"hide":S.screen==="path"?"home":S.screen);
+ window.KB3D&&KB3D.mode(S.screen==="result"||S.screen==="fff"||S.screen==="play"||S.screen==="guide"||S.screen==="buddy"||S.screen==="wallet"||S.screen==="account"?"hide":S.screen==="path"?"home":S.screen);
  if(S.screen==="home"){requestAnimationFrame(placeHomeCoin);[150,600,1500].forEach(t=>setTimeout(placeHomeCoin,t));typeHome()}else clearTimeout(typeT);syncLive();
  if(S.screen==="path"){if(!S.mapped){S.mapped=1;requestAnimationFrame(()=>pathJump(false))}else if(S.mapTop!=null)scrollTo({top:S.mapTop})}}
 /* the coin logo sits in the free band between the header and the "Kaun Banega" title */
@@ -1999,7 +1999,7 @@ function goPlay(mode){S.name=ME.name||S.name;
 document.addEventListener("click",e=>{const bl=e.target.closest(".bill3d");if(bl)bl.classList.toggle("flip")},SIG);
 /* Leaving mid-game ends the game (the hot seat needs a fresh Fastest Finger win), so header links ask first */
 let PEND=null,LEAVE_OK=false;
-const LEAVES={home:1,fame:1,wallet:1,path:1,logout:1,buddy:1,tour:1};
+const LEAVES={home:1,fame:1,wallet:1,path:1,logout:1,buddy:1,tour:1,account:1};
 function inGame(){return S.screen==="play"||S.screen==="seat"||(S.screen==="fff"&&S.fff&&S.fff.done!=="bad")}
 function askLeave(b){PEND=b;let m=$("#leavem");if(!m){m=document.createElement("div");m.id="leavem";m.className="modalx";document.body.appendChild(m)}
  const fff=S.screen==="fff";
@@ -2018,6 +2018,8 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="guide-close"){modalClose("#guidem");return}
  if(LEAVES[a]&&inGame()&&!LEAVE_OK&&!b.closest(".modalx")){askLeave(b);return}
  if(a==="logout"){logout();return}
+ if(a==="account"){if(S.screen==="play")endRun("stop");S={screen:"account",name:S.name};render();scrollTo({top:0});acctLoad().then(()=>{if(S.screen==="account")render()});return}
+ if(a.startsWith("acct-")){acctAct(a,b);return}
  if(a==="sol"){solOpen();return}
  if(a==="sol-close"){modalClose("#solm");return}
  if(a==="lvinfo"){lvInfoOpen();return}
@@ -2109,6 +2111,75 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden)return;if(
 function syncSound(){const b=$("#soundbtn");if(b){b.setAttribute("aria-pressed",soundOn);const l=b.querySelector(".lbl");if(l)l.textContent=soundOn?"Sound on":"Sound off"}}
 syncSound();addEventListener("pointerdown",()=>{if(soundOn)ctx()},SIG);
 KBCQ.onRerender(()=>{if(S.screen==="play"){const y=scrollY;render();scrollTo({top:y})}});
+/* ================= Account: how this student signs in (server/studentAuth.js).
+   After a first login with NIAT ID + name, a gate asks the student to connect Google or set a password before playing;
+   from then on the name alone no longer logs them in. The Account screen (menu) connects or removes Google, sets or
+   changes the password, and adds a recovery email (confirmed by a link) for "Forgot password". ================= */
+let ACCT=Object.assign({secured:true,googleOn:false,google:null,hasPassword:false,recovery:null},ME.account||{});
+const ACCT_MSG={"google-linked":"Google is connected. Next time, tap Continue with Google.","google-taken":"That Google account is already connected to another NIAT ID.",
+ "google-off":"Google sign-in is not switched on yet. Set a password instead.","cancelled":"Google sign-in was cancelled.","expired":"That took too long. Try connecting Google again.",
+ "failed":"Google sign-in didn't work. Try again.","email-verified":"Your recovery email is confirmed.","email-link-bad":"That email link has expired or was already used. Send a new one."};
+async function acctLoad(){try{ACCT=await KBCQ.api("GET","/api/account");ME.secured=ACCT.secured}catch(e){}return ACCT}
+const GOOG_ICON='<svg viewBox="0 0 48 48" aria-hidden="true" class="gico"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+const gBtn=(t)=>`<button class="btn gbtn2" data-act="acct-google">${GOOG_ICON}<span>${t}</span></button>`;
+function pwForm(id,cur){return `<form class="acf" data-form="${id}" novalidate>
+ ${cur?`<label>Current password<input type="password" name="current" autocomplete="current-password" required></label>`:""}
+ <label>${cur?"New password":"Password"}<input type="password" name="next" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required></label>
+ <label>Type it again<input type="password" name="again" autocomplete="new-password" required></label>
+ <p class="acmsg" role="alert"></p><button class="btn gold" type="submit">${cur?"Change password":"Save password"}</button></form>`}
+function recForm(id){const R=ACCT.recovery,g=ACCT.google;return `<form class="acf" data-form="${id}" novalidate>
+ <label>Recovery email<input type="email" name="email" autocomplete="email" placeholder="you@example.com" value="${esc(R&&!R.verified?R.email:"")}" required></label>
+ <p class="acmsg" role="alert"></p><div class="acrow"><button class="btn gold" type="submit">${R&&!R.verified?"Send the link again":"Send confirmation link"}</button>${g&&(!R||R.email!==g.email||!R.verified)?`<button class="btn quiet" type="button" data-act="acct-usegoogle">Use ${esc(g.email)}</button>`:""}</div></form>`}
+function vAccount(){const A=ACCT,R=A.recovery;
+ return `<section class="acct"><div class="ghead"><div><h2>Your account</h2><p class="muted">How you log in as <b>${esc(ME.roll)}</b>. ${A.secured?"Your name alone no longer logs you in.":"Connect Google or set a password so nobody else can log in as you."}</p></div></div>
+<div class="acgrid">
+<div class="card acc"><h3>Google</h3>${A.google?`<p class="acstat ok">✓ Connected: <b>${esc(A.google.email)}</b></p><p class="muted">Tap <b>Continue with Google</b> on the login page.</p>
+ <div class="acrow">${A.hasPassword?`<button class="btn quiet" data-act="acct-unlink">Disconnect Google</button>`:`<span class="muted small">To disconnect Google, set a password first.</span>`}</div>`
+ :A.googleOn?`<p class="muted">Log in with one tap using any Google account.</p>${gBtn("Connect Google")}`:`<p class="muted">Google sign-in is not switched on yet.</p>`}</div>
+<div class="card acc"><h3>Password</h3>${A.hasPassword?`<p class="acstat ok">✓ Password set</p>`:`<p class="muted">Log in with your NIAT ID and a password.</p>`}${pwForm("pw",A.hasPassword)}</div>
+<div class="card acc"><h3>Recovery email</h3>${R&&R.verified?`<p class="acstat ok">✓ Confirmed: <b>${esc(R.email)}</b></p><p class="muted">If you forget your password, we email a reset link here. To change it, enter a new one.</p>`
+ :R?`<p class="acstat warn">Waiting for you to confirm <b>${esc(R.email)}</b>. Open the link we emailed (check spam too).</p>`:`<p class="muted">Used only to send you a reset link if you forget your password.</p>`}${recForm("rec")}</div>
+</div>
+<div class="ractions"><button class="btn quiet" data-act="home">← Home</button></div></section>`}
+function acctMsg(form,t,ok){const m=form.querySelector(".acmsg");if(m){m.textContent=t||"";m.classList.toggle("ok",!!ok)}}
+async function acctSubmit(form){const id=form.dataset.form,fd=new FormData(form),btn=form.querySelector('[type="submit"]');acctMsg(form,"");
+ try{if(id==="pw"||id==="gpw"){const next=fd.get("next")||"";if(next.length<8)return acctMsg(form,"Use at least 8 characters.");if(next!==fd.get("again"))return acctMsg(form,"The two passwords don't match.");
+   btn.disabled=true;ACCT=await KBCQ.api("POST","/api/account/password",{current:fd.get("current")||undefined,next});ME.secured=ACCT.secured;
+   try{localStorage.setItem("kbc-login-mode","password")}catch(e){}
+   fsToast(id==="gpw"?"Password saved. Use it with your NIAT ID next time.":"Password saved. You've been logged out on other devices.");try{SFX.right()}catch(e){}}
+  else{const email=String(fd.get("email")||"").trim();if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email))return acctMsg(form,"Enter a valid email address.");
+   btn.disabled=true;const r=await KBCQ.api("POST","/api/account/recovery",{email});ACCT=r;fsToast(r.sent?`Link sent to ${email}. Open it to confirm (check spam too).`:"Recovery email saved.")}
+  if(id.startsWith("g"))acctGateNext();else render()}
+ catch(e){acctMsg(form,e.message);btn&&(btn.disabled=false)}}
+/* the gate after a first NIAT ID + name login: no close button, the rest of the page is inert (like the feedback pop-up) */
+let ACCT_GATE=null;
+function acctGate(){if(ACCT.secured)return Promise.resolve();
+ return new Promise(res=>{ACCT_GATE={res,step:"secure"};let m=$("#acctm");if(!m){m=document.createElement("div");m.id="acctm";m.className="fbm acctm";document.body.appendChild(m)}
+  m.hidden=false;acctGateDraw();fbLock(true);for(const el of document.body.children)if(el.id==="acctm")el.inert=false})}
+function acctGateDraw(){const m=$("#acctm");if(!m||!ACCT_GATE)return;const A=ACCT;
+ m.innerHTML=ACCT_GATE.step==="secure"?`<div class="fbbox acbox" role="dialog" aria-modal="true" aria-labelledby="acg-h">${mascot("pointup",64)}<h2 id="acg-h">Lock your account</h2>
+  <p class="muted">Anyone who knows your NIAT ID and name could log in as you. Connect Google or set a password. After this, your name alone won't log you in.</p>
+  ${A.googleOn?gBtn("Connect Google")+`<div class="acor">or set a password</div>`:""}${pwForm("gpw",false)}</div>`
+ :`<div class="fbbox acbox" role="dialog" aria-modal="true" aria-labelledby="acg-h">${mascot("dance",64)}<h2 id="acg-h">Account locked ✓</h2>
+  <p class="muted">Add a recovery email, so you can reset your password if you ever forget it. You can also do this later from <b>Account</b> in the menu.</p>
+  ${recForm("grec")}<button class="btn quiet acskip" data-act="acct-gate-done">${A.recovery?"Done":"Skip for now"}</button></div>`;
+ setTimeout(()=>{const i=m.querySelector("input,button");i&&i.focus()},40)}
+function acctGateNext(){if(!ACCT_GATE)return render();
+ if(ACCT_GATE.step==="secure"&&ACCT.secured)ACCT_GATE.step=ACCT.recovery&&ACCT.recovery.verified?"done":"recovery";
+ else if(ACCT_GATE.step==="recovery"&&ACCT.recovery)ACCT_GATE.step="done";
+ if(ACCT_GATE.step==="done")return acctGateClose();acctGateDraw()}
+function acctGateClose(){const m=$("#acctm");if(m)m.hidden=true;fbLock(false);const g=ACCT_GATE;ACCT_GATE=null;if(g)g.res();if(S.screen==="account")render()}
+document.addEventListener("submit",e=>{const f=e.target.closest&&e.target.closest("form.acf");if(!f)return;e.preventDefault();acctSubmit(f)},SIG);
+addEventListener("keydown",e=>{if(e.key==="Escape"&&ACCT_GATE){e.preventDefault();e.stopPropagation()}},Object.assign({capture:true},SIG));
+async function acctAct(a,b){
+ if(a==="acct-google"){b.disabled=true;try{pushP(true);flushEv(true)}catch(e){}location.href="/api/auth/google/start?mode=link";return}
+ if(a==="acct-unlink"){if(!confirm("Disconnect Google? You'll log in with your NIAT ID and password."))return;try{ACCT=await KBCQ.api("POST","/api/account/google/unlink");fsToast("Google disconnected.");render()}catch(e){fsToast(e.message)}return}
+ if(a==="acct-usegoogle"){try{ACCT=await KBCQ.api("POST","/api/account/recovery",{useGoogle:true});fsToast("Recovery email confirmed: "+ACCT.recovery.email);if(ACCT_GATE)acctGateNext();else render()}catch(e){fsToast(e.message)}return}
+ if(a==="acct-gate-done"){acctGateClose();return}}
+/* back from Google or from the email link: ?account=… */
+(function(){const q=new URLSearchParams(location.search),k=q.get("account");if(!k)return;history.replaceState(null,"",location.pathname);
+ setTimeout(async()=>{await acctLoad();fsToast(ACCT_MSG[k]||"Account updated.");if(k==="google-linked"&&ACCT_GATE)acctGateNext();else if(!ACCT_GATE&&S.screen!=="play"&&S.screen!=="fff"){S={screen:"account",name:S.name};render()}},700)})();
+
 /* ================= Copy guard. While a question is on screen (hot seat and Fastest Finger): the question can't be
    selected, copied, cut, dragged out or printed, nothing can be pasted or dropped into the answer boxes, and the
    right-click menu and the copy / paste / select-all / print / save / view-source / dev-tools keys are off. Typing,

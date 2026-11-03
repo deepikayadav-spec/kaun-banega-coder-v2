@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "node --env-file-if-exists=.env scripts/dev.js",
     "build": "node scripts/build.js",
@@ -15,6 +17,7 @@
   "dependencies": {
     "@electric-sql/pglite": "^0.3.0",
     "express": "^5.1.0",
+    "nodemailer": "^6.10.1",
     "pg": "^8.16.0",
     "read-excel-file": "^5.8.0"
   }

@@ -3048,3 +3048,35 @@ body.guard #app,body.guard #app *{-webkit-user-select:none!important;user-select
 body.guard #app input,body.guard #app textarea,body.guard #app [contenteditable]:not([contenteditable=false]){-webkit-user-select:text!important;user-select:text!important}
 body.guard #app img,body.guard #app svg{-webkit-user-drag:none}
 @media print{body.guard>*{display:none!important}body.guard::after{content:"Printing is turned off during questions.";display:block;padding:40px;font:600 18px sans-serif;color:#000}}
+
+/* ---------- Account screen and the "lock your account" gate (see "Account" in game.js) */
+.acct{max-width:1100px;margin:22px auto 0;display:flex;flex-direction:column;gap:16px}
+.acgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+.acc{padding:18px;display:flex;flex-direction:column;gap:10px}
+.acc h3{margin:0;font:800 19px var(--f-display)}
+.acc p{margin:0;line-height:1.5}
+.acstat{font-weight:700}.acstat.ok{color:var(--ok,#4ADE80)}.acstat.warn{color:#FBBF24}
+.acstat b{word-break:break-all}
+.acf{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.acf label{display:flex;flex-direction:column;gap:6px;font:700 12px var(--f-mono,monospace);letter-spacing:.06em;text-transform:uppercase;color:var(--cy,#5EEAD4)}
+.acf input{min-height:46px;padding:0 12px;border-radius:12px;border:1px solid var(--hl,rgba(96,165,250,.28));background:#060B18;color:var(--tx,#E2E8F0);font:600 15px var(--f-body);text-transform:none;letter-spacing:0;outline:none}
+.acf input:focus{border-color:var(--cy,#5EEAD4);box-shadow:0 0 0 3px rgba(94,234,212,.18)}
+.acmsg{min-height:0;margin:0!important;color:var(--bad,#FB7185);font:600 13.5px var(--f-body)}.acmsg:empty{display:none}.acmsg.ok{color:var(--ok,#4ADE80)}
+.acrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.acrow .btn,.acf .btn{min-height:44px}
+.small{font-size:13px}
+.gbtn2{display:inline-flex!important;align-items:center;justify-content:center;gap:10px;background:#fff!important;color:#1F1F1F!important;border:1px solid #DADCE0!important;box-shadow:0 1px 2px rgba(0,0,0,.25)!important}
+.gico{width:20px;height:20px;flex:none}
+.acm .fbbox,.acbox{width:min(440px,100%);max-height:calc(100vh - 32px);overflow:auto;text-align:left}
+.acbox h2{margin:2px 0 0;font:800 22px var(--f-display)}
+.acbox>p{margin:0;line-height:1.5}
+.acbox .mascot,.acbox svg.m3{align-self:center}
+.acor{display:flex;align-items:center;gap:10px;margin:2px 0;color:var(--muted);font:700 11px var(--f-mono,monospace);letter-spacing:.12em;text-transform:uppercase}
+.acor::before,.acor::after{content:"";flex:1;height:1px;background:currentColor;opacity:.35}
+.acskip{align-self:center}
+html[data-theme="light"] .acf input{background:#fff;color:#0F172A;border-color:#94A3B8}
+html[data-theme="light"] .acf label{color:#0F766E}
+@media (max-width:900px){.acgrid{grid-template-columns:1fr}}
+.acct .acc{align-items:stretch!important;text-align:left!important}.acct .acc h3{text-align:left}
+.acf,.acf label,.acf input{width:100%}.acf .btn,.acrow .btn{align-self:flex-start}
+.acstat b{word-break:normal;overflow-wrap:anywhere}

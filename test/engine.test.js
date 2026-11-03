@@ -142,3 +142,33 @@ test('upgradeState follows a new graph but keeps earned progress', async () => {
     assert.ok(l.every((v, i) => !i || v > l[i - 1]), 'strictly rising ' + n);
   }
 });
+
+test('levelTrack matches what applyAnswer really does, step by step', async () => {
+  const { levelTrack } = await import('../server/engine.js');
+  const A = fullAvail();
+  const clone = (x) => JSON.parse(JSON.stringify(x));
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (const id of ['S1', 'S2', 'S7', 'S20']) {   // rmax 1, 2, 3, 3
+    const S = G.skills[G.idx[id]];
+    const st = newState(G); st.skills[id].status = 'open';
+    for (let step = 0; step < 200 && st.skills[id].status === 'open'; step++) {
+      const sk = st.skills[id], t = levelTrack(S, sk);
+      // remaining: that many right answers in a row (and not one fewer) end this level
+      const sim = clone(st); let n = 0;
+      while (sim.skills[id].level === sk.level && sim.skills[id].status === 'open') {
+        const a = address(G, A, sim, id, 'hotseat'); applyAnswer(G, sim, id, a.type, true); n++;
+        assert.ok(n <= 10, 'runaway');
+      }
+      assert.equal(n, t.remaining, `${id} L${sk.level} R${sk.r} streak ${sk.rightStreak}`);
+      assert.equal(t.climb.length + t.need - t.streak, t.remaining);
+      assert.deepEqual(t.next, sk.level < 4 ? { level: sk.level + 1, name: ['', 'Recognise', 'Reason', 'Repair', 'Create'][sk.level + 1] } : { skillDone: true });
+      // onMiss: a miss here drops to R1 exactly when the track says so
+      const miss = clone(st), a0 = address(G, A, miss, id, 'hotseat');
+      const res = applyAnswer(G, miss, id, a0.type, false);
+      assert.equal(res.transitions.some((x) => x.kind === 'r_drop'), t.onMiss === 'drop_r1');
+      // then play on with a random answer
+      const a = address(G, A, st, id, 'hotseat'); applyAnswer(G, st, id, a.type, rnd() < 0.65);
+    }
+    assert.equal(levelTrack(S, { ...st.skills[id], status: 'done' }), null);
+  }
+});

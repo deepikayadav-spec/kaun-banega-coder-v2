@@ -856,6 +856,12 @@ const SFX={
  start(){ROBO.boot();noise(160,6000,1.15,0,.1,"bandpass");boom(48,.7,1.15,.5);boom(48,.7,1.42,.5);boom(44,1,1.7,.55);[523,659,784,1047].forEach(f=>tone(f,.9,"triangle",1.7,.07));tone(2093,.6,"sine",1.75,.05)},
  coins(n=10){for(let i=0;i<n;i++){const f=2200+Math.random()*1600;tone(f,.15,"sine",.1+i*.07,.045);tone(f*1.5,.1,"sine",.12+i*.07,.025)}},
  fanfare(){[392,523,659,784,659,784,1047].forEach((f,i)=>tone(f,.3,"triangle",i*.13,.07))},
+ /* Streak effects: a flame catching (whoosh + crackle + rising chime), ice forming (glassy shimmer falling),
+    ice shattering (bright crack + tinkles, then the flame catches), and the 2-in-a-row blaze (roar + hit + chord) */
+ ignite(){noise(180,2400,.38,0,.09,"bandpass");for(let i=0;i<6;i++)noise(3000+Math.random()*3000,1800,.03,.12+i*.045,.05,"highpass");[659,880,1175].forEach((f,i)=>tone(f,.22,"sine",.18+i*.07,.05))},
+ freeze(){noise(9000,2500,.5,0,.06,"highpass");[2093,1760,1568,1319,1047].forEach((f,i)=>{tone(f,.5,"sine",i*.07,.035);tone(f*1.5,.3,"sine",i*.07+.01,.015)});slide(520,260,.6,.15,.025)},
+ shatter(){noise(7000,1200,.12,0,.16,"highpass");boom(70,.25,0,.25);for(let i=0;i<9;i++){const f=2600+Math.random()*2600;tone(f,.18,"sine",.05+i*.035,.04)}setTimeout(()=>SFX.ignite(),180)},
+ blaze(){noise(120,3600,.7,0,.12,"bandpass");noise(90,700,.9,.2,.1,"lowpass");boom(46,.9,.55,.45);[523,659,784,1047].forEach(f=>{tone(f,.8,"sawtooth",.6,.03);tone(f*2,.6,"triangle",.6,.03)});tone(2093,.7,"sine",.75,.04)},
  /* Coins dropping on a table: metallic partials, each coin bouncing faster and quieter until it settles */
  coinDrop(n=3){if(!soundOn)return;try{const a=ctx(),t0=a.currentTime+.04;for(let c=0;c<n;c++){const base=2400+Math.random()*1500;let t=t0+c*.11+Math.random()*.05,gap=.17,vol=.085;
   for(let b=0;b<6;b++){[[1,.16],[2.76,.11],[5.4,.07],[8.93,.04]].forEach(([k,d])=>{const o=a.createOscillator(),g=a.createGain();o.type="sine";o.frequency.setValueAtTime(base*k*(1+(Math.random()-.5)*.01),t);g.gain.setValueAtTime(vol/k,t);g.gain.exponentialRampToValueAtTime(.0001,t+d*(1-b*.1));o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d+.02)});t+=gap;gap*=.6;vol*=.62}}}catch(e){}}
@@ -879,7 +885,7 @@ let saveT=null;
 function dayTick(){const d=new Date(),k=d.toDateString(),y=new Date(d-864e5).toDateString();if(P.lastDay!==k){P.day=(P.lastDay===y?(P.day||0):0)+1;P.lastDay=k}}
 function liveDay(){const k=new Date().toDateString(),y=new Date(Date.now()-864e5).toDateString();return (P.lastDay===k||P.lastDay===y)?(P.day||0):0}
 let COMBO=0;
-function comboTick(ok){if(!ok){COMBO=0;return}COMBO++;if(COMBO<2)return;const w=["","","Double!","Triple!","On fire!","Unstoppable!","Legendary!"];const el=document.createElement("div");el.className="combo";el.setAttribute("aria-hidden","true");el.innerHTML=`${COMBO}x combo<small>${w[Math.min(COMBO,6)]}</small>`;const big=COMBO>=5;if(big)el.classList.add("big");document.body.appendChild(el);requestAnimationFrame(()=>el.classList.add("go"));setTimeout(()=>el.remove(),big?2400:1400)}
+function comboTick(ok){if(!ok){COMBO=0;return}COMBO++;if(COMBO<2||S.screen==="play")return;const w=["","","Double!","Triple!","On fire!","Unstoppable!","Legendary!"];const el=document.createElement("div");el.className="combo";el.setAttribute("aria-hidden","true");el.innerHTML=`${COMBO}x combo<small>${w[Math.min(COMBO,6)]}</small>`;const big=COMBO>=5;if(big)el.classList.add("big");document.body.appendChild(el);requestAnimationFrame(()=>el.classList.add("go"));setTimeout(()=>el.remove(),big?2400:1400)}
 const FLAME='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3-1-3 0-7 1-9.5z" fill="#FF7A1A" stroke="#2B1A0E" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 12c.6 1.6 2.4 2.4 2.4 4.4a2.4 2.4 0 0 1-4.8 0c0-1.2.8-2 1.4-2.6.2 1 .6 1.4 1 1.4-.4-1.2-.2-2.2 0-3.2z" fill="#FFD23F"/></svg>';
 function syncFire(){const c=$("#wchip");if(!c)return;let f=$("#fire");if(!f){f=document.createElement("span");f.id="fire";c.parentNode.insertBefore(f,c)}const n=liveDay();f.className="fire "+(n?(n>=3?"hot":""):"cold");f.title=n?`${n}-day streak. Play tomorrow to keep it.`:"Play today to start a streak";f.setAttribute("aria-label",f.title);f.innerHTML=FLAME+n}
 function saveP(){P.t=Date.now();syncChip();clearTimeout(saveT);saveT=setTimeout(pushP,1200)}
@@ -970,7 +976,14 @@ async function submitAnswer(){const q=S.q,ms=Date.now()-S.qT0;
  return KBCQ.api("POST","/api/play/answer",{qid:q.id,answer,ms,timeout:!!S.timeout,prefetch:true}).then(keepNext)}
 function apply(ok,res){const q=S.q,sk=q.sk,before=res&&res.rungBefore!=null?res.rungBefore:rungOf(),info={before,mastered:false,rungUp:false,ck:null,drop:null,msg:res&&res.msg};
  if(ok){P.correct++;P.streak[sk]=(P.streak[sk]||0)+1}else P.streak[sk]=0;
+ /* the level track before and after this answer, for the level tracker and the "what changed" line */
+ info.sk=sk;info.ok=ok;info.tb=trackOf(sk);
  if(res&&res.engine){ENGINE=res.engine;graphCheck(ENGINE)}
+ info.ta=trackOf(sk);info.trans=(res&&res.transitions)||[];info.lvup=info.trans.some(t=>t.kind==="level_up"||t.kind==="skill_done");
+ /* streak ice (display only, the engine still resets the streak): a miss that breaks a streak freezes its flame;
+    the next right answer shatters the ice and the flame catches again (at 1 of 2, as the engine counts it) */
+ info.wasFrozen=frozenOf(sk);info.freeze=!ok&&!!info.tb&&info.tb.streak>0;info.thaw=ok&&info.wasFrozen;
+ if(info.freeze)setFrozen(sk,true);else if(ok)setFrozen(sk,false);
  P.answered++;dayTick();comboTick(ok);const after=rungOf();info.after=after;
  if(after>before){info.rungUp=true;if(CK[after-1])info.ck=CK[after-1];logEv({kind:"rung",rung:after});P.paid=P.paid||{};for(let r=before+1;r<=after;r++)if(!P.paid[r]){P.paid[r]=1;const amt=amountOf(r);P.coins=(P.coins||0)+amt;if(S.run)S.run.earned=(S.run.earned||0)+amt}}
  if(res&&res.transitions)info.mastered=res.transitions.some(t=>t.kind==="level_up"||t.kind==="skill_done");
@@ -1020,6 +1033,11 @@ async function reveal(){if(S.phase==="reveal"||S.revealing)return;S.revealing=tr
  render();
  if(ok){SFX.right();setTimeout(()=>SFX.coinDrop(info.rungUp?7:3),260);spotFx("win");window.KB3D&&KB3D.boost();if(info.rungUp){if(info.ck)setTimeout(()=>SFX.fanfare(),900);confetti(info.ck?260:160)}else confetti(50)}
  else{SFX.wrong();flash();spotFx("lose");window.KB3D&&KB3D.alarm()}
+ /* the streak moment on screen: fire for a right answer, ice for a broken streak, shattering ice when it comes back;
+    a level-up gets the big blaze on its card instead */
+ if(!info.lvup){const kind=info.thaw?"thaw":info.freeze?"ice":ok?"fire":null;
+  if(kind)setTimeout(()=>{if(S.screen==="play"&&S.info===info)streakFX(kind,info)},ok?250:350)}
+ if(info.lvup)setTimeout(()=>{if(S.screen==="play"&&S.phase==="reveal"&&S.info===info)levelUpFX(info)},reduceMotion?100:info.rungUp?1500:800);
  say(ok?(info.rungUp?"Group cleared! Prize "+fmtR(amountOf(info.after))+" won.":"Correct! "+(info.msg||"")):(S.timeout?"Time is up. ":"Wrong answer. ")+"The answer was "+(q.show||"")+".")}
 function say(t){const e=$("#sr-live");if(e){e.textContent="";setTimeout(()=>e.textContent=t,30)}}
 function leaveReveal(){if(S.revealAt)S.run.fb+=Math.min(Date.now()-S.revealAt,120000);S.revealAt=0}
@@ -1108,7 +1126,7 @@ function actHTML0(){const q=S.q;
  if(!S.ok)return `<span class="banner lose">${S.timeout?"Time's up":"Not this time"}</span><button class="btn gold" data-act="second">Try a new question →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
  if(S.ok)return rungOf()>=OPEN?`<span class="banner win">Correct answer!</span><button class="btn gold" data-act="collect">Collect ${fmtR(LADDER[OPEN-1])} →</button>`:`<span class="banner win">${S.retryWin?"You fixed it! ✓":"Correct answer!"}</span><button class="btn gold" data-act="next">Next →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
  return `<span class="banner lose">${S.timeout?"Time's up":"Wrong answer"}</span><button class="btn gold" data-act="end">See my game →</button>`}
-function feedbackHTML(){const I=S.info;if(S.phase!=="reveal"||!I)return "";let h="";
+function feedbackHTML(){const I=S.info;if(S.phase!=="reveal"||!I)return "";let h=progressDelta();
  if(S.ok&&I.rungUp)h+=`<div class="rungup">${noteBig(amountOf(I.after),"won")||mascot("happy",72)}<b>You won ${fmtR(amountOf(I.after))}!</b><span>${I.ck?`${stg(I.ck)} locked in. A wrong answer can't take you below this.`:`Prize ${I.after} of 15 won. ${I.after<OPEN?`Next: ${fmtR(LADDER[I.after])}.`:""}`}</span></div>`;
  if(!S.ok&&I.drop)h+=`<div class="drop">${mascot("sad",44)}<span>${I.drop.lostRung?`Dropped from ${fmtR(I.drop.from)} to <b>${fmtR(I.drop.to)}</b> (${stg(I.drop.ck)}).`:`Back to your ${stg(I.drop.ck)} checkpoint: progress on this prize resets.`}</span></div>`;
  return h}
@@ -1144,7 +1162,7 @@ function vPlay(){if(!S.q)return vNoQ();const q=S.q,r=rungOf(),st=rowSteps(Math.m
 <div class="stake one"><span class="stk-note" id="stknote">${noteThumb(stake)}</span><span class="stk-t"><small>Playing for</small><b>${fmtR(stake)}</b></span>${boardMin()?`<button class="bmax" data-act="board-min" aria-label="Show the money board">Money board <b aria-hidden="true">＋</b></button>`:""}</div></div>
 ${stripHTML(r)}<button class="mbtoggle" data-act="board" aria-label="Show the money board">Money board</button>
 <section class="mainc" id="mainc">
-<div class="qcard card"><div class="qtop"><span class="chip gold">Question ${S.run.answered+(S.phase==="reveal"?0:1)}</span>${pips?`<span class="rowprog">To the next prize <span class="pips" aria-label="${st.done} of ${st.total}">${pips}</span></span>`:""}</div>
+<div class="qcard card"><div class="qtop"><span class="chip gold">Question ${S.run.answered+(S.phase==="reveal"?0:1)}</span>${pips?`<span class="rowprog">To the next prize <span class="pips" aria-label="${st.done} of ${st.total}">${pips}</span></span>`:""}${levelHUD(q)}</div>
 <h2 class="qtext">${esc(q.prompt)}</h2>${KBCQ.above(q,S)}
 ${q.code?codeHTML(q.code):""}
 ${q.ai!=null?`<div class="ai"><i>AI</i><span>The AI says this prints <b>${esc(q.ai)}</b></span></div>`:""}
@@ -1202,6 +1220,131 @@ function skillDetail(s){const e=engSk(s.id),cells=e.cells||{};
  const here=e.status==="done"?`<div class="here ok"><b>Skill cleared</b></div>`:e.status==="locked"?`<div class="here"><b>Locked</b><span>Opens when you clear ${esc(s.pre.join(", ")||"the skills before it")}.</span></div>`:
   e.content==="none"?`<div class="here"><b>Coming soon</b><span>Questions for this skill are on their way.</span></div>`:`<div class="here"><small>You are here</small><b>L${e.level} ${esc(LEVELS[e.level-1].name)} · R${e.r} ${DIFFS[e.r-1][1]}</b><span>${e.rightStreak?"One more right answer clears this level.":"Two right answers in a row clear this level."}</span></div>`;
  return `<div class="skd card"><div class="skd-h"><div><b>${esc(s.name)}</b><p class="muted">${e.right||0}/${e.q||0} answered right${s.pre.length?` · builds on ${s.pre.join(", ")}`:""}</p></div>${here}</div><div class="lvls">${cols}</div></div>`}
+/* ================= Level progression: where the student is in a topic, what moves them up, what just changed =================
+   Display only. The rules live in server/engine.js: levelTrack() sends each open skill's track (climb, streak, remaining,
+   next, onMiss) with every engine view, so nothing here re-decides when a student moves up. */
+const LVINFO=GR.levelsInfo||{};
+const LVDO=l=>(LVINFO[l]&&LVINFO[l].do)||"";
+const trackOf=sk=>engSk(sk).track||null;
+/* question formats a student can meet at a level in the hot seat (real types from question-types.json) */
+const lvTypes=(l,n)=>GR.types.filter(t=>t.level===l&&(t.modes||[]).includes("hotseat")).slice(0,n).map(t=>t.name);
+const lvTo=t=>t.next.skillDone?"clear this topic":`reach Level ${t.next.level}`;
+/* the short rule shown under the tracker (L4 has no next level: two in a row clears the topic) */
+const lvRule=t=>t&&t.next.skillDone?"2 consecutive streaks to clear this topic":"2 consecutive streaks to unlock the next level";
+function lvGoal(t){if(!t)return "";
+ if(t.climb.length)return `Warm-up: ${t.climb.length} more right answer${t.climb.length>1?"s":""}, then 2 in a row to ${lvTo(t)}.`;
+ return t.streak?`1 more right answer to ${lvTo(t)}!`:`2 right answers in a row to ${lvTo(t)}.`}
+const lvAria=(e,t)=>t?`Level ${t.level} of 4. ${t.climb.length?"Warming up.":`${t.streak} of 2 right in a row.`} ${lvGoal(t)}`:e.status==="done"?"Topic cleared: all 4 levels done.":"";
+/* The level bar: four segments labelled Level 1 … Level 4. Cleared ones are gold, the current one glows and fills with
+   the two-in-a-row streak, later ones are dim. `fresh` marks the segment just reached (level-up animation). */
+function lvBar(lv,status,streak,o){o=o||{};const L=status==="done"?5:lv||1;
+ return `<span class="lvbar ${o.cls||""}" aria-hidden="true">${[1,2,3,4].map(l=>{const st=l<L?"done":l===L&&status==="open"?"now":"";
+  const f=st==="done"?1:st==="now"?Math.min(1,(streak||0)/2):0;
+  return `<span class="lb-seg ${st} ${o.fresh===l?"fresh":""}" style="--f:${f}"><i class="lb-fill"></i><b>${st==="done"?'<em class="lb-ck">✓</em>':""}Level ${l}</b></span>`}).join("")}</span>`}
+/* the steps of the current level: L1 difficulty chevrons (R2…rmax, lit up to the current R), then the two in-a-row slots */
+function lvPips(t,fx,frozen){if(!t)return "";fx=fx||{};
+ /* a frozen streak: the first dot keeps its flame, locked in ice, until the next right answer shatters it */
+ const ice=i=>i===0&&frozen&&t.streak===0;
+ const st=[0,1].map(i=>`<i class="lp-s ${i<t.streak?"on":""} ${ice(i)?"ice":""} ${i===1?"hot":""} ${fx.fill===i?"pop":""} ${fx.thaw&&i===0?"thaw":""} ${ice(i)&&fx.freeze?"freezing":""}" title="${ice(i)?"Streak frozen: a right answer breaks the ice":`Streak ${i+1} of 2`}">${i<t.streak||ice(i)?FIRE+(ice(i)?'<span class="lp-icecap"></span>':""):`<span>${i+1}</span>`}</i>`).join("");
+ return `<span class="lvpips"><span class="lp-ss">${st}</span></span>`}
+/* an animated CSS flame: three tongues that flicker (still with reduced motion) */
+/* streak ice, per skill and kept on this device (see apply) */
+const FROZEN=(()=>{const v=store.get("kbc-frozen",{});return v&&typeof v==="object"?v:{}})();
+const frozenOf=sk=>!!FROZEN[sk];
+function setFrozen(sk,v){if(v)FROZEN[sk]=1;else delete FROZEN[sk];store.set("kbc-frozen",FROZEN)}
+/* The streak moment, Duolingo style (a chunky flat flame, a rolling counter, "IN A ROW!" and the two check circles),
+   over the question card; it never blocks a click.
+   fire  the flame bounces in, the count rolls up (0 → 1), the next circle fills with a check
+   warm  a right answer on the Level 1 warm-up: the flame bounces, "WARMING UP!" (the in-a-row count doesn't move yet)
+   ice   the flame turns icy blue inside an ice cube, "STREAK FROZEN", the circle frosts over
+   thaw  the ice cube cracks and bursts into shards, the flame bounces back orange, "STREAK BACK ON!" */
+function streakFX(kind,I){const T=I.trans||[],up=T.some(x=>x.kind==="r_up");if(kind==="fire"&&up)kind="warm";const wt=kind==="thaw"&&up;
+ const snd={fire:"ignite",warm:"ignite",ice:"freeze",thaw:"shatter"}[kind];try{SFX[snd]()}catch(e){}
+ if(reduceMotion)return;
+ const card=$(".qcard"),r=card?card.getBoundingClientRect():{left:innerWidth/2-150,top:innerHeight/3,width:300,height:200};
+ const cx=r.left+r.width/2;let cy=Math.min(innerHeight-170,r.top+r.height/2+40);
+ const now=(I.ta&&I.ta.streak)||0,was=(I.tb&&I.tb.streak)||0,lv=I.ta&&!I.ta.next.skillDone?I.ta.next.level:null;
+ const num=kind==="ice"?`<span class="dl-n frozen">${was}</span>`:kind==="warm"||wt?"":`<span class="dl-roll"><span class="dl-n old">${kind==="thaw"?"❄":was}</span><span class="dl-n new">${now}</span></span>`;
+ const label=wt?"ice broken!":{fire:"in a row!",warm:"warming up!",ice:"streak frozen",thaw:"streak back on!"}[kind];
+ const sub=kind==="ice"?"Your level is safe. Next right answer breaks the ice."
+  :kind==="warm"?"Nice! A little more warm-up, then 2 in a row."
+  :wt?"Warming up again. Then 2 in a row moves you up."
+  :now>=1&&lv?`1 more in a row for Level ${lv}`:now>=1?"1 more in a row clears this topic":"";
+ const dots=[0,1].map(i=>{const st=kind==="ice"&&i===0?"ice":i<now&&kind!=="ice"?"on":"";const fresh=st==="on"&&i===now-1?"fresh":"";
+  return `<i class="dl-d ${st} ${fresh}">${st==="on"?'<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>':st==="ice"?"❄":""}</i>`}).join("");
+ const shards=kind==="thaw"?Array.from({length:10},(_,i)=>`<i class="dl-sh" style="--a:${(i*36+Math.random()*16).toFixed(0)}deg;--d:${(90+Math.random()*90).toFixed(0)}px;--r:${(Math.random()*400-200).toFixed(0)}deg"></i>`).join(""):"";
+ const sparks=kind!=="ice"?Array.from({length:8},(_,i)=>`<i class="dl-sp" style="--a:${i*45+20}deg"></i>`).join(""):"";
+ const old=$("#stkfx");if(old)old.remove();document.querySelectorAll(".combo").forEach(x=>x.remove());
+ const el=document.createElement("div");el.id="stkfx";el.className="stkfx dl-"+kind;el.setAttribute("aria-hidden","true");
+ el.style.setProperty("--cx",cx+"px");el.style.setProperty("--cy",cy+"px");
+ el.innerHTML=`<div class="dl-pop"><div class="dl-art">${sparks}<span class="dl-flame">${FIRE}</span>${kind==="ice"||kind==="thaw"?'<span class="dl-cube"><i></i><i></i></span>':""}${shards}</div>
+${num?`<div class="dl-num">${num}</div>`:""}<div class="dl-lbl">${label}</div>${kind!=="warm"&&!wt?`<div class="dl-dots">${dots}</div>`:""}${sub?`<div class="dl-sub">${esc(sub)}</div>`:""}</div>`;
+ document.body.appendChild(el);
+ /* keep the whole animation below the timer and the top bar: measure the flame's top and push everything down */
+ /* (layout sizes, not the animated ones: the pop starts scaled down) */
+ const pop=el.querySelector(".dl-pop"),art=el.querySelector(".dl-art"),clk=$("#clock")||$(".hud");
+ if(pop&&art&&clk){const top=cy-pop.offsetHeight/2+art.offsetTop,need=clk.getBoundingClientRect().bottom+14-top;if(need>0){cy=Math.min(innerHeight-pop.offsetHeight/2-8,cy+need);el.style.setProperty("--cy",cy+"px")}}
+ setTimeout(()=>el.classList.add("out"),kind==="ice"?2000:1650);
+ setTimeout(()=>el.remove(),kind==="ice"?2400:2050)}
+/* the flame: flat and chunky (Duolingo-like): an orange body, a yellow core and a soft highlight */
+const FIRE='<svg class="lvfire" viewBox="0 0 32 40" aria-hidden="true"><path class="f1" d="M16 1.5c1.6 6.4 12.5 11 12.5 23.5a12.5 12.5 0 0 1-25 0c0-6.4 3.1-9.6 5.2-13.4 1.1 3 3 5 5.1 5.3C13.2 12 13.6 6.6 16 1.5z"/><path class="f2" d="M16.3 17.5c1 3.6 6.4 6 6.4 11.2a6.7 6.7 0 0 1-13.4 0c0-3.5 2-5.3 3-7.6 1 1.8 2.1 2.6 3.1 2.7-.2-2.4 0-4.4.9-6.3z"/><path class="f3" d="M9.6 23.5c-1.3 2.3-1.9 4.6-1.4 6.9.3 1.2 1.8 1.2 2.1.1.5-2.3.4-4.6-.7-7z"/></svg>';
+/* how the last answer moved the track, for the pip animations */
+function lvFx(I){if(!I||!I.tb||!I.ta)return {};
+ return {fill:I.ok&&I.ta.streak>I.tb.streak?I.ta.streak-1:null,freeze:!!I.freeze,thaw:!!I.thaw}}
+/* Question page: the level tracker in the question card. The skill is the one this question was served for. */
+function levelHUD(q){const sk=q&&q.sk;if(!sk||!SK[sk])return "";const e=engSk(sk),t=e.track;
+ const I=S.phase==="reveal"&&S.info&&S.info.sk===sk?S.info:null,fx=lvFx(I);
+ const lvl=t?t.level:e.status==="done"?4:e.level||1;
+ /* one slim line beside the "Question N" chip: Level N, a 4-tick mini bar, the streak dots and the rule. Tap for details. */
+ const L=e.status==="done"?5:lvl,ticks=[1,2,3,4].map(l=>{const now=l===L&&e.status==="open",f=now&&t?Math.min(1,t.streak/2):l<L?1:0;
+  /* the current level burns as it fills, with a flame riding the edge */
+  return `<i class="${l<L?"done":now?"now":""} ${now&&f>0?"lit":""}" style="--f:${f}">${now&&f>0?FIRE:""}</i>`}).join("");
+ return `<button type="button" class="lvhud ${I&&I.lvup?"up":""}" data-act="lvinfo" aria-label="${esc(lvAria(e,t))} Show level details" title="${esc(SK[sk].name)}: tap for level details">
+<span class="lvh-lv">${e.status==="done"?"Topic cleared ✓":`Level ${lvl}`}</span><span class="lvticks" aria-hidden="true">${ticks}</span>
+${t?`<i class="lvh-sep" aria-hidden="true"></i>${lvPips(t,fx,frozenOf(sk))}<span class="lvh-i"><i aria-hidden="true">🔥</i>${esc(lvRule(t))}</span>`:""}</button>`}
+/* After the answer: one line on what changed, read from the engine's own transitions */
+function progressDelta(){const I=S.info;if(S.phase!=="reveal"||!I||!I.tb)return "";const T=I.trans||[],tb=I.tb,ta=I.ta;
+ const has=k=>T.find(x=>x.kind===k);let ic="",h="",p="",cls="";
+ if(has("skill_done")){ic="🏆";cls="big";h="Topic cleared!";const un=T.filter(x=>x.kind==="unlock").map(x=>SK[x.skill]).filter(Boolean);p=un.length?`Unlocked: ${un.slice(0,3).map(s=>esc(s.name)).join(", ")}${un.length>3?` and ${un.length-3} more`:""}.`:"All 4 levels of this topic done."}
+ else if(has("level_up")){const to=has("level_up").detail.to.l;ic="⬆";cls="big";h=`Level up! Welcome to Level ${to}`;p=esc(LVDO(to)||"New question types start now.")}
+ else if(has("r_up")){ic="▲";cls="up";h="Warming up";p=ta?esc(lvGoal(ta)):""}
+ else if(has("r_drop")){ic="↺";cls="soft";h="Back to warm-up";p="A couple of right answers warm you up again, then 2 in a row moves you up."}
+ else if(I.ok&&ta&&ta.streak>tb.streak){ic="⚡";cls="up";h="1 of 2 in a row";p=esc(lvGoal(ta))}
+ else if(!I.ok&&tb.streak>0){ic="↺";cls="soft";h="Streak reset";p=`Your level is safe: 2 right in a row will still ${lvTo(tb)}.`}
+ else if(!I.ok){ic="•";cls="soft";h=`Still Level ${tb.level}`;p="A miss never takes a level away. 2 right in a row moves you up."}
+ else return "";
+ return `<div class="lvdelta ${cls}" role="status"><i aria-hidden="true">${ic}</i><span><b>${h}</b>${p?`<small>${p}</small>`:""}</span></div>`}
+/* the full picture of a topic's levels: the four milestones, the steps of the current level, what comes next */
+function lvMilestones(s){const e=engSk(s.id),t=e.track,lv=e.status==="done"?5:e.level||1;
+ return `${lvBar(e.level,e.status,t?t.streak:0,{cls:"wide"})}<ol class="lvms">${[1,2,3,4].map(l=>{const st=l<lv?"done":l===lv&&e.status==="open"?"now":"";
+  return `<li class="lvm ${st}"><span class="lvm-b" aria-hidden="true">${st==="done"?"✓":st==="now"?l:LOCKI}</span><div><b>Level ${l}${st==="done"?` <em class="lvm-badge">Cleared</em>`:st==="now"?` <em class="lvm-badge now">You are here</em>`:""}</b>
+<small>${esc(LVDO(l))}</small>${st==="now"&&t?`<div class="lvm-now">${lvPips(t)}<span><b>${esc(lvRule(t))}</b>${esc(lvGoal(t))}</span></div>`:""}${st===""&&l===lv+1?`<small class="lvm-x">Formats: ${esc(lvTypes(l,3).join(", "))}</small>`:""}</div></li>`}).join("")}</ol>
+<p class="lvrec">Your record on this topic: <b>${e.q||0}</b> answered · <b>${e.q?Math.round((e.right||0)/e.q*100):0}%</b> right <small>(for your info: moving up only needs right answers in a row)</small></p>`}
+function lvInfoOpen(){const q=S.q;if(!q||!SK[q.sk])return;let m=$("#lvinfom");if(!m){m=document.createElement("div");m.id="lvinfom";m.className="modalx";document.body.appendChild(m)}
+ const s=SK[q.sk];
+ m.innerHTML=`<div class="mbox lvbox" role="dialog" aria-modal="true" aria-labelledby="lvinfo-h"><button class="mx" data-act="lvinfo-close" aria-label="Close">✕</button><small class="lvbox-k">Your levels in this topic</small><h3 id="lvinfo-h">${esc(s.name)}</h3>${lvMilestones(s)}<div class="mbtns"><button class="btn gold" data-act="lvinfo-close">Back to the question</button></div></div>`;
+ m.hidden=false;setTimeout(()=>{const b=m.querySelector(".mbtns .btn");b&&b.focus({preventScroll:true})},30)}
+/* Level up / topic cleared: a short moment with just the badge, the new level and the Level 1 … Level 4 bar.
+   It closes by itself after a few seconds, or on a tap, Enter or Esc. */
+let LVUP_T=0;
+function levelUpFX(I){const T=I.trans||[],done=T.find(x=>x.kind==="skill_done"),up=T.find(x=>x.kind==="level_up");if(!done&&!up)return;
+ const s=SK[I.sk]||{name:""},to=up?up.detail.to.l:4,from=up?up.detail.from.l:4,un=T.filter(x=>x.kind==="unlock").map(x=>SK[x.skill]).filter(Boolean);
+ let m=$("#lvupm");if(!m){m=document.createElement("div");m.id="lvupm";m.className="modalx lvupx";document.body.appendChild(m)}
+ m.innerHTML=`<div class="mbox lvup" role="dialog" aria-modal="true" aria-labelledby="lvup-h" tabindex="-1" data-act="lvup-close"><span class="lvu-rays" aria-hidden="true"></span>
+<div class="lvu-blaze" aria-hidden="true"><span class="bz bz1">${FIRE}</span>${Array.from({length:16},(_,i)=>`<i class="bz-em" style="--x:${(Math.random()*160-80).toFixed(0)}px;--t:${(1.2+Math.random()*1.4).toFixed(2)}s;--dl:${(Math.random()*1.2).toFixed(2)}s;--s:${(3+Math.random()*4).toFixed(1)}px"></i>`).join("")}</div>
+<div class="lvu-badge ${done?"cleared":""}" aria-hidden="true"><span class="lvu-lock">${LOCKI}</span><b>${done?"✓":to}</b></div>
+<p class="lvu-k">${done?"Topic cleared":"Level unlocked"}</p><h2 id="lvup-h">${done?esc(s.name):`Level ${to}`}</h2>
+<p class="lvu-from"><span class="lvu-streak" aria-hidden="true"><i class="lp-s on">${FIRE}</i><i class="lp-s on hot">${FIRE}</i></span>${done?"All 4 levels done.":`Level ${from} cleared with 2 in a row.`}</p>${lvBar(done?4:to,done?"done":"open",0,{cls:"big",fresh:done?4:to})}</div>`;
+ m.hidden=false;
+ /* the 2-in-a-row milestone: a roaring blaze, then the fanfare (a prize rung brings its own) */
+ try{SFX.blaze()}catch(e){}
+ if(!I.rungUp){confetti(120);setTimeout(()=>SFX.fanfare(),950)}
+ try{ROBO.happy()}catch(e){}
+ say(done?`Topic cleared: ${s.name}. ${un.length?"Unlocked "+un.map(u=>u.name).join(", ")+".":""}`:`Level ${to} unlocked.`);
+ logEv({kind:"level_fx",sk:I.sk,to:done?"done":to});
+ setTimeout(()=>{const b=m.querySelector(".mbox");b&&b.focus({preventScroll:true})},60);
+ clearTimeout(LVUP_T);LVUP_T=setTimeout(()=>{if(!m.hidden)lvupClose()},reduceMotion?2400:3400)}
+function lvupClose(){clearTimeout(LVUP_T);modalClose("#lvupm");const n=$('.actions [data-act="next"],.actions [data-act="collect"]');n&&n.focus({preventScroll:true})}
 /* Candy-style map: winding road from the bottom (G1) to the top (G15). Skills are round level nodes; a prize chest ends each group. */
 const CKCOL={C1:"#14C3A2",C2:"#FF4F8B",C3:"#7B5CFF",C4:"#2F8CFF",C5:"#FF8A1F",C6:"#FFC52E",FIN:"#FFC52E"};
 const CKNAME={C1:"Python basics",C2:"Loops & lists",C3:"Functions",C4:"Data & errors",C5:"GRIT practice",C6:"Grand finale",FIN:"Grand finale"};
@@ -1292,12 +1435,12 @@ function vPath(){const g0=curGroup(),gi=g0.idx,s0=curSkill(g0),open=S.open&&SK[S
   if(it.k==="ck"){const pc=PLC[it.c]||PLC.C1;return `<button class="ckplanet ${["C2","C4","C6"].includes(it.c)?"ring":""} ${S.openCk===it.c?"sel":""}" data-act="pathck" data-c="${it.c}" aria-label="${stg(it.c)}: ${CKNAME[it.c]}. Show its topics" style="left:${it.x}%;top:${it.top}px;--p1:${pc[0]};--p2:${pc[1]};--cc:${CKCOL[it.c]}"><span class="pl"></span><span class="pt"><b>${stg(it.c)}</b>${CKNAME[it.c]}</span></button>`}
   if(it.k==="pz"){const g=it.g,s=g.idx<gi?"won":g.idx===gi?"cur":"lock";return `<div class="mprize ${s}" style="${st}">${s==="won"?`<span class="crown">★</span>`:""}<div class="chest">${boardNote(g.prize)}<b>${fmtR(g.prize)}</b></div>${s==="won"?`<span class="mp-tag">Won</span>`:""}</div>`}
   const s=it.s,g=it.g,col=CKCOL[g.c];
-  if(s.ph)return `<div class="mnode soon" style="${st};--nc:${col}"><span class="mb"><b>${it.no}</b><i class="lk">${LOCKI}</i></span><small>Level ${it.no}</small></div>`;
+  if(s.ph)return `<div class="mnode soon" style="${st};--nc:${col}"><span class="mb"><b>${it.no}</b><i class="lk">${LOCKI}</i></span><small>Topic ${it.no}</small></div>`;
   const n=barOf(s.id),es=engSk(s.id),now=s===s0,done=n>=BPS||passed(s),stt=done?"done":now?"now":"soon";
   const dots=LVEND.map(e=>`<i class="${n>=e?"on":""}"></i>`).join("");
-  return `<button class="mnode ${stt} ${open===s?"sel":""}" style="${st};--nc:${col}" data-act="pathsk" data-sk="${s.id}" aria-label="Level ${it.no}: ${esc(s.name)}${done?", cleared":es.status==="locked"?", locked":""}">${now?`<span class="mav ${it.x>50?"l":"r"}">${mascot("pointup",160)}<em>You</em></span>`:""}<span class="mb">${done?TICK:`<b>${it.no}</b>`}${!done&&es.status==="locked"?`<i class="lk">${LOCKI}</i>`:""}</span><small title="${esc(s.name)}">${esc(s.short||s.name)}</small></button>`};
+  return `<button class="mnode ${stt} ${open===s?"sel":""}" style="${st};--nc:${col}" data-act="pathsk" data-sk="${s.id}" aria-label="Topic ${it.no}: ${esc(s.name)}${done?", cleared":es.status==="locked"?", locked":es.status==="open"?`, level ${es.level} of 4`:""}">${now?`<span class="mav ${it.x>50?"l":"r"}">${mascot("pointup",160)}<em>You</em></span>`:""}<span class="mb">${done?TICK:`<b>${it.no}</b>`}${!done&&es.status==="locked"?`<i class="lk">${LOCKI}</i>`:""}${!done&&es.status==="open"&&es.content!=="none"?`<span class="mdots" aria-hidden="true">${dots}</span>`:""}</span><small title="${esc(s.name)}">${esc(s.short||s.name)}</small></button>`};
  const pct=Math.round(gDone(g0)/gTotal(g0)*100);
- const sheet=open&&open===s0?`<div class="msheet" role="dialog" aria-label="${esc(open.name)}"><div class="msheet-in concept"><div class="cpt"><span class="cpt-k">Up next</span><h3>${esc(open.name)}</h3></div><div class="mfoot"><button class="btn gold" data-act="fffgo">Play this topic →</button><button class="btn sm mclose" data-act="pathsk" data-sk="${open.id}">Close</button></div></div></div>`
+ const sheet=open&&open===s0?`<div class="msheet" role="dialog" aria-label="${esc(open.name)}"><div class="msheet-in concept"><div class="cpt"><span class="cpt-k">Up next</span><h3>${esc(open.name)}</h3>${lvMilestones(open)}</div><div class="mfoot"><button class="btn gold" data-act="fffgo">Play this topic →</button><button class="btn sm mclose" data-act="pathsk" data-sk="${open.id}">Close</button></div></div></div>`
   :S.openCk?ckSheet(S.openCk,s0):"";
  const DW=diwaliHTML(items,H,TP,fogTop);
  return `<section class="pathv pfull">
@@ -1865,7 +2008,7 @@ function askLeave(b){PEND=b;let m=$("#leavem");if(!m){m=document.createElement("
 function guideOverlay(){let m=$("#guidem");if(!m){m=document.createElement("div");m.id="guidem";m.className="modalx wide";document.body.appendChild(m)}
  m.innerHTML=`<div class="mbox guidebox" role="dialog" aria-modal="true" aria-label="How to play"><button class="mx" data-act="guide-close" aria-label="Close">✕</button>${vGuide(true)}</div>`;m.hidden=false;
  setTimeout(()=>{const c=m.querySelector(".mx");c&&c.focus()},30)}
-document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;for(const id of ["#solm","#guidem","#leavem"]){const m=$(id);if(m&&!m.hidden){e.preventDefault();m.hidden=true;return}}if(TI>=0){e.preventDefault();tourEnd()}},SIG);
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;for(const id of ["#lvupm","#lvinfom","#solm","#guidem","#leavem"]){const m=$(id);if(m&&!m.hidden){e.preventDefault();m.hidden=true;return}}if(TI>=0){e.preventDefault();tourEnd()}},SIG);
 document.addEventListener("click",e=>{if(e.target.classList&&e.target.classList.contains("modalx"))e.target.hidden=true},SIG);
 document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b||b.disabled)return;const a=b.dataset.act;
  if(a!=="menu"&&b.closest("#menu"))setMenu(false);
@@ -1877,6 +2020,9 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="logout"){logout();return}
  if(a==="sol"){solOpen();return}
  if(a==="sol-close"){modalClose("#solm");return}
+ if(a==="lvinfo"){lvInfoOpen();return}
+ if(a==="lvinfo-close"){modalClose("#lvinfom");return}
+ if(a==="lvup-close"){lvupClose();return}
  /* the intro (intro.js) plays again on a fresh load of /?intro */
  if(a==="intro"){try{pushP(true)}catch(e){}location.href="/?intro";return}
  if(a==="tour"){if(S.screen==="play")endRun("stop");tourStart();return}
@@ -1952,6 +2098,8 @@ document.addEventListener("change",e=>{if(e.target.id==="fameuni"){loadFame("uni
 document.addEventListener("keydown",e=>{
  if(S.screen!=="play")return;
  if(!$("#fbm").hidden)return;
+ if(document.querySelector("#lvupm:not([hidden])")){if(e.key==="Enter"||e.key===" "){e.preventDefault();lvupClose()}return}
+ if(document.querySelector("#lvinfom:not([hidden])"))return; /* level dialogs take their own keys */
  if(e.key==="Enter"){if(e.target.id==="fillin"||(!e.target.matches("input,select,button,textarea")&&!(e.target.closest&&e.target.closest(".bq")))){const btn=$("#lockbtn")||$('[data-act="next"]')||$('[data-act="second"]')||$('[data-act="end"]');if(btn){e.preventDefault();btn.click()}}return}
  if(e.target.matches("input,select,textarea"))return;const i="abcd".indexOf(e.key.toLowerCase());
  if(i>-1&&S.q&&S.q.kind==="mcq"&&S.phase==="ask"&&i<S.q.opts.length&&!S.gone.includes(i)){S.pick=i;SFX.pick();document.querySelectorAll(".opt").forEach(o=>o.className=optCls(+o.dataset.i));syncAct()}},SIG);

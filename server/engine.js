@@ -200,6 +200,26 @@ export function skillProgress(sk) {
   return Math.min(0.99, ((sk.level - 1) * 2 + (sk.rightStreak ? 1 : 0) + climb) / 8);
 }
 
+// What moves the student up from where they are now, read off the same inputs applyAnswer uses (level, r, rmax,
+// rightStreak, the starting R). Display only: it never changes the state. null for a skill that is not open.
+//   climb:     L1 only, the R values still to climb (each right answer raises R by one until rmax)
+//   streak/need: the two-in-a-row slots and how many are filled
+//   remaining: right answers still needed, if none are missed
+//   onMiss:    what a miss does here ("drop_r1" on L1 at the starting R above R1, else "streak_reset")
+export function levelTrack(S, sk) {
+  if (!S || !sk || sk.status !== 'open') return null;
+  const l = sk.level, r = sk.r || 1, rmax = S.rmax || 1, start = Math.min(2, rmax);
+  const climb = [];
+  if (l === 1) for (let x = r + 1; x <= rmax; x++) climb.push(x);
+  const streak = climb.length ? 0 : Math.min(1, sk.rightStreak || 0), need = 2;
+  return {
+    level: l, levelName: LEVEL_NAMES[l].slice(3), r, rmax, climb, streak, need,
+    remaining: climb.length + need - streak,
+    next: l < 4 ? { level: l + 1, name: LEVEL_NAMES[l + 1].slice(3) } : { skillDone: true },
+    onMiss: l === 1 && r === start && r > 1 ? 'drop_r1' : 'streak_reset'
+  };
+}
+
 // A compact view of the state for the client: every skill's status, level, R and progress.
 export function view(G, avail, st, graphVersion = null) {
   const act = activeSkill(G, avail, st);
@@ -209,7 +229,7 @@ export function view(G, avail, st, graphVersion = null) {
     const hasAny = !!avail[S.id];
     skills[S.id] = { status: sk.status, level: sk.level, r: sk.r, rightStreak: sk.rightStreak, progress: skillProgress(sk),
       content: hasAny ? (playable(G, avail, st, S.id) ? 'ready' : 'partial') : 'none',
-      cells: sk.cells, q: sk.q, right: sk.right };
+      cells: sk.cells, q: sk.q, right: sk.right, track: levelTrack(S, sk) };
   }
   const groupsDone = G.groups.map((g) => g.skills.every((id) => st.skills[id].status === 'done'));
   return { graphVersion, active: act.id, allDone: !!act.allDone, comingSoon: act.comingSoon || null, skills, groupsDone, q: st.q, right: st.right };

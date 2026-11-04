@@ -177,6 +177,25 @@ CREATE TABLE IF NOT EXISTS feedback (
   ctx         JSONB,
   at          BIGINT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS student_auth (       -- how a student signs in once set up: Google and/or a password, plus a recovery email
+  roll_no       TEXT PRIMARY KEY,
+  google_sub    TEXT UNIQUE,                     -- Google account id (the id_token 'sub')
+  google_email  TEXT,
+  password_hash TEXT,                            -- scrypt, like admins
+  recovery_email TEXT,
+  recovery_verified_at BIGINT,
+  updated_at    BIGINT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS auth_tokens (        -- single-use emailed links (password reset, email check); only the SHA-256 is stored
+  token_hash  TEXT PRIMARY KEY,
+  kind        TEXT NOT NULL,                     -- reset | verify_email
+  roll_no     TEXT NOT NULL,
+  email       TEXT,
+  created_at  BIGINT NOT NULL,
+  expires_at  BIGINT NOT NULL,
+  used_at     BIGINT
+);
+CREATE INDEX IF NOT EXISTS auth_tokens_roll ON auth_tokens(roll_no, kind, created_at);
 CREATE TABLE IF NOT EXISTS audit_log (
   id          BIGSERIAL PRIMARY KEY,
   admin_id    BIGINT,

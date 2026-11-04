@@ -47,6 +47,27 @@ The app follows the same pattern as Saturday Sprint: one Express app running as 
 
 The one-line "what you'll do" for each level lives in `levels_info` in `question-types.json`.
 
+### Student sign-in (Google, password, reset by email)
+- **First login:** NIAT ID + name, as before. Right after, a gate asks the student to **connect Google or set a password** (and offers a recovery email). Once either is set, the name alone no longer logs that student in.
+- **After that:** "Continue with Google" or NIAT ID + password on `/login`. Any Google account can be connected. A Google email that matches the student's email on the master list also signs in on day one.
+- **Account** (game menu): connect or disconnect Google (disconnecting needs a password), set or change the password (other devices are logged out), add a recovery email (confirmed by an emailed link, or "use my Google email").
+- **Forgot password:** emails a single-use reset link (30 minutes) to the confirmed recovery email; `/reset.html` sets the new password and logs the student out everywhere else.
+- **Locked out with no recovery email:** Admin → Students → open the student → **Reset login**. It removes Google, the password and the recovery email, so the student logs in once more with NIAT ID + name.
+- Code: `server/studentAuth.js` (routes), `server/mail.js` (email), tables `student_auth` and `auth_tokens`.
+
+**Setup (once)**
+1. Google Cloud Console → APIs & Services:
+   - OAuth consent screen: **External**, app name and logo, then **Publish app** ("In production"; Testing mode allows only 100 test users). Scopes: `openid`, `email`, `profile` only.
+   - Credentials → Create OAuth client ID → **Web application**. Authorised redirect URIs: `https://<production domain>/api/auth/google/callback` and, for testing, `https://<preview domain>/api/auth/google/callback`.
+2. Google Workspace: on the sending mailbox (e.g. `no-reply@…`) turn on 2-Step Verification, then create an **app password** (myaccount.google.com → Security → App passwords). The Workspace admin must allow app passwords.
+3. Vercel → Settings → Environment Variables:
+   - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (Production and Preview)
+   - `SMTP_USER` (the mailbox), `SMTP_PASS` (the app password, no spaces), `MAIL_FROM` (optional, defaults to `SMTP_USER`)
+   - `PUBLIC_URL` (Production only, e.g. `https://kbc.example.com`): used in the Google redirect and email links. Leave it unset on Preview so each preview uses its own address.
+   - Optional: `SMTP_HOST` / `SMTP_PORT` (default `smtp.gmail.com` / `465`).
+
+Without the Google settings the Google button is hidden; without SMTP settings emails are not sent but printed to the server log (local development).
+
 ### Copy guard (questions)
 While a question is on screen (hot seat and Fastest Finger), the question text can't be selected, copied, cut, dragged or printed; nothing can be pasted or dropped into the answer boxes; and right-click plus Ctrl/Cmd + C, X, V, A (outside an answer box), P, S, U, Ctrl+Shift+I/J/C and F12 are off. Typing, Backspace, arrows and Ctrl+Z in the answer boxes work as normal, and the feedback pop-up is untouched. A short toast tells the student why.
 

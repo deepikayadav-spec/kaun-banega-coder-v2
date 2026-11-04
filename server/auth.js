@@ -32,7 +32,7 @@ export function readCookie(req, name) {
   return null;
 }
 
-async function sessionFor(req, kind) {
+export async function sessionFor(req, kind) {
   const t = readCookie(req, kind === 'admin' ? ADMIN_COOKIE : STUDENT_COOKIE);
   if (!t) return null;
   const s = await one('SELECT subject_id, expires_at FROM sessions WHERE token_hash = ? AND kind = ?', sha(t), kind);

@@ -1168,7 +1168,7 @@ function fixHTML(){if(S.phase!=="reveal"||S.ok||!S.res||!S.q)return "";const q=S
  const fix=firstSentences(r.ok||X.idea||"",2)||X.idea||"";
  if(!mix&&!fix)return "";
  return `<div class="fixcard card" role="region" aria-label="Quick fix">
-${S.timeout?`<div class="fx-sec"><span class="fx-k miss">Time ran out</span><p>No problem. Here is the idea in 30 seconds.</p></div>`:mix?`<div class="fx-sec"><span class="fx-k miss">Why you picked it</span><p>${esc(mix)}</p></div>`:""}
+${S.timeout?`<div class="fx-sec"><span class="fx-k miss">Time ran out</span><p>No problem. Here is the idea in 30 seconds.</p></div>`:mix?`<div class="fx-sec"><span class="fx-k miss">Common mistake</span><p>${esc(mix)}</p></div>`:""}
 ${fix?`<div class="fx-sec"><span class="fx-k fix">The 30-second fix <i class="fx-t" aria-hidden="true">⏱ 30s</i></span><p>${esc(fix)}</p></div>`:""}
 </div>`}
 /* "Reveal solution": the full working opens in a sheet over the hot seat, so the question screen never needs scrolling */

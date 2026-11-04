@@ -410,3 +410,26 @@ test('admin feedback leaves out test students (Admin > Settings test rules)', as
   assert.match(c.body, /,end of game,5,6,11,fun; fast,"loved it, a lot",/);
   assert.ok(c.body.includes('real note') && !c.body.includes('test cred note'));
 });
+
+test('bank replace: questions not in the new file are archived (kept, not served); dry run only counts', async () => {
+  const live = async () => (await call('a', 'GET', '/api/admin/content')).body.total;
+  const before = await live();
+  const keep = Object.values(bank).slice(0, 3);
+  assert.equal((await call('a', 'POST', '/api/admin/bank/replace', { ids: [] })).status, 400, 'an empty file never empties the bank');
+  const dry = await call('a', 'POST', '/api/admin/bank/replace?dry=1', { ids: keep.map((q) => q.id) });
+  assert.equal(dry.status, 200); assert.equal(dry.body.archived, before - 3); assert.equal(await live(), before, 'dry run changes nothing');
+  assert.equal((await call('m', 'POST', '/api/admin/bank/replace', { ids: keep.map((q) => q.id) })).status, 403, 'super admins only');
+  const up = await call('a', 'POST', '/api/admin/bank/upload', { questions: keep });
+  assert.equal(up.body.counts.updated, 3);
+  const r = await call('a', 'POST', '/api/admin/bank/replace?name=small.json', { ids: keep.map((q) => q.id) });
+  assert.equal(r.body.archived, before - 3);
+  assert.equal(await live(), 3);
+  const other = Object.values(bank)[5];
+  assert.equal((await call('a', 'GET', '/api/admin/questions/' + other.id)).body.status, 'archived', 'kept as archived, not deleted');
+  // uploading the full bank again in replace mode brings everything back live
+  const all = Object.values(bank);
+  await call('a', 'POST', '/api/admin/bank/upload', { questions: all });
+  assert.equal((await call('a', 'POST', '/api/admin/bank/replace', { ids: all.map((q) => q.id) })).body.archived, 0);
+  // earlier tests uploaded a few questions of other skills; they are not in this file, so they stay archived
+  assert.equal(await live(), all.length);
+});

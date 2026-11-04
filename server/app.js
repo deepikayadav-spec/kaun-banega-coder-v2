@@ -6,7 +6,7 @@ import { config } from './config.js';
 import { ready, one, all, run, tx, json, dbKind, audit } from './db.js';
 import { extractCtData, ctToGraph } from './ctgraph.js';
 import * as stats from './analytics.js';
-import { content, loadQuestion, questionById, uploadBank, uploadGraph, activateGraph, graphHistory, seedIfEmpty } from './bank.js';
+import { content, loadQuestion, questionById, uploadBank, replaceBank, uploadGraph, activateGraph, graphHistory, seedIfEmpty } from './bank.js';
 import { newState, upgradeState, activeSkill, address, applyAnswer, view as engineView, ladderFor, VARIANTS } from './engine.js';
 import { present, grade, fifty } from './grade.js';
 import { universityOf, normRoll, setPrefixes } from './universities.js';
@@ -450,6 +450,13 @@ admin.post('/bank/upload', requireSuper, bigJson, wrap(async (req, res) => {
   const r = await uploadBank(req.body, { adminId: req.admin.id, fileName: String(req.query.name || ''), dryRun: req.query.dry === '1' });
   if (req.query.dry !== '1') await audit(req.admin.id, 'bank_upload', String(req.query.name || ''), r.counts);
   res.json(r);
+}));
+// Replace mode, sent after every part of a bundle is in: archive the live questions that are not in the file.
+admin.post('/bank/replace', requireSuper, bigJson, wrap(async (req, res) => {
+  const dryRun = req.query.dry === '1', name = String(req.query.name || '');
+  const r = await replaceBank(Array.isArray(req.body?.ids) ? req.body.ids : [], { adminId: req.admin.id, fileName: name, dryRun });
+  if (r.ok && !dryRun) await audit(req.admin.id, 'bank_replace', name, { archived: r.archived });
+  res.status(r.ok ? 200 : 400).json(r);
 }));
 // The graph comes as skill-graph JSON, or as a CT Skill Graph HTML export ({ html }), converted in server/ctgraph.js.
 // ?fresh=1 also starts every student from the beginning once the new graph is live.

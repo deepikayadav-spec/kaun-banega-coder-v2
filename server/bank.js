@@ -113,6 +113,27 @@ export async function uploadBank(bundle, { adminId = null, fileName = null, dryR
   return { ok: errors.length === 0, counts, errors };
 }
 
+// Replace mode: after every part of a bundle is uploaded, each live question whose id is NOT in the bundle is archived,
+// so the bundle becomes the whole live bank. Archived, not deleted: answer history keeps pointing at the question, and
+// an open question can still be graded. `keepIds` are all ids in the file (an invalid one keeps its earlier version).
+export async function replaceBank(keepIds, { adminId = null, fileName = null, dryRun = false } = {}) {
+  const keep = [...new Set((keepIds || []).map(String).filter(Boolean))];
+  if (!keep.length) return { ok: false, error: 'The file has no question ids, so nothing would be left live.' };
+  const where = "status = 'live' AND id NOT IN (SELECT jsonb_array_elements_text(?::jsonb))";
+  const gone = await all(`SELECT skill, COUNT(*)::int AS n FROM questions WHERE ${where} GROUP BY skill ORDER BY skill`, json(keep));
+  const archived = gone.reduce((a, r) => a + r.n, 0);
+  if (!dryRun && archived) {
+    const now = Date.now();
+    await tx(async () => {
+      await run(`UPDATE questions SET status = 'archived', updated_at = ? WHERE ${where}`, now, json(keep));
+      await run('INSERT INTO bank_uploads (admin_id, file_name, kind, counts, errors, at) VALUES (?, ?, ?, ?, ?, ?)',
+        adminId, fileName, 'bank_replace', json({ kept: keep.length, archived }), json([]), now);
+    });
+    invalidate();
+  }
+  return { ok: true, archived, bySkill: gone };
+}
+
 // Graphs come in two shapes: checkpoints as { C1: "name" } with group.cp, or as [{ id, name, groups }] with
 // group.checkpoint and an ordered group.skills list. Everything downstream reads the first shape, in path order:
 // groups in their listed order, and skills in their group's listed order when the group gives one.

@@ -199,9 +199,13 @@ const COSTUMES={
   emblem:`<g fill="#C0661C"><circle cx="100" cy="144" r="4.5"/><circle cx="94" cy="137" r="2.2"/><circle cx="100" cy="135" r="2.2"/><circle cx="106" cy="137" r="2.2"/></g>`}};
 let CHAR="pixel";
 /* Mascot: a person in a costume (default Byte, a glossy toy robot: big white helmet head, huge dark eyes, gold ear discs and fins, slim body with a { } chest emblem, cuffed arms and chunky gold boots.
-   Poses: idle, review, think, dance (happy), trophy, finish, bonk (sad), tired, stare, run, chai, zen. */
+   Poses: idle, review, think, dance (happy), trophy, finish, bonk (sad), tired, stare, run, chai, zen.
+   Reactions (the gestures mascots on Duolingo, Headspace and Google Assistant use to answer what just happened):
+   wave (hello), cheer (both fists up), clap, thumbsup, fistbump (you've got this), oops (hand on face), shrug,
+   idea (lightbulb), heart (thank you), salute (all set), mindblown (big win). */
 const POSE_ALIAS={happy:"dance",sad:"bonk"};
-const BYTE_POSES=["panic","pointq","pointa","pointup","idle","review","think","dance","trophy","finish","bonk","tired","stare","run","chai","zen","warm","type","read","vibe","drink","stretch","streak","missed"];
+const BYTE_POSES=["panic","pointq","pointa","pointup","idle","review","think","dance","trophy","finish","bonk","tired","stare","run","chai","zen","warm","type","read","vibe","drink","stretch","streak","missed",
+ "wave","cheer","clap","thumbsup","fistbump","oops","shrug","idea","heart","salute","mindblown"];
 /* ================= 3D mascots: every buddy is modelled in three.js and rendered once per pose into a cached image ================= */
 const M3D=(()=>{let R=null,ok=null;const cache={};
  function init(){if(ok!==null)return ok;try{if(!window.THREE)return ok=false;const T=THREE,cv=document.createElement("canvas");cv.width=FW;cv.height=FH;
@@ -220,7 +224,8 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
  function linear(sc,T){const seen=new Set();sc.traverse(o=>{const ms=o.material?[].concat(o.material):[];ms.forEach(m=>{if(seen.has(m))return;seen.add(m);
   if(m.color)m.color.convertSRGBToLinear();if(m.emissive)m.emissive.convertSRGBToLinear();if(m.map)m.map.encoding=T.sRGBEncoding;
   if(m.isMeshStandardMaterial){m.envMapIntensity=m.metalness>.3?1.2:.75;if(m.isMeshPhysicalMaterial&&m.clearcoat<.8){m.clearcoat=.85;m.clearcoatRoughness=.16}}})})}
- const KIND={panic:"stare",pointq:"open",pointa:"down",pointup:"up",dance:"happy",trophy:"open",finish:"happy",chai:"open",think:"up",review:"down",bonk:"x",tired:"sleepy",stare:"stare",zen:"closed",run:"focus",warm:"happy",type:"down",read:"down",vibe:"happy",drink:"happy",stretch:"happy",streak:"happy",missed:"happy"};
+ const KIND={panic:"stare",pointq:"open",pointa:"down",pointup:"up",dance:"happy",trophy:"open",finish:"happy",chai:"open",think:"up",review:"down",bonk:"x",tired:"sleepy",stare:"stare",zen:"closed",run:"focus",warm:"happy",type:"down",read:"down",vibe:"happy",drink:"happy",stretch:"happy",streak:"star",missed:"happy",
+  wave:"happy",cheer:"star",clap:"happy",thumbsup:"wink",fistbump:"focus",oops:"closed",shrug:"open",idea:"up",heart:"heart",salute:"wink",mindblown:"stare"};
  function pal(C){if(C.hero)return {head:C.cowl?C.mask:C.mask,face:C.skin||null,body:C.suit[1],bodyHi:C.suit[0],belly:C.suit[0],limb:C.limb,glove:C.glove,leg:C.limbDk||C.suit[2],boot:C.boot,lens:C.lens,glow:!!C.lensGlow,belt:C.belt,cape:C.cape||null,accent:C.buckle||C.belt};
   return {head:C.head[0],face:null,body:C.gold[1],bodyHi:C.gold[0],belly:C.white[0],limb:C.cuff||C.white[0],glove:C.glove,leg:C.leg[0],boot:C.gold[1],lens:null,glow:false,belt:null,cape:null,accent:C.gold[2]}}
  function emblemTex(col){const c=document.createElement("canvas");c.width=c.height=128;const g=c.getContext("2d");g.fillStyle=col;g.beginPath();g.arc(64,64,60,0,7);g.fill();g.lineWidth=8;g.strokeStyle="rgba(0,0,0,.35)";g.stroke();
@@ -266,7 +271,9 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
   if(P.cape){const g=new T.PlaneGeometry(1.25,1.9,8,10),pos=g.attributes.position;for(let k=0;k<pos.count;k++){const x=pos.getX(k),y=pos.getY(k),down=(0.95-y)/1.9;pos.setX(k,x*(0.62+0.5*down));pos.setZ(k,-.18*Math.cos(x*2.2)-down*(.32+.12*W)+.06*Math.sin(x*4+t*12)*down)}g.computeVertexNormals();
    const cp=new T.Mesh(g,mat(P.cape,{side:T.DoubleSide,clearcoat:.2}));cp.position.set(0,-.62,-.52);tor.add(cp);[-1,1].forEach(sd=>tor.add(M(sph,mat(P.cape),[sd*.42,.5,-.38],[.12,.1,.1])))}
   /* arms: pivot at shoulder, hang down */
-  const A={panic:[.2,.2,.9,-.9],pointq:[.18,.18,0,0],pointa:[.18,.18,0,0],pointup:[.18,.18,0,0],warm:[2.2,2.2,0,0],stretch:[2.95,2.95,0,0],type:[.32,.32,-1.15,-1.15],read:[.4,.4,-1.0,-1.0],vibe:[.18,.18,0,0],drink:[.18,.35,0,-2.3],streak:[.3,.3,0,0],missed:[.55,.55,-1.25,-1.25],idle:[.18,.18,0,0],review:[.25,.25,-.6,-.6],think:[.2,.5,0,-1.9],dance:[2.5,2.2,0,0],trophy:[2.95,2.95,0,0],finish:[2.6,2.6,0,0],bonk:[1.25,1.25,0,0],tired:[.06,.06,.2,.2],stare:[.18,.18,0,0],run:[.2,.2,.9,-.9],chai:[.15,.45,0,-1.35],zen:[.95,.95,.3,.3]}[pose]||[.18,.18,0,0];
+  const A={panic:[.2,.2,.9,-.9],pointq:[.18,.18,0,0],pointa:[.18,.18,0,0],pointup:[.18,.18,0,0],warm:[2.2,2.2,0,0],stretch:[2.95,2.95,0,0],type:[.32,.32,-1.15,-1.15],read:[.4,.4,-1.0,-1.0],vibe:[.18,.18,0,0],drink:[.18,.35,0,-2.3],streak:[.3,.3,0,0],missed:[.55,.55,-1.25,-1.25],idle:[.18,.18,0,0],review:[.25,.25,-.6,-.6],think:[.2,.5,0,-1.9],dance:[2.5,2.2,0,0],trophy:[2.95,2.95,0,0],finish:[2.6,2.6,0,0],bonk:[1.25,1.25,0,0],tired:[.06,.06,.2,.2],stare:[.18,.18,0,0],run:[.2,.2,.9,-.9],chai:[.15,.45,0,-1.35],zen:[.95,.95,.3,.3],
+   wave:[2.5,.18,-.2,0],cheer:[2.75,2.75,0,0],clap:[-.5,-.5,-1.3,-1.3],thumbsup:[.35,.18,-1.55,0],fistbump:[.25,.3,-1.55,-.2],oops:[.2,-.5,0,-2.3],
+   shrug:[1.0,1.0,-.75,-.75],idea:[.18,2.45,0,-.2],heart:[-.45,-.45,-1.75,-1.75],salute:[.18,.12,0,-2.6],mindblown:[2.3,2.3,-.35,-.35]}[pose]||[.18,.18,0,0];
   const hands={};
   [1,-1].forEach((sd,i)=>{const ar=new T.Group();ar.position.set(sd*.74,.32,0);tor.add(ar);
    let hd;
@@ -295,6 +302,17 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
    if(pose==="review")ax=A[2+i]+.12*W;
    if(pose==="bonk")az=1.25+.3*W2;
    if(pose==="zen")az=.95+.1*W;
+   if(pose==="wave"&&sd>0)az=2.7+.3*W2;                 /* waves hello, toward the screen content */
+   if(pose==="cheer")az=2.75-.4*Math.abs(W2);              /* both fists pump up */
+   if(pose==="clap")az=-.32-.26*Math.abs(Wc);              /* hands meet in front and part */
+   if(pose==="thumbsup"&&sd>0)ax=-1.55+.08*W;
+   if(pose==="fistbump"&&sd>0)ax=-1.55-.12*Math.abs(W2);   /* a fist pushed out to the student */
+   if(pose==="oops"&&sd<0)ax=-2.3+.05*W;                   /* hand to the screen-face */
+   if(pose==="shrug")az=1.0+.12*Math.abs(W);
+   if(pose==="idea"&&sd<0)az=2.45+.05*W;
+   if(pose==="heart")ax=-1.75+.06*W;
+   if(pose==="mindblown")az=2.3+.25*W2;
+   if(pose==="streak"&&sd<0){az=2.45-.3*Math.abs(W2);ax=-.2} /* pumps the fist nearer the viewer */
    ar.rotation.z=sd*az;ar.rotation.x=ax;hands[sd>0?"L":"R"]=hd});
   /* props */
   if(pose==="trophy"){const cup=new T.Group(),g=mat("#FFC52E",{metalness:.6,roughness:.25});cup.add(M(cyl(.22,.08,.3),g,[0,.12,0]));cup.add(M(cyl(.05,.05,.12),g,[0,-.08,0]));cup.add(M(cyl(.12,.12,.04),g,[0,-.16,0]));cup.scale.setScalar(1/.17);cup.position.set(0,-.2/.17,0);hands.L.add(cup)}
@@ -321,7 +339,10 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
   const ez=id==="pixel"?.5:P.face?.76:.7,ey=.04;
   const eye=x=>{const g=new T.Group();g.position.set(x,ey,ez);head.add(g);if(id==="pixel")g.scale.setScalar(1.3);
    if(id==="pixel"){const em=new T.MeshBasicMaterial({color:0xFFFFFF}),px=(a,b,w=.075,h=.075)=>g.add(M(new T.BoxGeometry(w,h,.02),em,[a,b,0]));
-    if(kind==="happy"){px(-.1,-.03);px(-.05,.03);px(0,.07);px(.05,.03);px(.1,-.03);return}
+    if(kind==="happy"||(kind==="wink"&&x>0)){px(-.1,-.03);px(-.05,.03);px(0,.07);px(.05,.03);px(.1,-.03);return}
+    if(kind==="heart"){[[-.075,.06],[-.025,.06],[.025,.06],[.075,.06],[-.1,.01],[-.05,.01],[0,.01],[.05,.01],[.1,.01],[-.075,-.04],[-.025,-.04],[.025,-.04],[.075,-.04],[-.05,-.09],[0,-.09],[.05,-.09],[0,-.13]]
+     .forEach(([a,b])=>{if(!(a===0&&b===.06))px(a,b,.05,.05)});return}
+    if(kind==="star"){px(0,0,.06,.06);[[0,.07],[0,-.07],[.07,0],[-.07,0]].forEach(([a,b])=>px(a,b,.045,.045));[[.05,.05],[-.05,.05],[.05,-.05],[-.05,-.05]].forEach(([a,b])=>px(a,b,.03,.03));return}
     if(kind==="closed"||kind==="sleepy"){px(0,-.02,.26,.06);return}
     if(kind==="x"){[-.08,-.04,0,.04,.08].forEach(k=>{px(k,k,.06,.06);px(k,-k,.06,.06)});return}
     const dy={up:.06,down:-.06}[kind]||0;px(0,dy,.16,kind==="focus"?.1:.2);px(.05,dy+.05,.04,.04);return}
@@ -339,7 +360,10 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
    if(kind==="sleepy")g.add(M(sph,mat(P.head),[0,.11,.04],[.23,.14,.1]))};
   eye(-.3);eye(.3);
   /* mouth */
-  if(id==="pixel"){const mm=new T.MeshBasicMaterial({color:0xFFFFFF});const smile=["dance","trophy","finish","chai","happy","vibe","streak","missed","warm","stretch","drink"].includes(pose);if(smile){[-.12,-.06,0,.06,.12].forEach((k,j)=>head.add(M(new T.BoxGeometry(.075,.065,.03),mm,[k*1.15,-.3+(j===0||j===4?.05:0),.5])))}else if(pose==="bonk")head.add(M(new T.BoxGeometry(.26,.065,.03),mm,[0,-.32,.5]));else head.add(M(new T.BoxGeometry(.16,.065,.03),mm,[0,-.3,.5]))}
+  if(id==="pixel"){const mm=new T.MeshBasicMaterial({color:0xFFFFFF});const smile=["dance","trophy","finish","chai","happy","vibe","streak","missed","warm","stretch","drink","wave","cheer","clap","thumbsup","fistbump","heart","salute","idea"].includes(pose);
+   if(pose==="mindblown"||pose==="oops"){[[-.06,0],[.06,0]].forEach(([a])=>head.add(M(new T.BoxGeometry(.05,.16,.03),mm,[a,-.31,.5])));[.07,-.07].forEach(b=>head.add(M(new T.BoxGeometry(.08,.05,.03),mm,[0,-.31+b,.5])))}
+   else if(pose==="shrug")[[-.1,-.32],[-.035,-.3],[.035,-.3],[.1,-.28]].forEach(([a,b])=>head.add(M(new T.BoxGeometry(.075,.055,.03),mm,[a,b,.5])));
+   else if(smile){[-.12,-.06,0,.06,.12].forEach((k,j)=>head.add(M(new T.BoxGeometry(.075,.065,.03),mm,[k*1.15,-.3+(j===0||j===4?.05:0),.5])))}else if(pose==="bonk")head.add(M(new T.BoxGeometry(.26,.065,.03),mm,[0,-.32,.5]));else head.add(M(new T.BoxGeometry(.16,.065,.03),mm,[0,-.3,.5]))}
   else if(["dance","trophy","finish","chai"].includes(pose))head.add(M(new T.TorusGeometry(.09,.025,8,20,Math.PI),dark,[0,-.3,.73],[1,1,1],[0,0,Math.PI]));
   else if(pose==="bonk")head.add(M(new T.TorusGeometry(.08,.022,8,20,Math.PI),dark,[0,-.36,.73]));
   else head.add(M(sph,dark,[0,-.32,.73],[.05,.04,.03]));
@@ -355,24 +379,13 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
   if(id==="webby"){head.add(M(new T.TorusGeometry(.5,.012,6,40),mat("#1A0640"),[0,.05,.55],[1,1,1]));head.add(M(new T.TorusGeometry(.3,.012,6,40),mat("#1A0640"),[0,.05,.66]))}
   /* ---- pose accessories (hats, glasses, props, floating icons) ---- */
   const isBolt=id==="byte",cyl2=(a,b,h,n=32)=>new T.CylinderGeometry(a,b,h,n);
-  const icon=(txt,col,sz,pos)=>{const c=document.createElement("canvas");c.width=c.height=128;const g=c.getContext("2d");g.font=`900 ${sz}px 'Unbounded','Arial Black',sans-serif`;g.textAlign="center";g.textBaseline="middle";col="#FDE68A";g.lineWidth=10;g.strokeStyle="#14162A";g.strokeText(txt,64,68);g.fillStyle=col;g.fillText(txt,64,68);
+  const icon=(txt,col,sz,pos,own)=>{const c=document.createElement("canvas");c.width=c.height=128;const g=c.getContext("2d");g.font=`900 ${sz}px 'Unbounded','Arial Black',sans-serif`;g.textAlign="center";g.textBaseline="middle";if(!own)col="#FDE68A";g.lineWidth=10;g.strokeStyle="#14162A";g.strokeText(txt,64,68);g.fillStyle=col;g.fillText(txt,64,68);
    const sp=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(c),transparent:true,depthTest:false}));sp.position.set(...pos);sp.scale.set(.8,.8,1);root.add(sp);return sp};
   const inHand=(h,o,p=[0,0,0])=>{o.scale.multiplyScalar(1/.17);o.position.set(p[0]/.17,p[1]/.17,p[2]/.17);h.add(o)};
   if(isBolt){/* round glasses + pose shirt colour */
    const fr=mat("#14162A",{roughness:.2});[-.3,.3].forEach(x=>head.add(M(new T.TorusGeometry(.2,.035,10,28),fr,[x,.04,.73])));head.add(M(cyl2(.025,.025,.2),fr,[0,.06,.75],[1,1,1],[0,0,Math.PI/2]));
    const shirt={run:"#E5484D",warm:"#E5484D",stretch:"#E5484D",drink:"#E5484D",read:"#3E7C59",chai:"#3E7C59",tired:"#9DB4E0",trophy:"#6E56CF",finish:"#6E56CF",dance:"#6E56CF",streak:"#6E56CF",vibe:"#6E56CF"}[pose];
    }
-  const hat=(kind)=>{const h=new T.Group();h.position.set(0,.55,0);head.add(h);const H=c=>mat(c);
-   if(kind==="cap"||kind==="capblue"){const c=kind==="cap"?"#E5484D":"#2F8CFF";h.add(M(new T.SphereGeometry(.78,32,16,0,Math.PI*2,0,Math.PI/2),H(c),[0,-.12,0],[1,.6,1]));h.add(M(cyl2(.62,.62,.04),H(c),[0,-.1,-.55],[1,1,.6]))}
-   if(kind==="band"){head.add(M(new T.TorusGeometry(.8,.07,10,40),H("#FFFFFF"),[0,.32,0],[1.02,1,.95],[Math.PI/2,0,0]));head.add(M(new T.TorusGeometry(.8,.035,8,40),H("#E5484D"),[0,.32,0],[1.04,1,.97],[Math.PI/2,0,0]))}
-   if(kind==="party"){h.add(M(new T.ConeGeometry(.3,.75,24),H("#FF4F8B"),[0,.3,0],[1,1,1],[0,0,.15]));h.add(M(sph,H("#FFE45C"),[.06,.7,0],[.08,.08,.08]))}
-   if(kind==="grad"){h.add(M(new T.BoxGeometry(1.25,.06,1.25),H("#1C1E2C"),[0,.12,0],[1,1,1],[0,.6,0]));h.add(M(cyl2(.42,.46,.2),H("#1C1E2C"),[0,0,0]));h.add(M(cyl2(.012,.012,.4),H("#FFC52E"),[.45,-.05,.2],[1,1,1],[.2,0,.3]))}
-   if(kind==="detective"||kind==="fedora"){h.add(M(cyl2(.75,.75,.04),H("#2C2C34"),[0,-.12,0]));h.add(M(cyl2(.42,.5,.38),H("#2C2C34"),[0,.06,0]));h.add(M(cyl2(.505,.505,.08),H("#C9A227"),[0,-.06,0]))}
-   if(kind==="bucket"){h.add(M(cyl2(.48,.62,.36),H("#8EDB7A"),[0,0,0]));h.add(M(cyl2(.8,.8,.04),H("#6FC75A"),[0,-.17,0]))}
-   if(kind==="night"){h.add(M(new T.ConeGeometry(.66,1.0,28),H("#5B6B9A"),[.15,.22,-.05],[1,1,1],[0,0,-.7]));h.add(M(new T.TorusGeometry(.6,.1,10,30),H("#FFFFFF"),[0,-.18,0],[1,1,1],[Math.PI/2,0,0]));h.add(M(sph,H("#FFFFFF"),[.6,-.05,0],[.12,.12,.12]))}};
-  const shades=()=>{const sg=mat("#0B0B10",{roughness:.05,clearcoat:1});[-.3,.3].forEach(x=>head.add(M(sph,sg,[x,.05,.74],[.25,.17,.06])));head.add(M(new T.BoxGeometry(.25,.05,.05),sg,[0,.1,.76]))};
-  const phones=()=>{const pm=mat("#5E5E5E"),cup=mat("#FF8A1F");head.add(M(new T.TorusGeometry(.86,.06,10,40,Math.PI),pm,[0,.05,0],[1,1,1],[0,0,0]));[-1,1].forEach(sd=>head.add(M(cyl2(.24,.24,.2),cup,[sd*.86,.02,0],[1,1,1],[0,0,Math.PI/2])))};
-  const H={pointq:"cap",pointa:"cap",pointup:"cap",idle:"cap",run:"band",warm:"band",stretch:"band",finish:"party",trophy:"grad",review:"detective",type:"cap",dance:"bucket",vibe:"bucket",drink:"capblue",streak:"capblue",chai:"fedora",tired:"night"}[pose];
 
 
   if(pose==="vibe"){icon("♪","#5DE3C8",80,[1.0,3.4,0])}
@@ -381,7 +394,20 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
   if(pose==="pointq")icon("?","#5DE3C8",70,[1.55,2.85,0]);if(pose==="pointa")icon("✓","#3DD16F",70,[1.45,1.6,0]);if(pose==="pointup")icon("↑","#FFE45C",80,[1.2,3.7,0]);
   if(pose==="tired")icon("z","#FFFFFF",70,[1.0,3.5,0]),icon("Z","#FFFFFF",90,[1.35,3.95,0]);
   if(pose==="missed")icon("♥","#FF7AA8",100,[1.0,3.4,0]);
-  if(pose==="streak"){const fl=new T.Group();fl.add(M(new T.ConeGeometry(.2,.55,20),mat("#FF7A1A",{emissive:new T.Color("#FF7A1A"),emissiveIntensity:.5}),[0,0,0]));fl.add(M(new T.ConeGeometry(.11,.3,16),mat("#FFE45C",{emissive:new T.Color("#FFE45C"),emissiveIntensity:.6}),[0,-.06,.06]));fl.position.set(0,1.2+.05*W2,0);fl.scale.y=1+.15*W2;head.add(fl)}
+  /* streak: a fist pump with the streak flame flickering beside the raised fist (nothing sits on the head) */
+  if(pose==="streak"){const fl=icon("🔥","#FF7A1A",92,[-1.25,3.55+.05*W2,.3],true);fl.scale.set(.62+.05*W2,.66+.08*W2,1)}
+  if(pose==="thumbsup"){const th=caps(.06,.16,PX?PX.pearl:mat(P.glove));th.rotation.x=Math.PI/2;inHand(hands.L,th,[0,.03,.2]);icon("✦","#FFE45C",56,[1.55,2.6,0])}
+  if(pose==="fistbump"){icon("✦","#FFE45C",54,[1.6,1.95+.08*W,0]);icon("✦","#FFE45C",40,[1.35,2.35-.08*W,0])}
+  if(pose==="oops"){const dr=icon("💧","#5BC0FF",60,[.95,3.15-.12*Math.abs(W),0]);dr.scale.set(.5,.5,1)}
+  if(pose==="shrug"){icon("?","#FFE45C",64,[-1.05,3.2+.06*W,0]);icon("?","#FFE45C",80,[1.1,3.35-.06*W,0])}
+  if(pose==="idea"){const bl=new T.Group();bl.add(M(sph,mat("#FFE07A",{emissive:new T.Color("#FFD23F"),emissiveIntensity:.9+.35*W2,roughness:.15,clearcoat:1}),[0,0,0],[.24,.26,.24]));
+   bl.add(M(cyl2(.11,.13,.16),PX?PX.chrome:mat("#C9CED8"),[0,-.3,0]));bl.add(ring(.12,.018,PX?PX.gph:mat("#2C2C34"),[0,-.26,0]));bl.add(ring(.12,.018,PX?PX.gph:mat("#2C2C34"),[0,-.33,0]));
+   bl.position.set(-1.05,3.45+.06*W,.35);root.add(bl);icon("✦","#FFE45C",44,[-1.55,3.7,0]);icon("✦","#FFE45C",36,[-.55,3.75,0])}
+  if(pose==="heart"){[[.95,3.2,.0],[1.3,3.6,.33],[-.9,3.35,.66]].forEach(([x,y,ph])=>{const k=(t+ph)%1,hs=icon("♥","#FF6B9A",96,[x,y+.35*k,0],true);hs.scale.setScalar(.55+.25*Math.sin(k*Math.PI));hs.material.opacity=1-k*.6})}
+  if(pose==="cheer"){["#FF7AA8","#5DE3C8","#FFE45C","#7B5CFF","#3DD16F","#FF8A1F"].forEach((c,k)=>root.add(M(new T.BoxGeometry(.1,.1,.02),mat(c),[(k-2.5)*.42,3.5+.25*Math.sin(k*1.7+t*6.3),.25],[1,1,1],[k,k*2+t*6,0])))}
+  if(pose==="clap"){const on=Math.abs(Wc)<.35;if(on){icon("✦","#FFE45C",50,[-.35,2.05,.9]);icon("✦","#FFE45C",40,[.4,2.25,.9])}}
+  if(pose==="mindblown"){const g=new T.Group();g.position.set(0,0,-.05);head.add(g);for(let k=0;k<10;k++){const a=k/10*Math.PI*2,r=1.02+.22*((t*2)%1);
+    g.add(M(new T.BoxGeometry(.2,.06,.03),mat(k%2?"#FFE45C":"#FF8A1F",{emissive:new T.Color(k%2?"#FFE45C":"#FF8A1F"),emissiveIntensity:.6}),[Math.cos(a)*r*1.15,Math.sin(a)*r*.95,0],[1,1,1],[0,0,a]))}}
   if(pose==="bonk"){head.add(M(new T.BoxGeometry(.5,.13,.04),mat("#FFFFFF"),[.3,.55,.55],[1,1,1],[-.5,0,-.5]));icon("✦","#FFE45C",70,[-.9,3.2,0])}
   if(pose==="warm"||pose==="stretch"){icon("✦","#FFE45C",60,[-1.0,3.1,0]);icon("✦","#FFE45C",50,[1.05,3.3,0])}
   if(pose==="zen"){const ring=new T.Mesh(new T.RingGeometry(.6,1.0,40),new T.MeshBasicMaterial({color:0xFFE45C,transparent:true,opacity:.35,side:T.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=.04;root.add(ring)}
@@ -390,17 +416,20 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
   if(pose==="type"){const lp=new T.Group();lp.add(M(new T.BoxGeometry(1.1,.05,.7),mat("#3A3F58"),[0,0,0]));const scr=M(new T.BoxGeometry(1.1,.68,.04),mat("#2B2F44"),[0,.34,-.35],[1,1,1],[-.25,0,0]);lp.add(scr);lp.add(M(new T.PlaneGeometry(.95,.55),new T.MeshBasicMaterial({color:0x14C3A2}),[0,.34,-.32],[1,1,1],[-.25,0,0]));lp.position.set(0,1.2,.75);body.add(lp)}
   if(pose==="read"){const bk=new T.Group();[-1,1].forEach(sd=>bk.add(M(new T.BoxGeometry(.5,.62,.05),mat("#FFFFFF"),[sd*.26,0,0],[1,1,1],[0,sd*.35,0])));bk.add(M(new T.BoxGeometry(1.08,.66,.03),mat("#E5484D"),[0,0,-.06]));bk.position.set(0,1.45,.78);bk.rotation.x=-.35;body.add(bk)}
   if(pose==="drink"){const bt=new T.Group();bt.add(M(cyl2(.11,.11,.5),new T.MeshPhysicalMaterial({color:0x5BC0FF,transparent:true,opacity:.75,roughness:0,clearcoat:1}),[0,.15,0]));bt.add(M(cyl2(.07,.07,.08),mat("#FFFFFF"),[0,.44,0]));inHand(hands.R,bt,[0,.05,0]);icon("•","#5BC0FF",80,[1.1,3.3,0])}
-  if(pose==="trophy"&&isBolt){}
   /* pose tilt */
-  const tilt={panic:[-.1,0,.12*W2],pointq:[0,.55,0],pointa:[.25,.5,0],pointup:[-.3,.35,0],warm:[0,0,.1*W],stretch:[-.15,0,0],type:[.22,0,0],read:[.28,.08*W,0],vibe:[0,0,.15*W2],drink:[-.25,0,0],streak:[-.05,.1*W,0],missed:[0,0,.12*W],dance:[0,0,.12*W2],bonk:[0,0,.25*W2],tired:[.28,0,.05*W],think:[-.12,.15*W,-.1],review:[.18+.1*W,0,0],idle:[0,.18*W,.05*W],stare:[0,.12*W,0],chai:[-.05,0,.06*W],trophy:[-.15,0,.08*W2],finish:[-.1,0,.1*W2]}[pose]||[0,0,0];head.rotation.set(...tilt);
-  const hop={panic:.18,dance:.16,trophy:.22,finish:.24,run:.12,vibe:.08,warm:.1,streak:.06}[pose];if(hop)body.position.y=hop*Math.abs(W2);
+  const tilt={panic:[-.1,0,.12*W2],pointq:[0,.2,0],pointa:[.25,.18,0],pointup:[-.3,.12,0],warm:[0,0,.1*W],stretch:[-.15,0,0],type:[.22,0,0],read:[.28,.08*W,0],vibe:[0,0,.15*W2],drink:[-.25,0,0],streak:[-.05,.1*W,0],missed:[0,0,.12*W],dance:[0,0,.12*W2],bonk:[0,0,.25*W2],tired:[.28,0,.05*W],think:[-.12,.15*W,-.1],review:[.18+.1*W,0,0],idle:[0,.18*W,.05*W],stare:[0,.12*W,0],chai:[-.05,0,.06*W],trophy:[-.15,0,.08*W2],finish:[-.1,0,.1*W2],
+   wave:[-.05,.1,.1*W2],cheer:[-.18,0,.08*W2],clap:[-.08,0,.05*Wc],thumbsup:[-.06,.12,-.12],fistbump:[.05,.15,0],oops:[.22,-.1,.06*W],shrug:[0,0,.18],idea:[-.22,.1,-.06],heart:[-.08,0,.1*W],salute:[-.05,.12,0],mindblown:[-.12,0,.06*W2]}[pose]||[0,0,0];head.rotation.set(...tilt);
+  const hop={panic:.18,dance:.16,trophy:.22,finish:.24,run:.12,vibe:.08,warm:.1,streak:.06,cheer:.2,mindblown:.12,wave:.05,clap:.05,heart:.06}[pose];if(hop)body.position.y=hop*Math.abs(W2);
   if(pose==="dance")body.rotation.y=.35*W;if(pose==="zen")body.position.y=.18+.12*W;
   if(pose==="idle")tor.scale.set(1,1+.02*W2,1);
   if(run)body.rotation.x=.18;if(pose==="tired")body.rotation.z=.06*W;
   /* ground shadow */
   const sh=new T.Mesh(new T.PlaneGeometry(2.6,1.3),new T.MeshBasicMaterial({map:shadowTex(),transparent:true,depthWrite:false}));sh.rotation.x=-Math.PI/2;sh.position.y=.02;root.add(sh);
   if(id==="pixel")root.position.y+=.18+.1*W;
-  root.rotation.y=["pointq","pointa","pointup"].includes(pose)?-.05:-.38;return root}
+  /* Pixel always stands to the left of what he talks about (the question, the rules, the home card), so every pose is
+     drawn turned toward the right of the picture. Reactions aimed at the student turn him less; a buddy placed to the
+     right of its content is mirrored in CSS (.mascot.flip). */
+  root.rotation.y=["wave","cheer","clap","heart","mindblown","shrug","fistbump","thumbsup"].includes(pose)?.22:.42;return root}
  const N=8;
  /* A pose takes 50–300 ms to model and render, so finished sprite sheets are kept in IndexedDB (read before the game starts,
     see index.html) under a key that changes whenever the costume or the modelling code changes. */
@@ -415,7 +444,7 @@ const M3D=(()=>{let R=null,ok=null;const cache={};
     model him: drawing a pose took 80–200 ms of blocked page each time and made Fastest Finger and the hot seat stutter.
     The images are used only while the model, costume and lighting code are the ones they were drawn from (same key);
     after any change to those, the browser draws them as before until the images are exported again. */
- const PIXEL_SHEETS={key:"1vn8d6e|anbojt",poses:["bonk","chai","dance","drink","finish","idle","missed","panic","pointa","pointq","pointup","read","review","run","stare","streak","stretch","think","tired","trophy","type","vibe","warm","zen"]};
+ const PIXEL_SHEETS={key:"lc7qnz|anbojt",poses:["bonk","chai","cheer","clap","dance","drink","finish","fistbump","heart","idea","idle","mindblown","missed","oops","panic","pointa","pointq","pointup","read","review","run","salute","shrug","stare","streak","stretch","think","thumbsup","tired","trophy","type","vibe","warm","wave","zen"]};
  const shipped=(C,pose)=>C.id==="pixel"&&PIXEL_SHEETS.poses.includes(pose)&&PIXEL_SHEETS.key===ver()+"|"+hash(JSON.stringify(C))?"/media/pixel/poses/"+pose+".webp?k="+encodeURIComponent(PIXEL_SHEETS.key):null;
  function render(C,pose){const key=C.id+"|"+pose;if(cache[key]!==undefined)return cache[key];
   const sh=shipped(C,pose);if(sh)return cache[key]=sh;
@@ -526,9 +555,9 @@ function mascot(mood,size,cid){const C=COSTUMES[cid]||COSTUMES[CHAR]||COSTUMES.b
   zen:"",chai:"",review:""}[m]||"";
  const under=m==="zen"?`<ellipse cx="100" cy="250" rx="70" ry="9" fill="#FFC83D" opacity=".35"/><ellipse cx="100" cy="110" rx="92" ry="110" fill="url(#rGlow)"/>`:"";
  /* ---- headwear ---- */
- const hat=m==="finish"?`<g><path d="M80 26L100 -20L120 26Z" fill="#FF7A95"/><path d="M86 12L114 12M92 -2L108 -2" stroke="#FFE08A" stroke-width="4"/><circle cx="100" cy="-22" r="6" fill="#FFE08A"/></g>`
-  :m==="bonk"?`<g transform="rotate(-20 126 30)"><rect x="112" y="24" width="28" height="11" rx="5" fill="#F7D9B5"/><path d="M122 26v7M130 26v7" stroke="#C9A27A" stroke-width="1.6"/></g>`
-  :m==="tired"?`<g><path d="M52 40Q100 -4 150 40Q160 18 120 6Q84 -2 52 40Z" fill="#6D5BD0"/><circle cx="160" cy="24" r="7" fill="#fff"/><path d="M52 40Q100 26 150 40" stroke="#fff" stroke-width="5" fill="none"/></g>`:"";
+ /* no hats on any pose; only the bandage after a bonk */
+ const hat=m==="bonk"?`<g transform="rotate(-20 126 30)"><rect x="112" y="24" width="28" height="11" rx="5" fill="#F7D9B5"/><path d="M122 26v7M130 26v7" stroke="#C9A27A" stroke-width="1.6"/></g>`
+  :"";
  const tilt={bonk:"rotate(-8 100 110)",tired:"rotate(6 100 110) translate(0 6)",think:"rotate(7 100 110)",review:"rotate(-5 100 110)",dance:"rotate(5 100 110)",stare:""}[m]||"";
  /* gradient ids carry the costume id so different buddies on one page keep their own colours */
  return (`<span class="mascot rbot ${m} c-${K}" style="width:${size}px" aria-hidden="true"><svg viewBox="0 0 200 260"><defs>
@@ -1071,6 +1100,7 @@ function istHour(){const d=new Date(Date.now()+(330+new Date().getTimezoneOffset
 function ctxPose(){const h=istHour(),min=(Date.now()-T0)/60000;
  if(document.fullscreenElement)return "zen";
  if(MISSED&&min<10)return "missed";
+ if(min<.4)return "wave";
  if(min>=90&&Math.floor(min)%90<3)return "stretch";
  if(min>=45&&Math.floor(min)%45<3)return "drink";
  if(Date.now()<VIBE_UNTIL)return "vibe";
@@ -1156,7 +1186,7 @@ function vNoQ(){const r=S.noQ||{},soon=(r.comingSoon||[]).map(id=>SK[id]).filter
  return `<div class="play">${dockHTML(S.phase==="loading"?"think":"chai","col")}<div class="left"><section class="mainc">${body}</section></div><div class="side">${boardHTML(rungOf())}</div></div>`}
 function vPlay(){if(!S.q)return vNoQ();const q=S.q,r=rungOf(),st=rowSteps(Math.min(r,ROWS.length-1)),stake=r<OPEN?LADDER[r]:LADDER[OPEN-1];
  const pips="";
- const mood=S.phase==="reveal"?(S.ok?(S.info&&S.info.ck?"trophy":"dance"):S.timeout?"tired":"bonk"):S.phase==="locked"?"think":(S.run.en<=20?"tired":S.thinkLong?"think":(S.pick!=null||S.fill||(S.ord&&S.ord.length)?"pointa":"pointq"));
+ const RV=S.run.answered||0,mood=S.phase==="reveal"?(S.ok?(S.info&&S.info.ck?"trophy":S.info&&S.info.lvup?"mindblown":S.info&&S.info.ta&&S.info.tb&&S.info.ta.streak>S.info.tb.streak&&RV%2?"streak":["cheer","clap","thumbsup","dance"][RV%4]):S.timeout?"shrug":["oops","fistbump"][RV%2]):S.phase==="locked"?"think":(S.run.en<=20?"tired":S.thinkLong?"think":(S.pick!=null||S.fill||(S.ord&&S.ord.length)?"pointa":"pointq"));
  return `<div class="play ${S.phase==="reveal"?"rev":""}">${dockHTML(mood,"col")}<div class="left"><div class="hud"><div class="lls">${energyHTML()}</div>
 <div class="clock ${S.time<=10?"low":""}" id="clock" style="--p:${S.time/(S.secsMax||CFG.secs)}" role="timer" aria-label="Seconds left"><span>${S.time}</span></div>
 <div class="stake one"><span class="stk-note" id="stknote">${noteThumb(stake)}</span><span class="stk-t"><small>Playing for</small><b>${fmtR(stake)}</b></span>${boardMin()?`<button class="bmax" data-act="board-min" aria-label="Show the money board">Money board <b aria-hidden="true">＋</b></button>`:""}</div></div>
@@ -1174,7 +1204,7 @@ ${feedbackHTML()}
 </section></div><div class="side">${boardHTML(r)}</div></div>`}
 function vResult(){const R=S.res,rc=R.reached||0,pay=R.payout||0;
  const msg=R.reason==="win"?`${fmtR(pay)} collected! You're a Crorepati Coder.`:R.reason==="stop"?(pay?`Smart move. You walked away with ${fmtR(pay)}.`:"You stopped here. Nothing banked this time, but your path progress is saved."):R.reason==="energy"?`Out of energy! Your path progress is saved${pay?` and ${fmtR(pay)} went to your wallet`:""}. Recharge with a new game.`:pay?`Game over, but you keep it all. ${fmtR(pay)} goes to your wallet.`:"Tough one. Nothing banked this time. Read why, then go again.";
- const mood=R.reason==="win"?"trophy":R.reason==="stop"?"chai":pay?"dance":R.reason==="timeout"?"tired":"bonk";
+ const mood=R.reason==="win"?"trophy":R.reason==="stop"?"chai":pay?"clap":R.reason==="timeout"?"shrug":"fistbump";
  const learn=""; /* the results screen no longer repeats the last wrong answer's working (it was shown in the hot seat) */
  return `<section class="res enter"><div class="res-card card">
 <div class="res-top"><div class="res-head">
@@ -1566,7 +1596,7 @@ function rfPost(id,ctx){const F=RF[id],text=(F.text||"").trim().slice(0,600);log
 /* the results rating is optional (Skip) and shows only until the student has rated a game once */
 const gfbAsk=()=>!(P.gfbSent||ME.gameRated);
 function fbDone(){FB.must=false;FB.form="m";fbLock(false)}
-function fbHTML(sent){if(sent)return `<div class="fbbox" role="dialog" aria-modal="true" aria-label="Feedback"><div class="fbdone">${mascot("dance",120)}${FB.score>5?`<div class="fbbig">${FB.score}/5</div>`:""}<h3>Thank you!</h3><p>Your feedback reached the KBC team.</p><button class="btn gold" data-act="fb-close">Close</button></div></div>`;
+function fbHTML(sent){if(sent)return `<div class="fbbox" role="dialog" aria-modal="true" aria-label="Feedback"><div class="fbdone">${mascot("heart",120)}${FB.score>5?`<div class="fbbig">${FB.score}/5</div>`:""}<h3>Thank you!</h3><p>Your feedback reached the KBC team.</p><button class="btn gold" data-act="fb-close">Close</button></div></div>`;
  const f=FB.form||"m";return `<div class="fbbox fb-${f}" role="dialog" aria-modal="true" aria-labelledby="rf-${f}-h">${FB.must?"":`<button class="mx fbx" data-act="fb-close" aria-label="Close">✕</button>`}${f==="m"?"":mascot("dance",64)}${rfHTML(f)}</div>`}
 /* FB.must: the mandatory pop-up is up. It has no close button, ignores Escape, and the rest of the page is inert
    until the student sends a rating. */
@@ -1809,7 +1839,7 @@ function fffBegin(){const F=S.fff;if(!F||!F.intro)return;F.intro=false;F.t0=Date
  if(F.mode==="maze"){F.mz=0;F.grid=mazeGrid();F.sel=[];F.msg=""}
  if(F.mode==="cross"){F.cx=crossGen();F.fill={};F.msg=""}
  SFX.start();render();fffClock(F.max);fffFocus()}
-function fffBot(){const F=S.fff,m=F.intro?"warm":F.done==="ok"?"finish":F.done?(F.timeout?"tired":"bonk"):F.panic?"panic":"run";
+function fffBot(){const F=S.fff,m=F.intro?"warm":F.done==="ok"?"cheer":F.done?(F.timeout?"shrug":"fistbump"):F.panic?"panic":"run";
  const go=F.intro?"Read the rules, then hit Play. The clock waits for you!":F.panic?["Hurry! Clock is melting!","Faster faster faster!","Seconds left. GO!"][F.idx%3]:{sprint:"Type fast. Right answers jump ahead!",maze:"Find the path that hits the target!",cross:"Fill the blanks so every sum works!"}[F.mode];
  const say=F.done==="ok"?"Lightning fingers! The hot seat is yours.":F.done?(F.timeout?"Too slow! Try another round.":"Shake it off. Next round!"):go;
  return `<aside class="fffbot" data-m="${m}"><p class="say">${say}</p>${mascot(m,200)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span></aside>`}
@@ -1826,7 +1856,7 @@ function fffDemo(mode){
 function seatDemo(){return `<div class="dm dm-seat"><div class="dm-qc">What does this print?<code>print(7 // 2)</code></div><div class="dm-opts"><span>A · 3.5</span><span class="pk">B · 3</span><span>C · 4</span><span>D · 2</span></div><div class="dm-lock">Lock answer</div><div class="dm-sol">💡 Reveal solution</div>${PTR}</div>`}
 /* Between winning Fastest Finger and the first question: what happens in the hot seat, with a demo */
 function vSeat(){const first=!P.runs;
- return `<div class="fffgrid"><aside class="fffbot"><p class="say">You made it! I'm ${esc(buddyName())}, and I'll be right here with you. Read this, then take your seat.</p>${mascot("finish",200)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span></aside><section class="fffw enter"><div class="qcard card fffhead fintro seatin"><span class="chip gold">The hot seat</span><div class="fi-ic" aria-hidden="true">🪑</div><h2 class="qtext">How the hot seat works</h2>
+ return `<div class="fffgrid"><aside class="fffbot"><p class="say">You made it! I'm ${esc(buddyName())}, and I'll be right here with you. Read this, then take your seat.</p>${mascot("cheer",200)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span></aside><section class="fffw enter"><div class="qcard card fffhead fintro seatin"><span class="chip gold">The hot seat</span><div class="fi-ic" aria-hidden="true">🪑</div><h2 class="qtext">How the hot seat works</h2>
 <div class="fi-cols"><div><ol class="fi-steps"><li style="--i:0"><b>1</b><span>Read the question and the code</span></li><li style="--i:1"><b>2</b><span>Answer it the way the question asks: pick, tap, type or put in order</span></li><li style="--i:2"><b>3</b><span>Press <strong>Lock answer</strong>. Then tap <strong>Reveal solution</strong> to see the working</span></li></ol>
 <div class="fi-meta"><span>⏱ ${seatSecsNote()}</span><span>⚡ A miss costs energy; 3 right in a row gives some back</span></div></div>
 <figure class="demo" aria-label="How it looks: a short looping demo"><figcaption>Watch how it works</figcaption>${seatDemo()}</figure></div>
@@ -1916,7 +1946,7 @@ const TOUR=[
 let TI=-1;
 /* Pixel follows the cursor and reacts to it (reference: robot-heads reel). The head turns toward the pointer on a spring;
    hovering makes Pixel hop and cycle through its screen-face expressions, with a one-line reaction in the speech bubble. */
-const PX_MOODS=[["dance","Hehe, that tickles!"],["think","Hmm… planning your next level"],["stare","I see you 👀"],["vibe","Vibing at 60 fps"],["panic","Whoa! Careful with that cursor!"],["zen","Deep breath. You've got this."]];
+const PX_MOODS=[["wave","Hi there! 👋"],["dance","Hehe, that tickles!"],["idea","Ooh, I just had an idea…"],["thumbsup","You're doing great."],["stare","I see you 👀"],["heart","Thanks for playing with me!"],["vibe","Vibing at 60 fps"],["shrug","Me? I just work here."],["panic","Whoa! Careful with that cursor!"],["zen","Deep breath. You've got this."]];
 const PXF={rx:0,ry:0,vrx:0,vry:0,trx:0,try:0,hy:0,vhy:0,raf:0,hov:null,i:0,base:null,say:null,timer:null};
 const pxEl=()=>document.querySelector(".h4-bot .mascot,.mcol .mascot,.fffbot .mascot");
 function pxTick(){const el=pxEl();if(!el){PXF.raf=0;return}const dt=1/60,F=PXF;
@@ -2160,7 +2190,7 @@ function acctGateDraw(){const m=$("#acctm");if(!m||!ACCT_GATE)return;const A=ACC
  m.innerHTML=ACCT_GATE.step==="secure"?`<div class="fbbox acbox" role="dialog" aria-modal="true" aria-labelledby="acg-h">${mascot("pointup",64)}<h2 id="acg-h">Lock your account</h2>
   <p class="muted">Anyone who knows your NIAT ID and name could log in as you. Connect Google or set a password. After this, your name alone won't log you in.</p>
   ${A.googleOn?gBtn("Connect Google")+`<div class="acor">or set a password</div>`:""}${pwForm("gpw",false)}</div>`
- :`<div class="fbbox acbox" role="dialog" aria-modal="true" aria-labelledby="acg-h">${mascot("dance",64)}<h2 id="acg-h">Account locked ✓</h2>
+ :`<div class="fbbox acbox" role="dialog" aria-modal="true" aria-labelledby="acg-h">${mascot("salute",64)}<h2 id="acg-h">Account locked ✓</h2>
   <p class="muted">Add a recovery email, so you can reset your password if you ever forget it. You can also do this later from <b>Account</b> in the menu.</p>
   ${recForm("grec")}<button class="btn quiet acskip" data-act="acct-gate-done">${A.recovery?"Done":"Skip for now"}</button></div>`;
  setTimeout(()=>{const i=m.querySelector("input,button");i&&i.focus()},40)}

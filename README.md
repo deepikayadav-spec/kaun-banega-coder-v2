@@ -124,6 +124,10 @@ The Vercel project is connected to this repository, so every push to `main` depl
 
 Bundles use the format in `question-bank-format/`: `{"bank_version": "…", "questions": [ … ]}`. Upload them in **Admin → Question bank**, using **Check** first. Questions are validated against `question-types.json` and the skill graph, then added or updated by `id`. Uploads take effect for every instance within a minute.
 
+Two upload modes:
+- **Replace the whole bank** (default): after the file is uploaded, every live question whose `id` is not in the file is **archived**, so the file becomes the whole live bank. **Check** shows how many questions (per skill) would be archived, and **Upload** asks before doing it. Archived questions are kept with their answer history and are no longer served; mark one live again in the question list, or upload a file that contains it. An `id` that is in the file but invalid keeps its earlier version live.
+- **Add and update only**: adds new ids and updates matching ones; every other question stays live (use this for a file with only some skills).
+
 ### Changing the skill graph
 
 Upload a new `skill-graph.json` in **Admin → Question bank → Replace the skill graph**. Use **Check** first: it validates the graph and lists what changes, how many students it touches, and how many questions are left without a skill.

@@ -3080,3 +3080,10 @@ html[data-theme="light"] .acf label{color:#0F766E}
 .acct .acc{align-items:stretch!important;text-align:left!important}.acct .acc h3{text-align:left}
 .acf,.acf label,.acf input{width:100%}.acf .btn,.acrow .btn{align-self:flex-start}
 .acstat b{word-break:normal;overflow-wrap:anywhere}
+
+/* Pixel faces the content: every pose is drawn turned to the right, because the buddy stands to the left of what it talks
+   about. Where it stands to the right of its content (the "You" marker on the right of a map node), it is mirrored. */
+.pworld .mav.r .mascot.m3d .m3s,.mascot.m3d.flip .m3s{scale:-1 1}
+/* reaction poses: quick gestures play faster, calm ones slower */
+.mascot.m3d.wave .m3strip,.mascot.m3d.cheer .m3strip,.mascot.m3d.clap .m3strip,.mascot.m3d.mindblown .m3strip{animation-duration:.9s}
+.mascot.m3d.heart .m3strip,.mascot.m3d.idea .m3strip,.mascot.m3d.shrug .m3strip,.mascot.m3d.salute .m3strip{animation-duration:1.6s}

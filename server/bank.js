@@ -75,21 +75,37 @@ export function validateQuestion(q, typesByKey, skillIds) {
   return errs;
 }
 
-// bundle: { bank_version, questions: [...] } or a bare array or a single question
-export async function uploadBank(bundle, { adminId = null, fileName = null, dryRun = false } = {}) {
+// The skill ids of one checkpoint in the (normalized) skill graph, or null when the graph has no such checkpoint.
+export function checkpointSkills(graph, cp) {
+  if (!cp || !graph || !graph.checkpoints || !Object.prototype.hasOwnProperty.call(graph.checkpoints, cp)) return null;
+  return new Set(graph.skills.filter((s) => s.cp === cp).map((s) => s.id));
+}
+
+// bundle: { bank_version, questions: [...] } or a bare array or a single question.
+// `checkpoint` (e.g. "C2") limits the upload to that checkpoint of the live skill graph: other questions are rejected.
+export async function uploadBank(bundle, { adminId = null, fileName = null, dryRun = false, checkpoint = null } = {}) {
   const { typesDoc, graph } = await content();
   const typesByKey = Object.fromEntries(typesDoc.types.map((t) => [t.key, t]));
   const skillIds = new Set(graph.skills.map((s) => s.id));
+  let cpSkills = null;
+  if (checkpoint) {
+    cpSkills = checkpointSkills(graph, checkpoint);
+    if (!cpSkills) return { ok: false, errors: [{ id: null, errors: [`checkpoint ${checkpoint} is not in the live skill graph`] }], counts: {} };
+  }
+  const cpOfSkill = Object.fromEntries(graph.skills.map((s) => [s.id, s.cp]));
   const list = Array.isArray(bundle) ? bundle : Array.isArray(bundle?.questions) ? bundle.questions : bundle?.id ? [bundle] : null;
   if (!list) return { ok: false, errors: [{ id: null, errors: ['expected { questions: [...] }'] }], counts: {} };
   const errors = [], good = [], seen = new Set();
   for (const q of list) {
     const e = validateQuestion(q, typesByKey, skillIds);
+    if (cpSkills && q.skill != null && skillIds.has(q.skill) && !cpSkills.has(q.skill))
+      e.push(`skill ${q.skill} is in checkpoint ${cpOfSkill[q.skill] || '?'}, not ${checkpoint}`);
     if (q.id && seen.has(q.id)) e.push('duplicate id in this file');
     seen.add(q.id);
     if (e.length) errors.push({ id: q.id || null, errors: e }); else good.push(q);
   }
   const counts = { received: list.length, valid: good.length, invalid: errors.length, inserted: 0, updated: 0 };
+  if (checkpoint) counts.checkpoint = checkpoint;
   if (!dryRun && good.length) {
     const now = Date.now(), bv = bundle.bank_version || null;
     await tx(async () => {
@@ -116,22 +132,31 @@ export async function uploadBank(bundle, { adminId = null, fileName = null, dryR
 // Replace mode: after every part of a bundle is uploaded, each live question whose id is NOT in the bundle is archived,
 // so the bundle becomes the whole live bank. Archived, not deleted: answer history keeps pointing at the question, and
 // an open question can still be graded. `keepIds` are all ids in the file (an invalid one keeps its earlier version).
-export async function replaceBank(keepIds, { adminId = null, fileName = null, dryRun = false } = {}) {
+// With `checkpoint`, only that checkpoint's live questions (by skill, in the live skill graph) can be archived.
+export async function replaceBank(keepIds, { adminId = null, fileName = null, dryRun = false, checkpoint = null } = {}) {
   const keep = [...new Set((keepIds || []).map(String).filter(Boolean))];
   if (!keep.length) return { ok: false, error: 'The file has no question ids, so nothing would be left live.' };
-  const where = "status = 'live' AND id NOT IN (SELECT jsonb_array_elements_text(?::jsonb))";
-  const gone = await all(`SELECT skill, COUNT(*)::int AS n FROM questions WHERE ${where} GROUP BY skill ORDER BY skill`, json(keep));
+  let where = "status = 'live' AND id NOT IN (SELECT jsonb_array_elements_text(?::jsonb))";
+  const args = [json(keep)];
+  if (checkpoint) {
+    const cpSkills = checkpointSkills((await content()).graph, checkpoint);
+    if (!cpSkills) return { ok: false, error: `Checkpoint ${checkpoint} is not in the live skill graph.` };
+    if (!cpSkills.size) return { ok: false, error: `Checkpoint ${checkpoint} has no skills in the live skill graph.` };
+    where += ' AND skill IN (SELECT jsonb_array_elements_text(?::jsonb))';
+    args.push(json([...cpSkills]));
+  }
+  const gone = await all(`SELECT skill, COUNT(*)::int AS n FROM questions WHERE ${where} GROUP BY skill ORDER BY skill`, ...args);
   const archived = gone.reduce((a, r) => a + r.n, 0);
   if (!dryRun && archived) {
     const now = Date.now();
     await tx(async () => {
-      await run(`UPDATE questions SET status = 'archived', updated_at = ? WHERE ${where}`, now, json(keep));
+      await run(`UPDATE questions SET status = 'archived', updated_at = ? WHERE ${where}`, now, ...args);
       await run('INSERT INTO bank_uploads (admin_id, file_name, kind, counts, errors, at) VALUES (?, ?, ?, ?, ?, ?)',
-        adminId, fileName, 'bank_replace', json({ kept: keep.length, archived }), json([]), now);
+        adminId, fileName, 'bank_replace', json({ kept: keep.length, archived, ...(checkpoint ? { checkpoint } : {}) }), json([]), now);
     });
     invalidate();
   }
-  return { ok: true, archived, bySkill: gone };
+  return { ok: true, archived, bySkill: gone, checkpoint: checkpoint || null };
 }
 
 // Graphs come in two shapes: checkpoints as { C1: "name" } with group.cp, or as [{ id, name, groups }] with

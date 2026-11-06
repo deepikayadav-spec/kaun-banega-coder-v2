@@ -6,7 +6,7 @@ import { config } from './config.js';
 import { ready, one, all, run, tx, json, dbKind, audit } from './db.js';
 import { extractCtData, ctToGraph } from './ctgraph.js';
 import * as stats from './analytics.js';
-import { content, loadQuestion, questionById, uploadBank, replaceBank, uploadGraph, activateGraph, graphHistory, seedIfEmpty } from './bank.js';
+import { content, loadQuestion, questionById, uploadBank, replaceBank, uploadGraph, activateGraph, graphHistory, seedIfEmpty, checkpointSkills } from './bank.js';
 import { newState, upgradeState, activeSkill, address, applyAnswer, view as engineView, ladderFor, VARIANTS } from './engine.js';
 import { present, grade, fifty } from './grade.js';
 import { universityOf, normRoll, setPrefixes } from './universities.js';
@@ -447,15 +447,20 @@ admin.post('/students/import', requireSuper, express.raw({ type: () => true, lim
 
 // ---------- content
 admin.post('/bank/upload', requireSuper, bigJson, wrap(async (req, res) => {
-  const r = await uploadBank(req.body, { adminId: req.admin.id, fileName: String(req.query.name || ''), dryRun: req.query.dry === '1' });
+  // ?cp=C2 limits the upload to one checkpoint of the live skill graph
+  const checkpoint = req.query.cp ? String(req.query.cp) : null;
+  const r = await uploadBank(req.body, { adminId: req.admin.id, fileName: String(req.query.name || ''), dryRun: req.query.dry === '1', checkpoint });
+  const badCp = checkpoint && r.counts && r.counts.received == null && r.errors.length && r.errors[0].id == null;
+  if (badCp) return res.status(400).json({ ...r, error: r.errors[0].errors[0] });
   if (req.query.dry !== '1') await audit(req.admin.id, 'bank_upload', String(req.query.name || ''), r.counts);
   res.json(r);
 }));
 // Replace mode, sent after every part of a bundle is in: archive the live questions that are not in the file.
 admin.post('/bank/replace', requireSuper, bigJson, wrap(async (req, res) => {
   const dryRun = req.query.dry === '1', name = String(req.query.name || '');
-  const r = await replaceBank(Array.isArray(req.body?.ids) ? req.body.ids : [], { adminId: req.admin.id, fileName: name, dryRun });
-  if (r.ok && !dryRun) await audit(req.admin.id, 'bank_replace', name, { archived: r.archived });
+  const checkpoint = req.query.cp ? String(req.query.cp) : null;
+  const r = await replaceBank(Array.isArray(req.body?.ids) ? req.body.ids : [], { adminId: req.admin.id, fileName: name, dryRun, checkpoint });
+  if (r.ok && !dryRun) await audit(req.admin.id, 'bank_replace', name, { archived: r.archived, checkpoint });
   res.status(r.ok ? 200 : 400).json(r);
 }));
 // The graph comes as skill-graph JSON, or as a CT Skill Graph HTML export ({ html }), converted in server/ctgraph.js.
@@ -500,6 +505,11 @@ admin.get('/questions', wrap(async (req, res) => {
   const where = [], args = [];
   for (const k of ['skill', 'type', 'status']) if (req.query[k]) { where.push(`${k} = ?`); args.push(String(req.query[k])); }
   if (req.query.level) { where.push('level = ?'); args.push(Number(req.query.level)); }
+  if (req.query.cp) {
+    const cpSkills = checkpointSkills((await content()).graph, String(req.query.cp));
+    if (!cpSkills) return res.status(400).json({ error: `Checkpoint ${req.query.cp} is not in the live skill graph.` });
+    where.push('skill IN (SELECT jsonb_array_elements_text(?::jsonb))'); args.push(json([...cpSkills]));
+  }
   const rows = await all(`SELECT id, skill, level, type, difficulty, variant, status, data->>'task' AS task FROM questions
     ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY skill, level, type, difficulty, variant LIMIT 1000`, ...args);
   res.json({ rows });

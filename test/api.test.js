@@ -433,3 +433,40 @@ test('bank replace: questions not in the new file are archived (kept, not served
   // earlier tests uploaded a few questions of other skills; they are not in this file, so they stay archived
   assert.equal(await live(), all.length);
 });
+
+test('checkpoint-wise update: only the chosen checkpoint of the skill graph is touched', async () => {
+  const G = (await call('a', 'GET', '/api/admin/content')).body.graph;
+  const cpOf = Object.fromEntries(G.skills.map((s) => [s.id, s.cp]));
+  const all = Object.values(bank);
+  const cp = cpOf[all[0].skill];
+  const other = Object.keys(G.checkpoints).find((c) => c !== cp);
+  assert.ok(cp && other, 'the graph has at least two checkpoints');
+  const mine = all.filter((q) => cpOf[q.skill] === cp);
+  // unknown checkpoint: refused
+  const bad = await call('a', 'POST', '/api/admin/bank/upload?dry=1&cp=C99', { questions: mine.slice(0, 1) });
+  assert.equal(bad.status, 400);
+  assert.equal((await call('a', 'POST', '/api/admin/bank/replace?dry=1&cp=C99', { ids: [mine[0].id] })).status, 400);
+  // the right checkpoint: valid
+  const ok = await call('a', 'POST', '/api/admin/bank/upload?dry=1&cp=' + cp, { questions: mine.slice(0, 2) });
+  assert.equal(ok.body.counts.valid, 2);
+  // a question of another checkpoint: rejected, nothing written
+  const wrong = await call('a', 'POST', '/api/admin/bank/upload?cp=' + other, { questions: mine.slice(0, 1) });
+  assert.equal(wrong.body.counts.valid, 0);
+  assert.equal(wrong.body.counts.inserted + wrong.body.counts.updated, 0);
+  assert.match(wrong.body.errors[0].errors.join(';'), new RegExp(`checkpoint ${cp}, not ${other}`));
+  // replacing another checkpoint never archives this checkpoint's questions
+  const rep = await call('a', 'POST', '/api/admin/bank/replace?cp=' + other, { ids: ['C9-G9-S9-L1-T1-R1-V1'] });
+  assert.equal(rep.status, 200);
+  assert.ok(rep.body.bySkill.every((r) => cpOf[r.skill] === other));
+  assert.equal((await call('a', 'GET', '/api/admin/questions/' + mine[0].id)).body.status, 'live');
+  // replacing this checkpoint with two questions archives the rest of it only
+  const before = (await call('a', 'GET', '/api/admin/content')).body.total;
+  const r = await call('a', 'POST', '/api/admin/bank/replace?cp=' + cp, { ids: mine.slice(0, 2).map((q) => q.id) });
+  assert.equal(r.body.archived, mine.length - 2);
+  assert.equal((await call('a', 'GET', '/api/admin/content')).body.total, before - (mine.length - 2));
+  // the question list filters by checkpoint
+  const list = await call('a', 'GET', '/api/admin/questions?status=live&cp=' + cp);
+  assert.equal(list.body.rows.length, 2);
+  // put the bank back
+  await call('a', 'POST', '/api/admin/bank/upload', { questions: all });
+});

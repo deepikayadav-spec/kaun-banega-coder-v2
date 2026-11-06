@@ -3087,3 +3087,260 @@ html[data-theme="light"] .acf label{color:#0F766E}
 /* reaction poses: quick gestures play faster, calm ones slower */
 .mascot.m3d.wave .m3strip,.mascot.m3d.cheer .m3strip,.mascot.m3d.clap .m3strip,.mascot.m3d.mindblown .m3strip{animation-duration:.9s}
 .mascot.m3d.heart .m3strip,.mascot.m3d.idea .m3strip,.mascot.m3d.shrug .m3strip,.mascot.m3d.salute .m3strip{animation-duration:1.6s}
+
+/* ==========================================================================================
+   SIMPLIFY v1 (local): one base, two accents, frosted glass.
+   Base: deep navy. Gold = actions & prizes. Teal = progress & info. Green/red = right/wrong only.
+   ========================================================================================== */
+:root{--k-gold:#FFC83D;--k-gold-ink:#1A1300;--k-teal:#5EEAD4;--k-ok:#34D399;--k-bad:#F87171;
+  --k-tx:#F4F6FF;--k-tx2:#AEB6D6;--k-glass:rgba(255,255,255,.055);--k-glass-2:rgba(255,255,255,.09);
+  --k-line:rgba(255,255,255,.13);--k-blur:blur(18px) saturate(150%)}
+html:not([data-theme="light"]) body{background:radial-gradient(1200px 700px at 50% -10%,#1B2150 0%,#0B0F2A 55%,#070A1E 100%) fixed!important}
+
+/* frosted glass for every card-like surface */
+.card,.qcard,.mbox,.board,.hs-card,.ptop .pnext,.phud,.msheet-in,.h-hero.glass,.sprc{
+  background:var(--k-glass)!important;border:1px solid var(--k-line)!important;
+  backdrop-filter:var(--k-blur);-webkit-backdrop-filter:var(--k-blur);
+  box-shadow:0 18px 40px -22px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.08)!important}
+.qcard{border-radius:22px!important}
+
+/* ---------- Home ---------- */
+.wishc,.hmeta3,.h4-side,.h4-stats{display:none!important}
+.home4.hsimple{display:grid!important;grid-template-columns:minmax(0,300px) minmax(0,560px);justify-content:center;align-items:center;gap:32px;min-height:calc(100vh - 140px);padding:24px 16px}
+.hsimple .h4-bot{display:flex;justify-content:center}
+.hsimple .h-hero.glass{border-radius:28px;padding:34px 36px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;position:relative;z-index:5}
+.hsimple .htag{margin:0;color:var(--k-tx2)}
+.hsimple .ctready{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;gap:12px}
+.hsimple .ct-k{color:var(--k-teal)!important}
+.hsimple .ct-s{color:var(--k-tx2)!important}
+.hsimple .hhey{margin:6px 0 0;color:var(--k-tx2)}
+@media (max-width:820px){.home4.hsimple{grid-template-columns:1fr}.hsimple .h4-bot{order:2}}
+
+/* ---------- Question text ---------- */
+.qctx{margin:0;font:500 14.5px/1.5 var(--f-body);color:var(--k-tx2)}
+.qtext.qask{margin:-4px 0 0!important;color:var(--k-tx)!important;font-weight:800!important}
+.qnotes{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.qnotes li{position:relative;padding-left:16px;font:500 14px/1.45 var(--f-body);color:var(--k-tx2)}
+.qnotes li::before{content:'';position:absolute;left:3px;top:.62em;width:5px;height:5px;border-radius:50%;background:var(--k-teal);opacity:.7}
+.qouts{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.qout{border-radius:12px;padding:9px 12px;background:rgba(0,0,0,.22);border:1px solid var(--k-line)}
+.qout small{display:block;font:700 10.5px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--k-tx2);margin-bottom:6px}
+.qout pre{margin:0;font:600 14px/1.4 ui-monospace,Consolas,monospace;color:var(--k-tx);white-space:pre-wrap;word-break:break-word}
+.qout.good{border-left:3px solid var(--k-ok)}.qout.bad{border-left:3px solid var(--k-bad)}
+.play.rev .qask{font-size:clamp(17px,1.45vw,22px)!important}
+
+/* MCQ with code: code left, options right on wide screens */
+.qone{display:contents}
+@media (min-width:1100px){
+  .qsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
+  .qsplit .opts{grid-template-columns:1fr!important;margin:0!important}
+  .qsplit .bq-grid,.qsplit .tiles{grid-template-columns:1fr!important}}
+
+/* MCQ option letters: one neutral style, gold when picked */
+.opt .l,.opts .l,.bq .l{background:var(--k-glass-2)!important;color:var(--k-tx)!important;border:1px solid var(--k-line)!important;box-shadow:none!important}
+.opt.pending .l,.opt.locked .l,.opt.on .l{background:var(--k-gold)!important;color:var(--k-gold-ink)!important;border-color:var(--k-gold)!important}
+.opt{background:var(--k-glass)!important;border:1px solid var(--k-line)!important}
+.opt.pending,.opt.locked{border-color:var(--k-gold)!important}
+
+/* Match: each program as a proper code card, its output choices beside it */
+.mrow.mcard{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:center;padding:12px!important;border-radius:16px;background:var(--k-glass)!important;border:1px solid var(--k-line)!important}
+.mrow.mcard .mprog pre.code{margin:0}
+.mrow.mcard .mchips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.mch-k{flex-basis:100%;font:700 10.5px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--k-tx2)}
+@media (max-width:760px){.mrow.mcard{grid-template-columns:1fr}}
+
+/* Faded steps: numbered cards, instruction shown once above the editor */
+.bq-step{padding:12px 14px;border-radius:16px;background:var(--k-glass);border:1px solid var(--k-line);display:grid;gap:8px}
+.bq-step+.bq-step{margin-top:10px}
+.bq-sh{display:flex;align-items:center;gap:10px}
+.bq-sh i{font-style:normal;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:800 12px/1 var(--f-body);background:var(--k-glass-2);color:var(--k-tx);border:1px solid var(--k-line)}
+.bq-step.solved .bq-sh i{background:var(--k-teal);color:#06231F;border-color:var(--k-teal)}
+.bq-sh b{font:700 13.5px/1.2 var(--f-body);color:var(--k-tx)}
+.bq-sdo{margin:0;font:500 14px/1.45 var(--f-body);color:var(--k-tx2)}
+
+/* ---------- Question page: calmer chrome ---------- */
+.hud{align-items:center}
+.llsr{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;
+  background:var(--k-glass);border:1px solid rgba(255,200,61,.55);color:var(--k-tx);backdrop-filter:var(--k-blur);transition:background .15s,transform .1s}
+.llsr b{font:700 13px/1 var(--f-body)}.llsr small{font:600 11px/1 var(--f-body);color:var(--k-tx2)}
+.llsr:hover:not([disabled]){background:rgba(255,200,61,.14)}.llsr:active:not([disabled]){transform:scale(.97)}
+.llsr:focus-visible{outline:2px solid var(--k-gold);outline-offset:3px}
+.llsr.used,.llsr[disabled]{opacity:.45;cursor:default;border-color:var(--k-line)}
+.panel.srtip{border-left:3px solid var(--k-gold)!important}
+.panel.srtip h3{color:var(--k-gold)}
+.dock .say,.dockrow .say{max-width:260px}
+
+/* ---------- Level pill tooltip (solid, readable) ---------- */
+.lvhud{position:relative;flex-wrap:nowrap!important}
+.lvhud .lvh-i{position:absolute!important;right:0;left:auto;top:calc(100% + 8px);z-index:50;order:0!important;flex-basis:auto!important;
+  width:max-content;max-width:300px;overflow:visible!important;text-overflow:clip!important;white-space:normal!important;
+  padding:8px 12px!important;border-radius:10px;background:#0B1028!important;border:1px solid rgba(94,234,212,.55)!important;
+  color:#fff!important;font:600 12.5px/1.35 var(--f-body)!important;box-shadow:0 10px 28px rgba(0,0,0,.55);
+  opacity:0;visibility:hidden;transform:translateY(-4px);pointer-events:none;transition:opacity .15s,transform .15s,visibility .15s}
+.lvhud:hover .lvh-i,.lvhud:focus-visible .lvh-i{opacity:1;visibility:visible;transform:none}
+.qcard,.qtop{overflow:visible}
+@media (max-width:760px){.lvhud{flex-basis:auto!important;margin-left:auto!important}.lvhud .lvh-i{max-width:72vw}}
+
+/* ---------- Level card: simple ---------- */
+.lvs{display:grid;gap:6px;text-align:center;margin:14px 0 4px}
+.lvs b{font:800 17px/1.2 var(--f-body);color:var(--k-tx)}
+.lvs>span{color:var(--k-tx2);font:500 14px/1.45 var(--f-body)}
+.lvs-now{display:inline-flex;align-items:center;justify-content:center;gap:10px;margin-top:6px;padding:8px 12px;border-radius:12px;background:var(--k-glass);border:1px solid var(--k-line);color:var(--k-tx);font:600 13.5px/1.3 var(--f-body)}
+.lvbox{max-width:440px!important}
+
+/* ---------- My Path: calmer ---------- */
+.pworld .deco,.pworld .zone,.pworld .blob,.pworld .stk,.pworld .prop{display:none!important}
+.ptop{gap:10px!important}
+
+/* ---------- Diya splash ---------- */
+.diwali,.diwali.dnear{pointer-events:none}
+.diya,.bigdiya{pointer-events:auto!important;cursor:pointer}
+.dsplash{position:fixed;z-index:9999;pointer-events:none;width:0;height:0}
+.dsplash i{position:absolute;left:-3px;top:-3px;width:6px;height:6px;border-radius:50%;background:var(--k-gold);box-shadow:0 0 10px var(--k-gold);
+  animation:dspl .9s cubic-bezier(.2,.8,.3,1) forwards}
+.dsplash i:nth-child(3n){background:#FF8A00;box-shadow:0 0 10px #FF8A00}
+.dsplash b{position:absolute;left:50%;top:-58px;transform:translateX(-50%);white-space:nowrap;padding:6px 12px;border-radius:999px;
+  background:rgba(11,16,40,.9);border:1px solid rgba(255,200,61,.6);color:var(--k-gold);font:800 13px/1 var(--f-body);animation:dsplt 1.5s ease forwards}
+@keyframes dspl{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--x),var(--y)) scale(.3);opacity:0}}
+@keyframes dsplt{0%{opacity:0;transform:translate(-50%,6px) scale(.9)}15%{opacity:1;transform:translate(-50%,0) scale(1)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-8px)}}
+@media (prefers-reduced-motion:reduce){.dsplash i{display:none}.dsplash b{animation:none}}
+
+/* SIMPLIFY v1 fixes: neutral option letters (beat the per-position colours), one-row top bar */
+.opts>.opt:nth-child(n) .l,body .opts>.opt:nth-child(n) .l{background:rgba(255,255,255,.08)!important;color:#F4F6FF!important;border:1px solid rgba(255,255,255,.2)!important;box-shadow:none!important}
+.opts>.opt.pending:nth-child(n) .l,.opts>.opt.locked:nth-child(n) .l{background:var(--k-gold)!important;color:var(--k-gold-ink)!important;border-color:var(--k-gold)!important}
+.opts>.opt.right:nth-child(n) .l{background:var(--k-ok)!important;color:#05261A!important;border-color:var(--k-ok)!important}
+.opts>.opt.wrong:nth-child(n) .l{background:var(--k-bad)!important;color:#2A0707!important;border-color:var(--k-bad)!important}
+.hud{display:flex!important;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:12px}
+.hud .lls{flex:0 1 auto}.hud .clock{flex:none;order:2}.hud .llsr{order:3;margin-left:auto}.hud .stake{order:4;flex:0 0 auto}
+@media (max-width:700px){.hud{flex-wrap:wrap}.hud .llsr{order:5;margin:0 auto}}
+html:not([data-theme="zz"]) body .opts>.opt:nth-child(n):not(.locked):not(.right):not(.wrong):not(.pending) .l{background:rgba(255,255,255,.08)!important;color:#F4F6FF!important;border:1px solid rgba(255,255,255,.22)!important;box-shadow:none!important}
+html:not([data-theme="zz"]) body .opts>.opt.pending:nth-child(n):not(.zz):not(.zy):not(.zx) .l,html:not([data-theme="zz"]) body .opts>.opt.locked:nth-child(n):not(.zz):not(.zy):not(.zx) .l{background:#FFC83D!important;color:#1A1300!important;border-color:#FFC83D!important}
+.llsr b,.llsr small{white-space:nowrap}
+.phud{grid-template-columns:auto minmax(0,1fr) auto!important}
+.phud .ph-me{width:auto!important;justify-self:end;padding:8px 16px!important}
+.bq-sout{margin:0;display:flex;align-items:center;gap:8px;font:600 12.5px/1.3 var(--f-body);color:var(--k-tx2)}
+.bq-sout code{padding:3px 8px;border-radius:8px;background:rgba(0,0,0,.25);border:1px solid var(--k-line);color:var(--k-tx);font:600 13px/1.3 ui-monospace,Consolas,monospace}
+.bq-grid .mchip{text-align:left;white-space:pre}
+
+/* ===== MINIMAL v2 (local): question page with only what you need ===== */
+/* no buddy column while a question is open; the board shows only if opened */
+.play{grid-template-columns:minmax(0,1fr) auto!important;margin-top:8px!important;gap:20px!important}
+.play>.mcol,.play .dockrow .mcol,.play .dock,.play .mcol{display:none!important}
+.play .side:has(.board.min),.play .side:empty{display:none!important}
+.play .left{max-width:980px;width:100%;margin:0 auto}
+body.qscreen .mainc{justify-content:flex-start!important;padding-bottom:16px!important;gap:12px!important}
+
+/* one slim top bar */
+.hud{margin:0 0 10px!important;padding:6px 8px;border-radius:999px;background:var(--k-glass);border:1px solid var(--k-line);backdrop-filter:var(--k-blur);-webkit-backdrop-filter:var(--k-blur);gap:10px!important}
+.hud .lls>*,.hud .stake{background:transparent!important;border:0!important;box-shadow:none!important;padding:0 6px!important}
+.hud .clock{width:52px!important;height:52px!important}.hud .clock span{font-size:20px!important}
+.hud .stake .stk-note{display:none}
+.hud .stake .bmax{padding:6px 10px!important;font-size:12px!important}
+.llsr{padding:7px 12px}
+
+/* question card: tighter */
+.qcard{padding:16px 20px!important;gap:10px!important}
+.qtop .chip{font-size:11px!important;padding:3px 9px!important}
+.qnote{margin:0;font:500 13.5px/1.45 var(--f-body);color:var(--k-tx2)}
+.qnote::before{content:"Note: ";font-weight:700;color:var(--k-teal)}
+
+/* select-all / tile answers: one even grid, code left-aligned */
+.bq-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+.bq-grid .mchip{display:flex!important;align-items:center;justify-content:flex-start;min-height:56px;padding:10px 14px!important;
+  background:var(--k-glass)!important;border:1px solid var(--k-line)!important;border-radius:14px!important;font-size:14px!important;line-height:1.45}
+.bq-grid .mchip.on{border-color:var(--k-gold)!important;background:rgba(255,200,61,.10)!important}
+@media (max-width:700px){.bq-grid{grid-template-columns:1fr!important}}
+
+/* match: two cards per row on wide screens to cut scrolling */
+@media (min-width:1100px){.qone .tiles:has(.mcard){display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
+.mrow.mcard{grid-template-columns:1fr!important;gap:8px!important}
+
+/* stop playing: a quiet text link, not a big button */
+.qstop{all:unset;cursor:pointer;font:600 13px/1 var(--f-body);color:var(--k-tx2);padding:8px 10px;border-radius:8px}
+.qstop:hover{color:var(--k-tx);background:var(--k-glass)}
+.qstop:focus-visible{outline:2px solid var(--k-teal);outline-offset:2px}
+.dockrow{justify-content:center;margin-top:0!important}
+html body .play,html body.qscreen .play{display:flex!important;align-items:flex-start;gap:20px!important}
+html body .play>.left{flex:1 1 auto;min-width:0;max-width:980px;margin:0 auto}
+html body .play>.side{flex:0 0 340px}
+html body .play>.side:has(.board.min){display:none!important}
+
+/* fixes: selected chips keep readable text; Pixel always on screen */
+.mchip.on,.bq-grid .mchip.on,.mchips .mchip.on,.hchip.on{color:#F4F6FF!important;background:rgba(255,200,61,.14)!important;border-color:#FFC83D!important}
+.mchip.on code,.mchip.on span,.mchip.on *{color:inherit!important}
+html body .play>.mcol{display:flex!important;flex:0 0 220px;flex-direction:column;align-items:center;position:sticky;top:96px}
+html body .play>.mcol .say{max-width:210px}
+html body .play>.left{margin:0!important}
+@media (max-width:900px){html body .play>.mcol{display:none!important}html body .play .dockrow .mcol,html body .play .dockrow .dock{display:flex!important}}
+
+/* ===== round 4 ===== */
+/* Home: no box. The title, ring and Play sit on the stage under a soft spotlight, with a glowing floor under the button */
+.hsimple .h-hero.glass{background:none!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding:24px 12px!important;overflow:visible}
+.hsimple .h-hero.glass::before{content:"";position:absolute;inset:-60px -120px -40px;z-index:-1;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(255,214,140,.16),rgba(255,214,140,.06) 55%,transparent 75%)}
+.hsimple .h-hero.glass::after{content:"";position:absolute;left:50%;bottom:-6px;width:min(520px,90%);height:46px;transform:translateX(-50%);z-index:-1;pointer-events:none;
+  border-radius:50%;background:radial-gradient(closest-side,rgba(255,200,61,.35),rgba(255,200,61,.08) 60%,transparent);filter:blur(4px)}
+.hsimple .htag,.hsimple .hhey,.hsimple .ct-k{text-shadow:0 2px 12px rgba(0,0,0,.9)}
+.hsimple .ctready{padding:6px 14px 6px 6px!important;border-radius:999px!important;background:rgba(7,10,30,.55)!important;border:1px solid var(--k-line)!important}
+
+/* Ask Senior Dev: tooltip on hover / focus */
+.llsr{position:relative}
+.llsr .srtipx{position:absolute;left:50%;top:calc(100% + 10px);transform:translate(-50%,-4px);z-index:60;width:max-content;max-width:260px;white-space:normal;text-align:center;
+  padding:8px 12px;border-radius:10px;background:#0B1028;border:1px solid rgba(255,200,61,.6);color:#fff;font:600 12.5px/1.35 var(--f-body);
+  box-shadow:0 10px 28px rgba(0,0,0,.55);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .15s,transform .15s,visibility .15s}
+.llsr:hover .srtipx,.llsr:focus-visible .srtipx{opacity:1;visibility:visible;transform:translate(-50%,0)}
+
+/* After answering: every option stays readable. Right = green, wrong pick = red, missed right one = dashed green */
+.mchip.ok,.mchip.no,.mchip.miss,.bq-grid .mchip.ok,.bq-grid .mchip.no,.bq-grid .mchip.miss{color:#F4F6FF!important;opacity:1!important}
+.mchip.ok,.bq-grid .mchip.ok{background:rgba(52,211,153,.14)!important;border:1px solid #34D399!important}
+.mchip.no,.bq-grid .mchip.no{background:rgba(248,113,113,.14)!important;border:1px solid #F87171!important}
+.mchip.miss,.bq-grid .mchip.miss{background:rgba(52,211,153,.06)!important;border:1px dashed #34D399!important}
+.mchip.ok *,.mchip.no *,.mchip.miss *{color:inherit!important}
+.mchip[disabled],.bq-grid .mchip[disabled]{opacity:1!important;color:#F4F6FF!important}
+.hud{position:relative;z-index:40}
+
+/* ===== round 5 ===== */
+/* Home: a permanent Happy Diwali tag beside the corner diya */
+.dwish{position:fixed;right:calc(max(16px,2.5vw) + 104px);bottom:40px;z-index:3;padding:8px 14px;border-radius:999px;
+  background:rgba(11,16,40,.8);border:1px solid rgba(255,200,61,.6);color:#FFC83D;font:800 14px/1 var(--f-body);
+  box-shadow:0 0 24px rgba(255,160,0,.25);backdrop-filter:var(--k-blur);-webkit-backdrop-filter:var(--k-blur);pointer-events:none}
+@media (max-width:700px){.dwish{right:16px;bottom:110px;font-size:12px}}
+
+/* Question page: use the screen. Wider column, centred in the height, larger type, taller options */
+html body .play>.left{max-width:1280px}
+body.qscreen .mainc{justify-content:center!important;min-height:calc(100vh - 230px)}
+body.qscreen .qtext.qask{font-size:clamp(24px,1.2vw + 1.4vh,40px)!important}
+body.qscreen .qctx{font-size:clamp(15px,.5vw + .9vh,20px)}
+body.qscreen .qcard pre.code,body.qscreen .qcard .code{font-size:clamp(15px,.45vw + 1vh,21px)!important;line-height:1.6}
+body.qscreen .qcard{padding:clamp(18px,2vh,30px) clamp(20px,1.6vw,34px)!important;gap:clamp(10px,1.4vh,18px)!important}
+body.qscreen .opts>.opt{min-height:clamp(64px,9vh,110px)}
+body.qscreen .opts>.opt .t,body.qscreen .opts>.opt{font-size:clamp(15px,.45vw + 1vh,21px)!important}
+@media (min-width:1100px){body.qscreen .qsplit{gap:clamp(16px,1.4vw,28px);align-items:stretch}body.qscreen .qsplit>.qcard{display:flex;flex-direction:column;justify-content:center}
+  body.qscreen .qsplit .opts{gap:clamp(10px,1.4vh,18px)!important;align-content:center}}
+body.qscreen .bq-grid .mchip,body.qscreen .mchip{font-size:clamp(14px,.4vw + .9vh,19px)!important}
+body.qscreen .mainc{min-height:calc(100vh - 200px)}
+body.qscreen .qtext.qask{font-size:clamp(24px,1.3vw + 1.8vh,46px)!important}
+body.qscreen .qctx{font-size:clamp(15px,.5vw + 1.1vh,22px)}
+body.qscreen .qcard pre.code,body.qscreen .qcard .code{font-size:clamp(15px,.5vw + 1.3vh,24px)!important}
+body.qscreen .opts>.opt{min-height:clamp(64px,11.5vh,140px)}
+body.qscreen .opts>.opt .t,body.qscreen .opts>.opt{font-size:clamp(15px,.5vw + 1.2vh,23px)!important}
+body.qscreen .opts>.opt .l{width:clamp(30px,2.2vw,46px)!important;height:clamp(30px,2.2vw,46px)!important}
+body.qscreen .lvhud,body.qscreen .qtop .chip{transform:scale(1.08);transform-origin:right center}
+body.qscreen .qtop .chip{transform-origin:left center}
+body.qscreen .qout pre{font-size:clamp(14px,.45vw + 1.1vh,22px)}body.qscreen .qout small{font-size:11.5px}body.qscreen .bq-grid .mchip{font-size:clamp(14px,.45vw + 1vh,20px)!important}
+
+/* ===== round 6: compact question card, money board beside it ===== */
+html body .play>.left{max-width:1040px}
+html body .play>.side{flex:0 0 clamp(300px,22vw,380px)}
+body.qscreen .mainc{min-height:0!important;justify-content:flex-start!important;padding-top:clamp(8px,3vh,40px)!important}
+body.qscreen .qcard{padding:16px 20px!important;gap:10px!important}
+body.qscreen .qtext.qask{font-size:clamp(20px,.9vw + .9vh,28px)!important}
+body.qscreen .qctx{font-size:clamp(14px,.3vw + .7vh,16px)}
+body.qscreen .qcard pre.code,body.qscreen .qcard .code{font-size:clamp(14px,.3vw + .7vh,17px)!important;line-height:1.55}
+body.qscreen .opts>.opt{min-height:0!important;padding:12px 16px!important}
+body.qscreen .opts>.opt .t,body.qscreen .opts>.opt{font-size:clamp(14px,.3vw + .7vh,17px)!important}
+body.qscreen .opts>.opt .l{width:32px!important;height:32px!important}
+body.qscreen .lvhud,body.qscreen .qtop .chip{transform:none}
+@media (min-width:1100px){body.qscreen .qsplit{align-items:start}body.qscreen .qsplit>.qcard{display:flex;justify-content:flex-start}body.qscreen .qsplit .opts{gap:10px!important}}
+body.qscreen .qout pre{font-size:15px}
+body.qscreen .bq-grid .mchip,body.qscreen .mchip{font-size:clamp(13px,.3vw + .6vh,16px)!important}

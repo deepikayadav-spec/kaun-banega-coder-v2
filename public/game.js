@@ -838,7 +838,7 @@ function energyHTML(){if(!S.run)return "";const e=S.run.en,c=e>50?"hi":e>20?"mid
 function dockHTML(mood,cls,extra){const I=S.info,q=S.q;let say;
  if(!q)say=S.phase==="loading"?"Picking your next question…":S.phase==="error"?"Hmm, the line dropped. Try again?":"Nice work! More levels are coming.";
  else if(S.phase==="locked")say="Locked in… fingers crossed!";
- else if(S.phase==="reveal")say=S.ok?(I&&I.rungUp?`You won ${fmtR(amountOf(I.after))}! Next question.`:CHEER[hashStr(q.id)%CHEER.length]):(S.timeout?"Too slow! Read why, then try a new question.":"Not quite. Read why, then try a new question.");
+ else if(S.phase==="reveal")say=S.ok?(I&&I.rungUp?`You won ${fmtR(amountOf(I.after))}! Next question.`:CHEER[hashStr(q.id)%CHEER.length]):(S.timeout?"Too slow! Read why, then tap Next.":"Not quite. Read why, then tap Next.");
  else say=S.run.en<=20?"Low battery! One more miss and we power down.":S.hint?"Hint's up there. You've got this.":S.run.answered===0?"First question! Read the code line by line.":CALM[hashStr(q.id)%CALM.length];
  const r=rungOf(),stake=r<OPEN?LADDER[r]:0;
  if(cls==="col")return `<aside class="mcol" aria-label="${esc(buddyName())}, your KBC buddy"><p class="say">${esc(say)}</p>${mascot(mood,176)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span>${extra||""}</aside>`;
@@ -1090,7 +1090,7 @@ function boardHTML(r,compact,full){const rows=[];for(let i=LADDER.length-1;i>=0;
   rows.push(`<div class="${cls}"><span class="no">${i+1}</span><span class="amtc">${boardNote(LADDER[i])}${fmtR(LADDER[i])}</span>${CK[i]?`<span class="tg">${stg(CK[i])}${TAG[i]?" · "+TAG[i]:""}</span>`:TAG[i]?`<span class="tg">${TAG[i]}</span>`:soon?"":"<span></span>"}</div>`)}
  const min=!full&&boardMin();return `<aside class="board card ${min?"min":""}" aria-label="Money board"><h2>Money board${full?"":`<button class="bmin" data-act="board-min" aria-pressed="${min}" aria-label="${min?"Show the whole money board":"Minimise the money board"}" title="${min?"Show the whole money board":"Minimise"}">${min?"＋":"−"}</button>`}</h2>${rows.join("")}</aside>`}
 /* the money board can be folded down to the rung being played; the choice is remembered on this device */
-const boardMin=()=>!!store.get("kbc-board-min",false);
+const boardMin=()=>!!store.get("kbc-board-min2",false);
 function stripHTML(r){return `<div class="strip" aria-hidden="true">${LADDER.map((v,i)=>`<i class="${i<r?"done":i===r?"next":""} ${i>=OPEN?"soon":""}"></i>`).join("")}</div>`}
 function syncChip(){const c=$("#wchip");if(c){c.innerHTML=`<span class="coinlogo" style="width:20px;height:20px;font-size:7px" aria-hidden="true">{ }</span><b>${fmtR(P.coins||0)}</b>`;c.setAttribute("aria-label","Wallet "+fmtR(P.coins||0))}}
 /* Contextual buddy pose on Home (mirrors the reference pose rules) */
@@ -1111,26 +1111,19 @@ function ctxPose(){const h=istHour(),min=(Date.now()-T0)/60000;
 const buddyName=()=>(COSTUMES[CHAR]||COSTUMES.pixel).name;
 function homeLine(r,st){if(!P.answered)return `Hi! I'm ${buddyName()}, your KBC buddy.`+"  Win Fastest Finger First, then climb the money board one question at a time.";
  return `Welcome back! Every game starts fresh at 10. Wallet: ${fmtR(P.coins||0)}.`}
-function vHome(){const best=P.best||0,coins=P.coins||0;
- const greet=esc(quipText("homebubble"));
- return `<div class="wishc" role="note"><b>Happy Diwali!</b></div><section class="home4 enter">
-<div class="h4-bot"><p class="say">${P.answered?greet:esc(`Hi! I'm ${buddyName()}, your KBC buddy. Win Fastest Finger First to take the hot seat!`)}</p>${mascot(ctxPose(),300)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span><button class="btn quiet sm" data-act="buddy">Change buddy</button></div>
-<div class="h-hero">
+function vHome(){const first=String(S.name||"").split(" ")[0]||"coder";
+ /* simple Home: buddy, title, one readiness ring, a greeting and one Play button. Tour, intro, buddy, path and fame live in the menu. */
+ return `<section class="home4 hsimple enter">
+<div class="h4-bot">${mascot(ctxPose(),260)}</div>
+<div class="h-hero glass">
 <span class="emb hlogo" aria-hidden="true"><i class="er"></i><i class="er er2"></i><span class="ec">{ }</span></span>
 <h1 class="ttl"><span>Kaun Banega</span><b class="typed" aria-label="Coder"><em class="tw" aria-hidden="true">Coder</em><i class="caret" aria-hidden="true"></i></b></h1>
 <p class="htag">Code. Climb. Crorepati.</p>
-<div class="ctready" aria-label="Your GRIT Computational Thinking readiness: ${gritReady()} percent"><div class="ct-ring" style="--v:${Math.min(100,parseFloat(gritReady()))}"><b>${gritReady()}<small>%</small></b></div><div class="ct-txt"><span class="ct-k">Your GRIT</span><strong>Computational Thinking readiness</strong><span class="ct-s">Rises with every level you clear</span></div></div>
-<p class="hhey">Hey ${esc(String(S.name||"").split(" ")[0]||"coder")} 👋 Your seat is waiting</p>
+<div class="ctready" aria-label="Your Computational Thinking readiness: ${gritReady()} percent"><div class="ct-ring" style="--v:${Math.min(100,parseFloat(gritReady()))}"><b>${gritReady()}<small>%</small></b></div><div class="ct-txt"><span class="ct-k">Computational Thinking readiness</span><span class="ct-s">Rises with every level you clear</span></div></div>
+<p class="hhey">Hey ${esc(first)} 👋 your seat is waiting</p>
 <button class="hplay" type="button" data-act="play"><span>Play Fastest Finger</span><i aria-hidden="true">→</i></button>
-<div class="hmeta3"><span class="hlive"><i class="ldot"></i><b class="livenum">${LIVE}</b> playing now</span><span class="hdot" aria-hidden="true"></span><button class="hlink" type="button" data-act="tour">Quick tour</button><span class="hdot" aria-hidden="true"></span><button class="hlink" type="button" data-act="intro">▶ Watch intro</button></div>
-
-<div class="h4-stats"><span>Wallet <b>${fmtR(coins)}</b></span><span>Best <b>${best?fmtR(amountOf(best)):"—"}</b></span><span>First prize <b>10</b></span></div>
 </div>
-${(()=>{const g=curGroup(),sk=curSkill(g),pct=Math.round(gDone(g)/gTotal(g)*100);const top=(fameRows().rows||[]).sort((a,b)=>(b.coins||0)-(a.coins||0)).slice(0,3);
- return `<aside class="h4-side"><div class="hs-card"><small>Up next on your path</small><h3>${sk?esc(sk.name):"All clear"}</h3><span class="hs-c">${stg(g.c)} · ${esc(g.name)}</span>
- <div class="hs-prize">${boardNote(g.prize)}<span><small>Next prize</small><b>${fmtR(g.prize)}</b></span></div><div class="pbar"><i style="width:${pct}%"></i></div><span class="hs-pc">${pct}% of the way</span>
- <button class="btn quiet sm" data-act="path">Open my path →</button></div>
- <div class="hs-card"><small>Hall of Fame</small>${top.length?`<ol class="hs-fame">${top.map((r,i)=>`<li><b>${i+1}</b><span>${esc(r.n)}</span><em>${fmtR(r.coins||0)}</em></li>`).join("")}</ol>`:`<p class="hs-empty">No names yet. Be the first.</p>`}<button class="btn quiet sm" data-act="fame">See all →</button></div></aside>`})()}
+<div class="dwish" role="note">Happy Diwali! 🪔</div>
 </section>`}
 function llHTML(){const q=S.q;return LIFE.map(l=>{const u=S.used[l.k],na=l.k==="fifty"&&(q.kind!=="mcq"||q.two),dis=u||na||S.phase!=="ask";
  return `<button class="ll ${u?"used":""}" data-act="ll" data-k="${l.k}" ${dis?"disabled":""} title="${esc(l.tip)}" aria-label="${l.name}${u?" (used)":""}"><span class="lt">${ICON[l.k]}</span><span class="cap">${l.cap}</span></button>`}).join("")}
@@ -1149,11 +1142,11 @@ function ready(){const q=S.q;if(!q)return false;if(q.kind==="bank")return KBCQ.r
 function actHTML(){const h=actHTML0();return S.phase==="reveal"&&S.q?h+`<button class="btn quiet solbtn" data-act="sol">💡 Reveal solution</button>`:h}
 function actHTML0(){const q=S.q;
  if(S.phase==="ask"){if(S.quitAsk)return `<span class="ask">Stop here and keep ${fmtR(amountOf(rungOf()))}?</span><button class="btn gold" data-act="quit">Yes, stop</button><button class="btn quiet" data-act="quit-no">Keep playing</button>`;
-  if(!ready())return '<button class="btn quiet sm" data-act="quit-ask">Stop playing</button>';
+  if(!ready())return '<button class="qstop" data-act="quit-ask">Stop playing</button>';
   return `<span class="ask">Final answer?</span><button class="btn gold" id="lockbtn" data-act="lock">Lock answer</button>${q.kind==="mcq"?`<button class="btn quiet" data-act="unpick">Change</button>`:""}`}
  if(S.phase==="locked")return `<span class="ask pulse">Answer locked… let's see</span>`;
  if(!S.ok&&S.run.en<=0)return `<span class="banner lose">Out of energy</span><button class="btn gold" data-act="end">See my game →</button>`;
- if(!S.ok)return `<span class="banner lose">${S.timeout?"Time's up":"Not this time"}</span><button class="btn gold" data-act="second">Try a new question →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
+ if(!S.ok)return `<span class="banner lose">${S.timeout?"Time's up":"Not this time"}</span><button class="btn gold" data-act="second">Next →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
  if(S.ok)return rungOf()>=OPEN?`<span class="banner win">Correct answer!</span><button class="btn gold" data-act="collect">Collect ${fmtR(LADDER[OPEN-1])} →</button>`:`<span class="banner win">${S.retryWin?"You fixed it! ✓":"Correct answer!"}</span><button class="btn gold" data-act="next">Next →</button><button class="btn quiet" data-act="stop">Save progress & leave</button>`;
  return `<span class="banner lose">${S.timeout?"Time's up":"Wrong answer"}</span><button class="btn gold" data-act="end">See my game →</button>`}
 function feedbackHTML(){const I=S.info;if(S.phase!=="reveal"||!I)return "";let h=progressDelta();
@@ -1184,21 +1177,45 @@ function vNoQ(){const r=S.noQ||{},soon=(r.comingSoon||[]).map(id=>SK[id]).filter
   <p class="muted">${r.allDone?"There is nothing left to unlock. Legend.":`New questions are on their way for ${soon.length?soon.slice(0,4).map(s=>esc(s.name)).join(", ")+(soon.length>4?" and more":""):"your next skills"}. Your progress is saved, so come back soon.`}</p>
   <div class="ractions"><button class="btn gold" data-act="stop">Save progress & leave</button><button class="btn quiet" data-act="path">See my path</button></div></div>`;
  return `<div class="play">${dockHTML(S.phase==="loading"?"think":"chai","col")}<div class="left"><section class="mainc">${body}</section></div><div class="side">${boardHTML(rungOf())}</div></div>`}
+/* Question text, laid out in parts so labelled outputs never read as the question itself:
+   line 1 = the instruction (small tag); line 2 = the situation, i.e. the question (bold);
+   later plain lines = small notes; "Expected output:" / "Actual output:" / "Output:" blocks = side-by-side output boxes.
+   An expected output that the widget already shows as "Target output" is not repeated. */
+function promptHTML(q){const lines=String(q.prompt||"").replace(/\r/g,"").split("\n"),head=lines.shift()||"";
+ const LBL=/^(expected output|actual output|output|the code must print|it should print|it prints|target output)\s*:\s*$/i;
+ const story=[],notes=[],outs=[];let cur=null;
+ for(const ln of lines){const t=ln.trim(),m=t.match(LBL);
+  if(m){cur={label:m[1],text:[]};outs.push(cur);continue}
+  if(cur){cur.text.push(ln);continue}
+  if(!t)continue;
+  /* faded steps: "Step N … prints X" lines belong inside each step card, not above */
+  const sm=q.ty==="faded"&&t.match(/^Step (\d+)\b.*?\bprints?\s+(.+?)\.?$/i);if(sm){(q.stepOut||(q.stepOut={}))[+sm[1]-1]=sm[2];continue}
+  if(/^put each printed line on its own line\.?$/i.test(t)){notes.push("It may print more than one line. Press Enter between them.");continue}
+  (story.length?notes:story).push(t)}
+ const target=q.p&&q.p.target!=null?String(q.p.target).trim():null;
+ const shown=outs.filter(o=>!(target!=null&&!/actual/i.test(o.label)&&o.text.join("\n").trim()===target));
+ const kind=l=>/actual/i.test(l)?"bad":/expected|must|should/i.test(l)?"good":"";
+ const nice=l=>/actual/i.test(l)?"Actual output":/expected/i.test(l)?"Expected output":/must|should/i.test(l)?"Must print":"Output";
+ return (story.length?`<p class="qctx">${esc(story.join(" "))}</p>`:"")+`<h2 class="qtext qask">${esc(head)}</h2>`+
+  (notes.length?`<p class="qnote">${esc(notes.join(" "))}</p>`:"")+
+  (shown.length?`<div class="qouts">${shown.map(o=>`<div class="qout ${kind(o.label)}"><small>${nice(o.label)}</small><pre>${esc(o.text.join("\n").replace(/\s+$/,""))}</pre></div>`).join("")}</div>`:"")}
+/* Ask the Senior Dev: one lifeline per game, at the top of the question page */
+function seniorBtn(){const u=S.used.senior,dis=u||S.phase!=="ask";return `<button class="llsr ${u?"used":""}" data-act="ll" data-k="senior" ${dis?"disabled":""} aria-label="Ask the Senior Dev${u?" (used this game)":" (once per game)"}"><span aria-hidden="true">🧑‍💻</span><b>Ask Senior Dev</b>${u?"<small>used</small>":""}<span class="srtipx" role="tooltip">${u?"You have used your lifeline for this game.":"It's your lifeline: you can use it once in a game."}</span></button>`}
 function vPlay(){if(!S.q)return vNoQ();const q=S.q,r=rungOf(),st=rowSteps(Math.min(r,ROWS.length-1)),stake=r<OPEN?LADDER[r]:LADDER[OPEN-1];
  const pips="";
  const RV=S.run.answered||0,mood=S.phase==="reveal"?(S.ok?(S.info&&S.info.ck?"trophy":S.info&&S.info.lvup?"mindblown":S.info&&S.info.ta&&S.info.tb&&S.info.ta.streak>S.info.tb.streak&&RV%2?"streak":["cheer","clap","thumbsup","dance"][RV%4]):S.timeout?"shrug":["oops","fistbump"][RV%2]):S.phase==="locked"?"think":(S.run.en<=20?"tired":S.thinkLong?"think":(S.pick!=null||S.fill||(S.ord&&S.ord.length)?"pointa":"pointq"));
- return `<div class="play ${S.phase==="reveal"?"rev":""}">${dockHTML(mood,"col")}<div class="left"><div class="hud"><div class="lls">${energyHTML()}</div>
+ return `<div class="play ${S.phase==="reveal"?"rev":""}">${dockHTML(mood,"col")}<div class="left"><div class="hud"><div class="lls">${energyHTML()}</div>${seniorBtn()}
 <div class="clock ${S.time<=10?"low":""}" id="clock" style="--p:${S.time/(S.secsMax||CFG.secs)}" role="timer" aria-label="Seconds left"><span>${S.time}</span></div>
 <div class="stake one"><span class="stk-note" id="stknote">${noteThumb(stake)}</span><span class="stk-t"><small>Playing for</small><b>${fmtR(stake)}</b></span>${boardMin()?`<button class="bmax" data-act="board-min" aria-label="Show the money board">Money board <b aria-hidden="true">＋</b></button>`:""}</div></div>
 ${stripHTML(r)}<button class="mbtoggle" data-act="board" aria-label="Show the money board">Money board</button>
 <section class="mainc" id="mainc">
-<div class="qcard card"><div class="qtop"><span class="chip gold">Question ${S.run.answered+(S.phase==="reveal"?0:1)}</span>${pips?`<span class="rowprog">To the next prize <span class="pips" aria-label="${st.done} of ${st.total}">${pips}</span></span>`:""}${levelHUD(q)}</div>
-<h2 class="qtext">${esc(q.prompt)}</h2>${KBCQ.above(q,S)}
+<div class="${(q.ty==="mcq"||q.ty==="explain")&&q.code?"qsplit":"qone"}"><div class="qcard card"><div class="qtop"><span class="chip gold">Question ${S.run.answered+(S.phase==="reveal"?0:1)}</span>${pips?`<span class="rowprog">To the next prize <span class="pips" aria-label="${st.done} of ${st.total}">${pips}</span></span>`:""}${levelHUD(q)}</div>
+${promptHTML(q)}${KBCQ.above(q,S)}
 ${q.code?codeHTML(q.code):""}
 ${q.ai!=null?`<div class="ai"><i>AI</i><span>The AI says this prints <b>${esc(q.ai)}</b></span></div>`:""}
-${S.hint?`<div class="panel card"><h3>${ICON.hint}${esc(COSTUMES[CHAR].name)}'s hint</h3><p>${esc(S.hintText||"Thinking…")}</p></div>`:""}
+${S.hint?`<div class="panel card srtip"><h3>${S.hintBy==="senior"?"🧑‍💻 The Senior Dev says":ICON.hint+esc(COSTUMES[CHAR].name)+"'s hint"}</h3><p>${esc(S.hintText||"Thinking…")}</p></div>`:""}
 </div>
-${answerHTML()}${fixHTML()}
+${answerHTML()}</div>${fixHTML()}
 <div class="dockrow">${dockHTML(mood)}<div class="actions">${actHTML()}</div></div>
 ${feedbackHTML()}
 </section></div><div class="side">${boardHTML(r)}</div></div>`}
@@ -1260,7 +1277,7 @@ const trackOf=sk=>engSk(sk).track||null;
 const lvTypes=(l,n)=>GR.types.filter(t=>t.level===l&&(t.modes||[]).includes("hotseat")).slice(0,n).map(t=>t.name);
 const lvTo=t=>t.next.skillDone?"clear this topic":`reach Level ${t.next.level}`;
 /* the short rule shown under the tracker (L4 has no next level: two in a row clears the topic) */
-const lvRule=t=>t&&t.next.skillDone?"2 consecutive streaks to clear this topic":"2 consecutive streaks to unlock the next level";
+const lvRule=t=>t&&t.next.skillDone?"2 right in a row clears this topic":"2 right in a row unlocks the next level";
 function lvGoal(t){if(!t)return "";
  if(t.climb.length)return `Warm-up: ${t.climb.length} more right answer${t.climb.length>1?"s":""}, then 2 in a row to ${lvTo(t)}.`;
  return t.streak?`1 more right answer to ${lvTo(t)}!`:`2 right answers in a row to ${lvTo(t)}.`}
@@ -1329,7 +1346,7 @@ function levelHUD(q){const sk=q&&q.sk;if(!sk||!SK[sk])return "";const e=engSk(sk
  const L=e.status==="done"?5:lvl,ticks=[1,2,3,4].map(l=>{const now=l===L&&e.status==="open",f=now&&t?Math.min(1,t.streak/2):l<L?1:0;
   /* the current level burns as it fills, with a flame riding the edge */
   return `<i class="${l<L?"done":now?"now":""} ${now&&f>0?"lit":""}" style="--f:${f}">${now&&f>0?FIRE:""}</i>`}).join("");
- return `<button type="button" class="lvhud ${I&&I.lvup?"up":""}" data-act="lvinfo" aria-label="${esc(lvAria(e,t))} Show level details" title="${esc(SK[sk].name)}: tap for level details">
+ return `<button type="button" class="lvhud ${I&&I.lvup?"up":""}" data-act="lvinfo" aria-label="${esc(lvAria(e,t))} Show level details">
 <span class="lvh-lv">${e.status==="done"?"Topic cleared ✓":`Level ${lvl}`}</span><span class="lvticks" aria-hidden="true">${ticks}</span>
 ${t?`<i class="lvh-sep" aria-hidden="true"></i>${lvPips(t,fx,frozenOf(sk))}<span class="lvh-i"><i aria-hidden="true">🔥</i>${esc(lvRule(t))}</span>`:""}</button>`}
 /* After the answer: one line on what changed, read from the engine's own transitions */
@@ -1345,11 +1362,9 @@ function progressDelta(){const I=S.info;if(S.phase!=="reveal"||!I||!I.tb)return 
  else return "";
  return `<div class="lvdelta ${cls}" role="status"><i aria-hidden="true">${ic}</i><span><b>${h}</b>${p?`<small>${p}</small>`:""}</span></div>`}
 /* the full picture of a topic's levels: the four milestones, the steps of the current level, what comes next */
-function lvMilestones(s){const e=engSk(s.id),t=e.track,lv=e.status==="done"?5:e.level||1;
- return `${lvBar(e.level,e.status,t?t.streak:0,{cls:"wide"})}<ol class="lvms">${[1,2,3,4].map(l=>{const st=l<lv?"done":l===lv&&e.status==="open"?"now":"";
-  return `<li class="lvm ${st}"><span class="lvm-b" aria-hidden="true">${st==="done"?"✓":st==="now"?l:LOCKI}</span><div><b>Level ${l}${st==="done"?` <em class="lvm-badge">Cleared</em>`:st==="now"?` <em class="lvm-badge now">You are here</em>`:""}</b>
-<small>${esc(LVDO(l))}</small>${st==="now"&&t?`<div class="lvm-now">${lvPips(t)}<span><b>${esc(lvRule(t))}</b>${esc(lvGoal(t))}</span></div>`:""}${st===""&&l===lv+1?`<small class="lvm-x">Formats: ${esc(lvTypes(l,3).join(", "))}</small>`:""}</div></li>`}).join("")}</ol>
-<p class="lvrec">Your record on this topic: <b>${e.q||0}</b> answered · <b>${e.q?Math.round((e.right||0)/e.q*100):0}%</b> right <small>(for your info: moving up only needs right answers in a row)</small></p>`}
+function lvMilestones(s){const e=engSk(s.id),t=e.track,done=e.status==="done",lv=done?4:e.level||1;
+ /* simple: the 4-level bar, one line on this level, and how far to the next */
+ return `${lvBar(e.level,e.status,t?t.streak:0,{cls:"wide"})}<div class="lvs"><b>${done?"Topic cleared ✓":`Level ${lv} of 4`}</b><span>${esc(done?"All four levels done.":LVDO(lv))}</span>${!done&&t?`<div class="lvs-now">${lvPips(t)}<span>${esc(lvGoal(t))}</span></div>`:""}</div>`}
 function lvInfoOpen(){const q=S.q;if(!q||!SK[q.sk])return;let m=$("#lvinfom");if(!m){m=document.createElement("div");m.id="lvinfom";m.className="modalx";document.body.appendChild(m)}
  const s=SK[q.sk];
  m.innerHTML=`<div class="mbox lvbox" role="dialog" aria-modal="true" aria-labelledby="lvinfo-h"><button class="mx" data-act="lvinfo-close" aria-label="Close">✕</button><small class="lvbox-k">Your levels in this topic</small><h3 id="lvinfo-h">${esc(s.name)}</h3>${lvMilestones(s)}<div class="mbtns"><button class="btn gold" data-act="lvinfo-close">Back to the question</button></div></div>`;
@@ -1450,14 +1465,14 @@ function vPath(){const g0=curGroup(),gi=g0.idx,s0=curSkill(g0),open=S.open&&SK[S
   bug:'<svg viewBox="0 0 34 34"><ellipse cx="17" cy="19" rx="9" ry="11" fill="#FF5468" stroke="#000" stroke-width="2.5"/><path d="M17 8v22M8 15l-5-3M26 15l5-3M8 22H3M26 22h5M10 28l-4 3M24 28l4 3" stroke="#000" stroke-width="2.2"/><circle cx="17" cy="8" r="5" fill="#2B1A0E"/></svg>',
   cloud:'<svg viewBox="0 0 60 30"><path d="M14 26a10 10 0 0 1 2-19 12 12 0 0 1 23 2 8 8 0 0 1 9 15z" fill="rgba(255,255,255,.12)"/></svg>'};
  const PK=["mon","cube","cloud","brk","cube","bug","cloud"];let props="";
- TP.forEach((p,k)=>{if(k%2)return;const side=p.x>50?-1:1,px=Math.max(6,Math.min(94,p.x+side*(30+((k*17)%14)))),t=PK[(k/2)%PK.length],sz=t==="cloud"?70:t==="mon"?40:32;
+ TP.forEach((p,k)=>{return;const side=p.x>50?-1:1,px=Math.max(6,Math.min(94,p.x+side*(30+((k*17)%14)))),t=PK[(k/2)%PK.length],sz=t==="cloud"?70:t==="mon"?40:32;
   props+=`<span class="prop ${t}" style="left:${px}%;top:${p.top-10}px;width:${sz}px;--pc:${["#7B5CFF","#14C3A2","#FF4F8B","#2F8CFF","#FFC52E"][k%5]};animation-delay:${k%4*.5}s">${PROPS[t]}</span>`});
  const fogTop=(items.find(it=>it.fog)||{top:null}).top;
  const zones=[];items.forEach(it=>{const z=zones[zones.length-1];if(!z||z.c!==it.g.c)zones.push({c:it.g.c,lo:it.top,hi:it.top});else{z.lo=Math.max(z.lo,it.top);z.hi=Math.min(z.hi,it.top)}});
  const zoneHTML=zones.map((z,zi)=>{const top=z.hi-80,bot=zi===0?H:z.lo+80;return `<div class="zone" style="top:${top}px;height:${bot-top}px;--zc:${CKCOL[z.c]}"></div>`}).join("");
  const SPR=["{ }","print()","404","</>","git push","True","λ","++","Ctrl+Z","if/else","def","no bugs","for i in","10x dev","[ ]","pip install","==","main()"],STC=["#FF4F8B","#5DE3C8","#FFE45C","#A58FFF","#5BC0FF","#FF9E3D","#B6FF3B"];
- let deco="";for(let k=0,yy=70;yy<H-40;yy+=86,k++){const left=k%2===0,x=left?3+(k*37%11):84+(k*53%11),rot=(k*47%28)-14,c=STC[k%STC.length];deco+=`<span class="stk" style="top:${yy}px;left:${x}%;--r:${rot}deg;--c:${c};animation-delay:${(k%7)*.5}s">${esc(SPR[k%SPR.length])}</span>`;if(k%2===1)deco+=`<span class="star" style="top:${yy+40}px;left:${left?20:74}%;animation-delay:${k%5*.4}s"></span>`}
- for(let k=0,yy=120;yy<H;yy+=420,k++)deco+=`<span class="blob" style="top:${yy}px;left:${k%2?62:-8}%;--c:${STC[(k*3)%STC.length]}"></span>`;
+ let deco="";if(0)for(let k=0,yy=70;yy<H-40;yy+=86,k++){const left=k%2===0,x=left?3+(k*37%11):84+(k*53%11),rot=(k*47%28)-14,c=STC[k%STC.length];deco+=`<span class="stk" style="top:${yy}px;left:${x}%;--r:${rot}deg;--c:${c};animation-delay:${(k%7)*.5}s">${esc(SPR[k%SPR.length])}</span>`;if(k%2===1)deco+=`<span class="star" style="top:${yy+40}px;left:${left?20:74}%;animation-delay:${k%5*.4}s"></span>`}
+ if(0)for(let k=0,yy=120;yy<H;yy+=420,k++)deco+=`<span class="blob" style="top:${yy}px;left:${k%2?62:-8}%;--c:${STC[(k*3)%STC.length]}"></span>`;
  const node=(it,ix)=>{const st=`left:${it.x}%;top:${it.top}px;--d:${(ix%6)*.35}s`;
   if(it.fog){if(it.k==="ck")return "";
    if(it.k==="pz")return `<div class="mprize fogged" style="${st}"><div class="chest"><b class="q">?</b></div></div>`;
@@ -1475,8 +1490,7 @@ function vPath(){const g0=curGroup(),gi=g0.idx,s0=curSkill(g0),open=S.open&&SK[S
  const DW=diwaliHTML(items,H,TP,fogTop);
  return `<section class="pathv pfull">
 <div class="ptop"><div class="pnext"><span class="pn-k">Your next topic</span><b>${s0?esc(s0.name):"More topics coming soon"}</b>${s0?`<button class="btn gold sm" data-act="fffgo">Play →</button>`:""}</div>
-<div class="plegend" aria-label="What the map shows"><span><i class="lg now"></i>You are here</span><span><i class="lg done">✓</i>Cleared</span><span><i class="lg lock">🔒</i>Locked</span><span><i class="lg prize">${noteThumb(10)}</i>Prize</span><span><i class="lg planet"></i>Stage</span></div>
-<div class="phud"><div class="ph-prize"><small>Next prize</small><b>${fmtR(g0.prize)}</b></div><div class="ph-prog"><div class="ph-t"><b>${pct}%</b> to the next prize</div><div class="pbar"><i style="width:${pct}%"></i></div></div><div class="ph-ct" title="GRIT Computational Thinking readiness">${gritRing(40)}<span><small>CT ready</small><b>${gritReady()}%</b></span></div><button class="ph-me" data-act="pathjump" aria-label="Jump to my level">◎ Me</button></div></div>
+<div class="phud"><div class="ph-prize"><small>Next prize</small><b>${fmtR(g0.prize)}</b></div><div class="ph-prog"><div class="ph-t"><b>${pct}%</b> to the next prize</div><div class="pbar"><i style="width:${pct}%"></i></div></div><button class="ph-me" data-act="pathjump" aria-label="Jump to my level">◎ Me</button></div></div>
 <div class="pworld diw univ" style="height:${H}px;--fade:${fogTop!=null?fogTop+140:160}px">${spaceHTML(zones,H)}${DW.far}<div class="deco" aria-hidden="true">${deco}</div>
 <div class="map" style="height:${H}px">${DW.near}<div class="deco" aria-hidden="true">${props}</div><svg class="mroad mshadow" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" class="r-shadow"/></svg><div class="mlayer"><svg class="mroad" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" class="r-base"/><path d="${d}" class="r-edge"/><path d="${d}" class="r-top"/><path d="${dDone}" class="r-done"/><path d="${dDone}" class="r-flow"/><path d="${d}" class="r-dash"/><path d="${dDone}" class="r-dash done"/></svg>${items.map(node).join("")}</div></div>
 </div>${sheet}</section>`}
@@ -1617,7 +1631,7 @@ function fbCheck(){if(P.fbSent||ME.feedbackGiven||FB.must)return;   /* a student
  FB.form="m";if(open)m.innerHTML=fbHTML();else fbOpen();   /* if the student already opened it from the button, it just loses its close button */
  fbLock(true);if(!P.fbPrompted){P.fbPrompted=true;saveP()}logEv({kind:"feedback_prompt",at:FB_MUST,mandatory:true})}
 /* Pixel can be hidden from the header; the hot seat then gives its space to the question */
-function syncBuddy(){const off=!!store.get("kbc-hide-buddy",false),b=$("#buddybtn");document.body.classList.toggle("nobuddy",off);
+function syncBuddy(){const off=false /* Pixel always on screen */,b=$("#buddybtn");document.body.classList.toggle("nobuddy",off);
  if(b){const n=buddyName();b.setAttribute("aria-pressed",off);b.title=off?`Show ${n}`:`Hide ${n}`;b.setAttribute("aria-label",off?`Show ${n}, your KBC buddy`:`Hide ${n}, your KBC buddy`);const l=b.querySelector(".lbl");if(l)l.textContent=off?`Show ${n}`:`Hide ${n}`}}
 syncBuddy();
 /* The hot seat and Fastest Finger shrink their question column to fit the window instead of scrolling */
@@ -1734,7 +1748,7 @@ window.KB3D=(function(){if(!window.THREE)return null;try{document.body.classList
  const aura=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(ac),transparent:true,blending:T.AdditiveBlending,depthWrite:false,fog:false}));aura.scale.set(12,12,1);aura.position.z=-1.2;hero.add(aura);
  const gemMat=new T.MeshStandardMaterial({color:0xffb8d6,metalness:.25,roughness:.1,flatShading:true,emissive:0xff5aa5,emissiveIntensity:.65,transparent:true,opacity:.92});
  /* place a drifting prop anywhere across the visible screen at its depth (camera: fov 50, z 14) */
- const spread=(m,anyY)=>{const d=14-m.position.z,hh=Math.tan(25*Math.PI/180)*d,hw=hh*Math.max(1,innerWidth/Math.max(1,innerHeight));m.position.x=(Math.random()-.5)*2*hw*.94;m.position.y=anyY?(Math.random()-.5)*2*hh:-hh-1;m.userData.top=hh+1};
+ const spread=(m,anyY)=>{const d=14-m.position.z,hh=Math.tan(25*Math.PI/180)*d,hw=hh*Math.max(1,innerWidth/Math.max(1,innerHeight));m.position.x=(Math.random()-.5)*2*hw*.94;if(Math.abs(m.position.x)<hw*.4)m.position.x=(m.position.x<0?-1:1)*hw*(.4+Math.random()*.52); /* keep the centre column (title, ring, Play) clear */m.position.y=anyY?(Math.random()-.5)*2*hh:-hh-1;m.userData.top=hh+1};
  const floaters=[],geos=[new T.IcosahedronGeometry(.55,0),new T.OctahedronGeometry(.55,0)];
  for(let i=0;i<5;i++){const m=new T.Mesh(geos[i%2],gemMat);m.position.z=-6-Math.random()*12;m.scale.setScalar(.5+Math.random()*.7);
   m.userData={vy:.002+Math.random()*.003,rx:(Math.random()-.5)*.01,ry:(Math.random()-.5)*.012};spread(m,true);scene.add(m);floaters.push(m)}
@@ -1796,7 +1810,7 @@ const FMODES=["sprint","maze","cross"];
 const FMODE={
  sprint:{name:"Math Sprint",secs:45,icon:"⚡",how:["Solve 5 quick sums","Type the answer. A right answer moves on by itself","Stuck? Skip to a new sum"],demo:"&gt;&gt;&gt; 7 × 8 = <b>56</b>"},
  maze:{name:"Code Maze",secs:40,icon:"🧩",how:["Look at the target number","Tap 3 numbers that touch each other (side by side or up and down)","They must add up to the target. Solve 2 mazes"],demo:"target <b>15</b> → 4 + 5 + 6"},
- cross:{name:"Cross Math",secs:50,icon:"✚",how:["Every row and every column is a small sum","Tap a number tile to fill the next blank","Fill both blanks so all four sums work"],demo:"3 + <b>?</b> = 8 → <b>?</b> = 5"}};
+ cross:{name:"Cross Math",secs:50,icon:"✚",how:["Every row and every column is a small sum","Tap a number tile to fill the next blank","Fill both blanks so all four sums work. Solve 2 grids"],demo:"3 + <b>?</b> = 8 → <b>?</b> = 5"}};
 const rint=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 function sprintQ(){const k=rint(0,7);let q,a;
  if(k===0){const x=rint(3,12),y=rint(3,12);q=`${x} × ${y}`;a=x*y}
@@ -1837,7 +1851,7 @@ function startFFF(idx){prefetchQ("hotseat");ctx();goFull();clearInterval(fInt);s
 function fffBegin(){const F=S.fff;if(!F||!F.intro)return;F.intro=false;F.t0=Date.now()+1;
  if(F.mode==="sprint"){F.cur=sprintQ();F.solved=0;F.log=[]}
  if(F.mode==="maze"){F.mz=0;F.grid=mazeGrid();F.sel=[];F.msg=""}
- if(F.mode==="cross"){F.cx=crossGen();F.fill={};F.msg=""}
+ if(F.mode==="cross"){F.cxn=0;F.cx=crossGen();F.fill={};F.msg=""}
  SFX.start();render();fffClock(F.max);fffFocus()}
 function fffBot(){const F=S.fff,m=F.intro?"warm":F.done==="ok"?"cheer":F.done?(F.timeout?"shrug":"fistbump"):F.panic?"panic":"run";
  const go=F.intro?"Read the rules, then hit Play. The clock waits for you!":F.panic?["Hurry! Clock is melting!","Faster faster faster!","Seconds left. GO!"][F.idx%3]:{sprint:"Type fast. Right answers jump ahead!",maze:"Find the path that hits the target!",cross:"Fill the blanks so every sum works!"}[F.mode];
@@ -1858,7 +1872,7 @@ function seatDemo(){return `<div class="dm dm-seat"><div class="dm-qc">What does
 function vSeat(){const first=!P.runs;
  return `<div class="fffgrid"><aside class="fffbot"><p class="say">You made it! I'm ${esc(buddyName())}, and I'll be right here with you. Read this, then take your seat.</p>${mascot("cheer",200)}<span class="bname" aria-hidden="true">${esc(buddyName())}<small>your KBC buddy</small></span></aside><section class="fffw enter"><div class="qcard card fffhead fintro seatin"><span class="chip gold">The hot seat</span><div class="fi-ic" aria-hidden="true">🪑</div><h2 class="qtext">How the hot seat works</h2>
 <div class="fi-cols"><div><ol class="fi-steps"><li style="--i:0"><b>1</b><span>Read the question and the code</span></li><li style="--i:1"><b>2</b><span>Answer it the way the question asks: pick, tap, type or put in order</span></li><li style="--i:2"><b>3</b><span>Press <strong>Lock answer</strong>. Then tap <strong>Reveal solution</strong> to see the working</span></li></ol>
-<div class="fi-meta"><span>⏱ ${seatSecsNote()}</span><span>⚡ A miss costs energy; 3 right in a row gives some back</span></div></div>
+<div class="fi-meta"><span>⏱ ${seatSecsNote()}</span><span>⚡ A miss costs energy; 3 right in a row gives some back</span><span>🧑‍💻 Stuck? Tap Ask Senior Dev at the top for a tip. Once per game.</span></div></div>
 <figure class="demo" aria-label="How it looks: a short looping demo"><figcaption>Watch how it works</figcaption>${seatDemo()}</figure></div>
 <div class="fi-go"><button class="btn gold glow" data-act="seat-go">${first?"I'm ready, start →":"Start the hot seat →"}</button></div><small class="muted">or press Enter</small></div></section><div class="fffsp"></div></div>`}
 function vFFFIntro(F){const M=FMODE[F.mode];
@@ -1890,13 +1904,14 @@ function vCross(F){const X=F.cx,val=k=>X.blanks.includes(k)?F.fill[k]:X.v[k],use
  const grid=`<div class="cxgrid">${cv(0)}${op(X.o[0])}${cv(1)}${eq}${res(X.R[0])}${op(X.o[2])}${gap}${op(X.o[3])}${gap}${gap}${cv(2)}${op(X.o[1])}${cv(3)}${eq}${res(X.R[1])}${eq}${gap}${eq}${gap}${gap}${res(X.R[2])}${gap}${res(X.R[3])}${gap}${gap}</div>`;
  const counts={};used.forEach(v=>counts[v]=(counts[v]||0)+1);
  const tiles=F.done?"":`<div class="cx-tiles">${X.tiles.map(v=>{const u=counts[v]>0;if(u)counts[v]--;return `<button class="cx-t ${u?"used":""}" data-act="fff-tile" data-v="${v}" ${u?"disabled":""}>${v}</button>`}).join("")}</div><p class="fb ${F.wrong?"bad":""}">${esc(F.msg||"Tap a tile to fill the glowing blank. Tap a filled blank to clear it.")}</p>`;
- const body=`<div class="sprc card mathc"><div class="spr-top"><span class="fl">${F.done?"The answer":"Fill the blanks"}</span></div>${grid}${tiles}</div>`;
+ const body=`<div class="sprc card mathc"><div class="spr-top"><span class="fl">${F.done?"The answer":`Grid ${(F.cxn||0)+1} of 2`}</span><span class="spips">${[0,1].map(k=>`<i class="${k<(F.cxn||0)?"on":""}"></i>`).join("")}<b>${Math.min(2,F.cxn||0)}/2</b></span></div>${grid}${tiles}</div>`;
  return fffHead(F)+body+fffVerdict(F,"")}
 function vFFF(){const F=S.fff;const inner=F.intro?vFFFIntro(F):({sprint:vSprint,maze:vMaze,cross:vCross})[F.mode](F);
  return `<div class="fffgrid">${fffBot()}<section class="fffw enter" data-r="${F.idx}-${F.t0}">${inner}${F.intro?"":quipHTML("fff"+F.idx)}</section><div class="fffsp"></div></div>`}
 function crossCheck(){const F=S.fff,X=F.cx;if(X.blanks.some(k=>F.fill[k]==null)){F.wrong=false;F.msg="";return}
  const w=X.v.map((v,k)=>X.blanks.includes(k)?F.fill[k]:v),ok=XOP(w[0],X.o[0],w[1])===X.R[0]&&XOP(w[2],X.o[1],w[3])===X.R[1]&&XOP(w[0],X.o[2],w[2])===X.R[2]&&XOP(w[1],X.o[3],w[3])===X.R[3];
- if(ok){fffFinish(true);return true}F.wrong=true;F.msg="One of the sums doesn't work yet. Tap a blank to change it.";SFX.wrong()}
+ if(ok&&!(F.cxn>=1)){F.cxn=1;F.cx=crossGen();F.fill={};F.wrong=false;F.msg="Grid 1 solved! One more to go.";SFX.pick();render();return true}
+ if(ok){F.cxn=2;fffFinish(true);return true}F.wrong=true;F.msg="One of the sums doesn't work yet. Tap a blank to change it.";SFX.wrong()}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b||b.disabled||S.screen!=="fff"||!S.fff)return;const a=b.dataset.act,F=S.fff;
  if(a==="fff-begin"){fffBegin();return}
  if(F.done||F.intro)return;
@@ -1929,6 +1944,7 @@ function vGuide(inOverlay){
  <div class="vrule"><span class="vic sm">${GICON.clock}</span><b>60 seconds</b><small>for each hot-seat question (${FIRST_SECS} for your very first)</small></div>
  <div class="vrule"><span class="vic sm">${GICON.heart}</span><b>Energy</b><small>a miss costs 20%. 3 right in a row gives 10% back</small></div>
  <div class="vrule"><span class="vic sm">${GICON.door}</span><b>Stay in the game</b><small>leaving mid-game ends it. Your path progress is always saved</small></div>
+ <div class="vrule"><span class="vic sm">🧑‍💻</span><b>Ask the Senior Dev</b><small>your lifeline: one tip per game, from the button at the top of a question</small></div>
  <div class="vrule"><span class="vic sm">${GICON.steps}</span><b>Learn from every answer</b><small>step-by-step working behind “Reveal solution”</small></div>
 </div>
 ${inOverlay?"":quipHTML("guide")}
@@ -1936,6 +1952,7 @@ ${inOverlay?"":quipHTML("guide")}
 /* ================= Product tour: spotlights each part of the home screen once, on a student's first visit ================= */
 const TOUR=[
  {sel:'.h-hero [data-act="play"]',t:"Start here",d:"Play Fastest Finger First: a quick maths puzzle. Win it to take the hot seat."},
+ {sel:'.h-hero [data-act="play"]',t:"Your lifeline: Ask the Senior Dev",d:"In the hot seat, tap 🧑‍💻 Ask Senior Dev at the top of a question for a tip from a senior developer. You get it once per game, so save it for a hard one."},
  {sel:'header [data-act="path"]',t:"My path",d:"Your journey, topic by topic. Clear topics to win prize money."},
  {sel:"#wchip",t:"Your wallet",d:"Every prize you win is saved here."},
  {sel:'header [data-act="fame"]',t:"Hall of Fame",d:"Top players overall and in your university."},
@@ -2095,7 +2112,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="seat"){goPlay("seat");return}
  if(a==="hotseat"){S={screen:"seat",name:S.name,fff:S.fff};render();scrollTo({top:0});setTimeout(()=>{const b=$('[data-act="seat-go"]');b&&b.focus({preventScroll:true})},60);return}
  if(a==="seat-go"){startRun(true);return}
- if(a==="board-min"){store.set("kbc-board-min",!boardMin());const y=scrollY;render();scrollTo({top:y});return}
+ if(a==="board-min"){store.set("kbc-board-min2",!boardMin());const y=scrollY;render();scrollTo({top:y});return}
  if(a==="fff-next"){startFFF(S.fff?S.fff.idx+1:null);return}
  if(a==="collect"){endRun("win");return}
  if(S.screen!=="play")return;
@@ -2115,11 +2132,11 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="end"){endRun(S.run&&S.run.en<=0?"energy":S.timeout?"timeout":"wrong");return}
  if(a==="ll"){const k=b.dataset.k;if(S.used[k]||S.phase!=="ask"||!S.q)return;S.used[k]=true;const q0=S.q;
   logEv({kind:"lifeline",life:k,sk:q0.sk,ty:q0.ty});SFX.pick();
-  if(k==="hint"){S.hint=true;S.hintText=""}
+  if(k==="hint"||k==="senior"){S.hint=true;S.hintText="";S.hintBy=k}
   const y=scrollY;render();scrollTo({top:y});
   KBCQ.api("POST","/api/play/lifeline",{qid:q0.id,kind:k}).then(r=>{if(S.q!==q0||S.phase!=="ask")return;
    if(k==="fifty"){S.gone=r.hide||[];if(S.gone.includes(S.pick))S.pick=null}
-   if(k==="hint")S.hintText=r.hint;
+   if(k==="hint")S.hintText=r.hint;if(k==="senior")S.hintText=r.tip;
    if(k==="flip"&&r.question){const used=S.used,secsMax=S.secsMax;setQ(r);S.used=used;S.time=secsMax;S.secsMax=secsMax}
    const y2=scrollY;render();scrollTo({top:y2})}).catch(e=>{S.used[k]=false;fsToast(e.message||"That lifeline is not available now.");render()});return}
  if(a==="bq"){if(KBCQ.act(b,S)){const y=scrollY;render();scrollTo({top:y})}else syncAct();return}
@@ -2245,3 +2262,9 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden&&guardLive(
 render();initOnline();syncXtime();setInterval(fbTick,10000);setTimeout(()=>{if(!document.hidden&&(Number(ME.timeOnMs)||0)>(P.tOn||0)){P.tOn=Number(ME.timeOnMs);saveP()}fbCheck()},1500);
 setTimeout(()=>M3D.warm(COSTUMES[CHAR]||COSTUMES.byte,BYTE_POSES),1500);
 })();
+
+/* Diya: hovering (or tapping) one makes it splash sparks and wish Happy Diwali */
+document.addEventListener("pointerover",e=>{const d=e.target.closest&&e.target.closest(".diya,.bigdiya");if(!d||d.dataset.spl==="1")return;d.dataset.spl="1";
+ const r=d.getBoundingClientRect(),w=document.createElement("div");w.className="dsplash";w.style.left=(r.left+r.width/2)+"px";w.style.top=(r.top+r.height*.25)+"px";
+ let h="";for(let i=0;i<14;i++){const a=i/14*Math.PI*2,dd=38+(i%3)*16;h+=`<i style="--x:${(Math.cos(a)*dd).toFixed(1)}px;--y:${(Math.sin(a)*dd).toFixed(1)}px;animation-delay:${(i%4)*.03}s"></i>`}
+ w.innerHTML=h+(document.querySelector(".home4")?"<b>Happy Diwali! 🪔</b>":"");document.body.appendChild(w);setTimeout(()=>w.remove(),1500);setTimeout(()=>{delete d.dataset.spl},1600)});

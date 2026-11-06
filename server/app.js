@@ -221,6 +221,11 @@ app.post('/api/play/lifeline', requireStudent, jsonBody, wrap(async (req, res) =
       const fromMistakes = (q.mistakes || []).map((m) => S.mistakes && S.mistakes[m]).filter(Boolean);
       const fromKps = (q.kps || []).map((k) => S.kps && S.kps[k]).filter(Boolean);
       body = { hint: q.hint || fromMistakes[0] || fromKps[0] || 'Read the code one line at a time and say each value out loud.' };
+    } else if (kind === 'senior') {
+      // Ask the Senior Dev (once per game, enforced in the client): the question's own senior-dev tip
+      const S = c.graph.skills.find((x) => x.id === q.skill) || {};
+      const fromKps = (q.kps || []).map((k) => S.kps && S.kps[k]).filter(Boolean);
+      body = { tip: q.ask_senior_dev || q.hint || fromKps[0] || 'Read the code one line at a time and say each value out loud.' };
     } else return null;
     if (!p.lifelines.includes(kind)) p.lifelines.push(kind);
     await run('UPDATE engine_state SET pending = ? WHERE roll_no = ?', json(p), roll);

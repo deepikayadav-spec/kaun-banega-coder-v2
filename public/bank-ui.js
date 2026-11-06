@@ -81,9 +81,11 @@ function render(q,S){const b=init(q,S),p=q.p,t=q.type,dis=S.phase!=="ask",rev=S.
  let h="";
  switch(t){
   case "match":{const ans=det.answer;
-   h=`<div class="tiles">${p.left.map((l,i)=>{const st=rev&&ans?(b.pairs[l]===ans[l]?"right":"wrong"):"";return `<div class="mrow ${st}"><code>${esc(l)}</code><div class="mchips">${p.right.map(r=>{const on=b.pairs[l]===r,k=rev&&ans?(r===ans[l]?"ok":on?"no":""):on?"on":"";
+   h=`<div class="tiles">${p.left.map((l,i)=>{const st=rev&&ans?(b.pairs[l]===ans[l]?"right":"wrong"):"";return `<div class="mrow mcard ${st}"><div class="mprog">${codeBlock(l)}</div><div class="mchips"><span class="mch-k">It prints</span>${p.right.map(r=>{const on=b.pairs[l]===r,k=rev&&ans?(r===ans[l]?"ok":on?"no":""):on?"on":"";
     return btn("match",`data-i="${i}" data-v="${esc(r)}" aria-pressed="${on}"`,"mchip "+k,esc(r))}).join("")}</div></div>`}).join("")}</div>`;break}
-  case "predict":h=`<div class="fillrow bq"><label class="muted" for="bqtext">Type exactly what it prints</label><textarea id="bqtext" class="bq-ta${verdict}" rows="3" data-bq-in="text" spellcheck="false" autocomplete="off" ${D}>${esc(b.text||"")}</textarea></div>`;break;
+  case "predict":h=`<div class="fillrow bq"><label class="muted" for="bqtext">Type exactly what it prints</label><textarea id="bqtext" class="bq-ta${verdict}" rows="3" data-bq-in="text" spellcheck="false" autocomplete="off" placeholder="e.g.
+first printed line
+second printed line" ${D}>${esc(b.text||"")}</textarea></div>`;break;
   case "hunt":{const ans=det.answer?det.answer.map(String):null;
    h=`<div class="bq-grid">${p.values.map(v=>{const on=b.picks.includes(v),k=rev&&ans?(ans.includes(v)?(on?"ok":"miss"):on?"no":""):on?"on":"";return btn("hunt",`data-v="${esc(v)}" aria-pressed="${on}"`,"mchip "+k,esc(v))}).join("")}</div>`;break}
   case "path2":case "bug":{const sel=t==="bug"?[b.line]:b.path,ans=det.answer;
@@ -112,7 +114,7 @@ function render(q,S){const b=init(q,S),p=q.p,t=q.type,dis=S.phase!=="ask",rev=S.
   case "mystery":case "fix":case "write":case "grow":
    h=`<div class="bq">${editor("code",b.code||"",dis,t==="fix"?"Fix the code here":"Write your code here",verdict)}<div class="bq-row">${!dis&&(b.code||"").trim()?btn("run","","btn quiet sm","▶ Run it"):""}</div>${b.out?outBlock(b.out.error?"Python says":"Your code prints",b.out.error||b.out.stdout):""}</div>`;break;
   case "faded":
-   h=`<div class="bq">${p.steps.map((st,i)=>`<div class="bq-step"><small>${esc(st.label)}</small>${st.solved?codeBlock(st.code):editor("step",b.steps[i],dis,st.hint||"",verdict,i)}${!st.solved&&st.hint?`<p class="muted bq-note">${esc(st.hint)}</p>`:""}</div>`).join("")}
+   h=`<div class="bq">${p.steps.map((st,i)=>`<div class="bq-step ${st.solved?"solved":""}"><div class="bq-sh"><i>${st.solved?"✓":i+1}</i><b>${esc(st.label)}</b></div>${!st.solved&&st.hint?`<p class="bq-sdo">${esc(st.hint)}</p>`:""}${q.stepOut&&q.stepOut[i]?`<p class="bq-sout"><span>${st.solved?"It prints":"Should print"}</span><code>${esc(q.stepOut[i])}</code></p>`:""}${st.solved?codeBlock(st.code):editor("step",b.steps[i],dis,"Type your code here",verdict,i)}</div>`).join("")}
    <div class="bq-row">${!dis?btn("run","","btn quiet sm","▶ Run all steps"):""}</div>${b.out?outBlock(b.out.error?"Python says":"All steps print",b.out.error||b.out.stdout):""}</div>`;break;
   case "diverge":
    h=`<div class="bq">${[0,1,2].map(i=>`<div class="bq-step"><small>Program ${i+1}${i===2?" (optional)":""}</small>${editor("div",b.progs[i],dis,"print(…)",verdict,i)}${b.outs&&b.outs[i]?outBlock(b.outs[i].error?"Python says":"prints",b.outs[i].error||b.outs[i].stdout):""}</div>`).join("")}

@@ -23,13 +23,13 @@ The app follows the same pattern as Saturday Sprint: one Express app running as 
 ### Engine rules
 
 - **Right answer:**
-  - At L1 below the skill's `rmax`, R goes up one.
-  - Otherwise two right answers in a row move the student to the next level.
+  - Below the skill's `rmax`, R goes up one (R1 → R2, R2 → R3), on any level. That answer does not count toward the streak.
+  - Otherwise two right answers in a row move the student to the next level, keeping the current R.
   - Finishing L4 marks the skill done and opens every skill whose AND-of-OR prerequisites are now met.
 - **Wrong answer:**
   - The next variant is served.
   - Two misses on the same level and R switch to the next question type.
-  - At L1 on the starting R2, a miss drops the student to R1.
+  - Every skill starts at R2 (R1 if `rmax` is 1). Two misses in a row at the same R drop R by one (R3 → R2, R2 → R1), on any level. The level never drops.
 - **What gets served:**
   - Only types that have live questions for that skill and level, minus the skill's `skipped_types`.
   - The hot seat serves only types whose modes include `hotseat`; the rest come up in Practice.
@@ -37,7 +37,7 @@ The app follows the same pattern as Saturday Sprint: one Express app running as 
 
 ### How students see their progress
 
-`levelTrack()` in `server/engine.js` turns a skill's state into what moves the student up from where they are: the L1 difficulty climb still to go, the two-in-a-row slots, the right answers remaining, and what a miss does there. It is display only and comes with every engine view as `skills[id].track`, so the game never re-decides the rules. A test plays random answers and checks the track against what `applyAnswer` actually does.
+`levelTrack()` in `server/engine.js` turns a skill's state into what moves the student up from where they are: the difficulty climb still to go, the two-in-a-row slots, the right answers remaining, and what a miss does there. It is display only and comes with every engine view as `skills[id].track`, so the game never re-decides the rules. A test plays random answers and checks the track against what `applyAnswer` actually does.
 
 - **Question page:** one slim line beside the "Question N" chip: "Level N", a 4-tick mini bar (the current tick fills with the streak), the two streak dots (each earned streak burns with an animated flame), and the rule "2 consecutive streaks to unlock the next level". Tap it for the topic's level milestones (the full Level 1 … Level 4 bar).
 - **Streak moments (display only, Duolingo style):** a chunky flat flame animation over the question (no card behind it, always below the timer): the in-a-row count rolls up ("1 IN A ROW!") and the next of the two check circles fills. On the Level 1 warm-up it says "WARMING UP!". A miss that breaks a streak turns the flame icy blue in an ice cube ("STREAK FROZEN", the dot stays frozen on this device); the next right answer cracks the cube into shards ("STREAK BACK ON!", or "ICE BROKEN!" with no count when that answer is a Level 1 warm-up step). The engine still resets the streak on a miss, so the count after the thaw is 1 of 2. Sounds: `SFX.ignite`, `freeze`, `shatter`; the level-up card adds one big flame behind the badge (`SFX.blaze`). Students see levels only: no R1–R3 anywhere in the level UI.

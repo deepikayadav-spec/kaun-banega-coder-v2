@@ -45,25 +45,88 @@ test('L1 climbs R before the streak counts (rmax 3)', () => {
   assert.equal(st.skills.S7.r, 3); assert.equal(r.transitions[0].kind, 'r_up');
 });
 
-test('wrong at L1 on the starting R2 drops to R1; every answer moves on to the next type', () => {
+test('two misses in a row at R2 drop to R1 (rmax 2); every answer moves on to the next type', () => {
   const A = fullAvail(), st = newState(G);
   st.skills.S1.status = 'done'; st.skills.S4.status = 'done'; st.skills.S10.status = 'done';
   st.skills.S2.status = 'open';
   assert.equal(activeSkill(G, A, st).id, 'S2');
   assert.equal(st.skills.S2.r, 2);
   const a0 = address(G, A, st, 'S2', 'hotseat');
-  const r = applyAnswer(G, st, 'S2', a0.type, false);
-  assert.equal(st.skills.S2.r, 1); assert.equal(r.transitions[0].kind, 'r_drop');
+  let r = applyAnswer(G, st, 'S2', a0.type, false);
+  assert.equal(st.skills.S2.r, 2, 'one miss keeps R2'); assert.equal(r.transitions.length, 0);
   const a1 = address(G, A, st, 'S2', 'hotseat');
   assert.notEqual(a1.type, a0.type, 'a miss moves on to the next type');
-  applyAnswer(G, st, 'S2', a1.type, false);
+  r = applyAnswer(G, st, 'S2', a1.type, false);
+  assert.equal(st.skills.S2.r, 1); assert.equal(r.transitions[0].kind, 'r_drop');
+  assert.deepEqual(r.transitions[0].detail, { level: 1, from: 2, to: 1 });
   assert.notEqual(address(G, A, st, 'S2', 'hotseat').type, a1.type);
+  // R1 is the floor; one right at R1 climbs back to R2 without counting toward the streak
+  const a2 = address(G, A, st, 'S2', 'hotseat'); applyAnswer(G, st, 'S2', a2.type, false); applyAnswer(G, st, 'S2', address(G, A, st, 'S2', 'hotseat').type, false);
+  assert.equal(st.skills.S2.r, 1);
+  r = applyAnswer(G, st, 'S2', address(G, A, st, 'S2', 'hotseat').type, true);
+  assert.equal(st.skills.S2.r, 2); assert.equal(r.transitions[0].kind, 'r_up'); assert.equal(st.skills.S2.rightStreak, 0);
+});
+
+test('rmax 3: R2 → R3 on one right; two misses in a row at R3 → R2; a right in between resets the misses', () => {
+  const A = fullAvail(), st = newState(G);
+  for (const s of Object.keys(st.skills)) st.skills[s].status = 'done';
+  st.skills.S7.status = 'open';
+  const ans = (ok) => applyAnswer(G, st, 'S7', address(G, A, st, 'S7', 'hotseat').type, ok);
+  ans(true); assert.equal(st.skills.S7.r, 3);
+  ans(false); ans(true); ans(false);
+  assert.equal(st.skills.S7.r, 3, 'misses not in a row do not drop R');
+  const r = ans(false);
+  assert.equal(st.skills.S7.r, 2); assert.deepEqual(r.transitions[0].detail, { level: 1, from: 3, to: 2 });
+  ans(false); assert.equal(st.skills.S7.r, 2, 'the miss count starts again after a drop');
+  ans(false); assert.equal(st.skills.S7.r, 1);
+});
+
+test('demoted to R1, rights climb R one at a time and never skip a level', () => {
+  const A = fullAvail(), st = newState(G);
+  for (const s of Object.keys(st.skills)) st.skills[s].status = 'done';
+  const play = (id, ok) => applyAnswer(G, st, id, address(G, A, st, id, 'hotseat').type, ok);
+  // rmax 3: R2 → R3, then 2 wrong → R2, 2 wrong → R1
+  st.skills.S7.status = 'open';
+  for (const ok of [true, false, false, false, false]) play('S7', ok);
+  assert.equal(st.skills.S7.level, 1); assert.equal(st.skills.S7.r, 1);
+  let r = play('S7', true);
+  assert.equal(r.transitions[0].kind, 'r_up'); assert.equal(st.skills.S7.r, 2); assert.equal(st.skills.S7.level, 1); assert.equal(st.skills.S7.rightStreak, 0);
+  r = play('S7', true);
+  assert.equal(r.transitions[0].kind, 'r_up'); assert.equal(st.skills.S7.r, 3); assert.equal(st.skills.S7.level, 1, '2 rights from R1 do not level up');
+  play('S7', true); r = play('S7', true);
+  assert.equal(r.transitions[0].kind, 'level_up'); assert.equal(st.skills.S7.level, 2); assert.equal(st.skills.S7.r, 3);
+  // rmax 2: 2 wrong → R1, 1 right → R2, then 2 in a row level up at R2
+  st.skills.S2.status = 'open';
+  play('S2', false); play('S2', false); assert.equal(st.skills.S2.r, 1);
+  play('S2', true); assert.equal(st.skills.S2.r, 2); assert.equal(st.skills.S2.level, 1);
+  play('S2', true); r = play('S2', true);
+  assert.equal(r.transitions[0].kind, 'level_up'); assert.equal(st.skills.S2.level, 2); assert.equal(st.skills.S2.r, 2);
+});
+
+test('R moves on every level and a level-up keeps the current R', () => {
+  const A = fullAvail(), st = newState(G);
+  for (const s of Object.keys(st.skills)) st.skills[s].status = 'done';
+  st.skills.S7.status = 'open'; st.skills.S7.level = 2; st.skills.S7.r = 2;
+  const ans = (ok) => applyAnswer(G, st, 'S7', address(G, A, st, 'S7', 'hotseat').type, ok);
+  let r = ans(true); assert.equal(r.transitions[0].kind, 'r_up'); assert.equal(st.skills.S7.r, 3);
+  ans(false); r = ans(false); assert.equal(r.transitions[0].kind, 'r_drop'); assert.equal(st.skills.S7.r, 2);
+  ans(true); assert.equal(st.skills.S7.r, 3);
+  ans(false); ans(false); assert.equal(st.skills.S7.r, 2);
+  assert.equal(st.skills.S7.rightStreak, 0);
+  // at R2 below rmax a right climbs R first; from R3 two in a row level up and R stays R3
+  ans(true); ans(true); r = ans(true);
+  assert.equal(r.transitions[0].kind, 'level_up'); assert.equal(st.skills.S7.level, 3); assert.equal(st.skills.S7.r, 3);
+  assert.equal(r.msg, 'Promoted to L3 Repair.');
+  // rmax 1 never changes R
+  st.skills.S1.status = 'open'; st.skills.S1.level = 1; st.skills.S1.r = 1;
+  for (const ok of [false, false, false, true]) applyAnswer(G, st, 'S1', address(G, A, st, 'S1', 'hotseat').type, ok);
+  assert.equal(st.skills.S1.r, 1);
 });
 
 test('each level starts at T1 V1, cycles the types, then repeats them with the next variant; two right in a row levels up', () => {
   const A = fullAvail(), st = newState(G);
   for (const s of Object.keys(st.skills)) st.skills[s].status = 'done';
-  st.skills.S5.status = 'open'; st.skills.S5.level = 2;   // L2 plays at rmax: no R climbing in the way
+  st.skills.S5.status = 'open'; st.skills.S5.level = 2;
   const types = typesFor(G, A, G.skills[G.idx.S5], 2, 'hotseat');
   const seen = [];
   for (let i = 0; i < types.length + 1; i++) {
@@ -73,6 +136,7 @@ test('each level starts at T1 V1, cycles the types, then repeats them with the n
   }
   assert.deepEqual(seen.slice(0, types.length), types.map((t) => t + ' V1'), 'T1 V1, T2 V1, … in order');
   assert.equal(seen[types.length], types[0] + ' V2', 'then T1 V2');
+  st.skills.S5.r = G.skills[G.idx.S5].rmax;   // the misses lowered R: start the two rights at rmax so no R climb is in the way
   let a = address(G, A, st, 'S5', 'hotseat'); applyAnswer(G, st, 'S5', a.type, true);
   a = address(G, A, st, 'S5', 'hotseat'); const r = applyAnswer(G, st, 'S5', a.type, true);
   assert.equal(r.transitions[0].kind, 'level_up');
@@ -162,10 +226,11 @@ test('levelTrack matches what applyAnswer really does, step by step', async () =
       assert.equal(n, t.remaining, `${id} L${sk.level} R${sk.r} streak ${sk.rightStreak}`);
       assert.equal(t.climb.length + t.need - t.streak, t.remaining);
       assert.deepEqual(t.next, sk.level < 4 ? { level: sk.level + 1, name: ['', 'Recognise', 'Reason', 'Repair', 'Create'][sk.level + 1] } : { skillDone: true });
-      // onMiss: a miss here drops to R1 exactly when the track says so
+      // onMiss: a miss here drops R exactly when the track says so, to the R it names
       const miss = clone(st), a0 = address(G, A, miss, id, 'hotseat');
       const res = applyAnswer(G, miss, id, a0.type, false);
-      assert.equal(res.transitions.some((x) => x.kind === 'r_drop'), t.onMiss === 'drop_r1');
+      assert.equal(res.transitions.some((x) => x.kind === 'r_drop'), t.onMiss === 'drop_r');
+      if (t.onMiss === 'drop_r') assert.equal(miss.skills[id].r, t.dropTo);
       // then play on with a random answer
       const a = address(G, A, st, id, 'hotseat'); applyAnswer(G, st, id, a.type, rnd() < 0.65);
     }

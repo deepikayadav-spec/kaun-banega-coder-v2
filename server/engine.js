@@ -7,9 +7,10 @@
 //   2. Each level starts at T1 V1. Every answer, right or wrong, moves on to the next question type of that level.
 //      Two right in a row moves up a level (L4 → skill done, which opens the skills that needed it).
 //   3. Once every question type at a level has been tried, the types repeat with the next variant: T1 V2, T2 V2, …
-//   4. R1 uses this skill only, R2 mixes in 1–2 earlier skills, R3 mixes in 3 or more. Difficulty moves as before:
-//      on L1 a right answer below the skill's rmax raises R by one, and a miss on the starting R drops to R1;
-//      L2–L4 play at rmax.
+//   4. R1 uses this skill only, R2 mixes in 1–2 earlier skills, R3 mixes in 3 or more. Difficulty (every level):
+//      a skill starts at R2 (R1 if rmax is 1); a right answer below the skill's rmax raises R by one (R1 → R2,
+//      R2 → R3) and does not count toward the two-in-a-row; two misses in a row at the same R drop R by one
+//      (R3 → R2, R2 → R1). A level-up keeps the current R.
 // Changes for the real bank:
 //   - the graph is skill-graph.json (stored rmax, skipped_types honoured);
 //   - a type is offered only if the bank has live questions for it at that skill and level;
@@ -158,7 +159,7 @@ export function address(G, avail, st, id, mode) {
 export function applyAnswer(G, st, id, type, ok) {
   const S = G.skills[G.idx[id]], sk = st.skills[id], tr = [];
   if (!S || !sk || sk.status !== 'open') return { transitions: tr, msg: '' };
-  const l = sk.level, r = sk.r, start = Math.min(2, S.rmax);
+  const l = sk.level, r = sk.r;
   posOf(sk); sk.pos[l] = (sk.pos[l] || 0) + 1;   // rule 2: every answer moves on to the next type
   st.used[type] = (st.used[type] || 0) + 1;
   const ck = l + '-' + r, cell = sk.cells[ck] || (sk.cells[ck] = { attempts: 0, wrong: 0, cleared: false });
@@ -167,18 +168,21 @@ export function applyAnswer(G, st, id, type, ok) {
   let nl = l, nr = r, done = false, msg = '';
   if (ok) {
     sk.streak = { key: null, count: 0 };
-    if (l === 1 && r < S.rmax) { nr = r + 1; msg = 'Up to ' + R_NAMES[nr] + '.'; tr.push({ kind: 'r_up', detail: { level: l, from: r, to: nr } }); }
+    if (r < S.rmax) { nr = r + 1; msg = 'Up to ' + R_NAMES[nr] + '.'; tr.push({ kind: 'r_up', detail: { level: l, from: r, to: nr } }); }
     else if (!sk.rightStreak) { sk.rightStreak = 1; msg = 'One more right to ' + (l < 4 ? 'reach ' + LEVEL_NAMES[l + 1] : 'finish the skill') + '.'; }
     else if (l === 4) { done = true; msg = 'Skill done.'; }
     else {
-      nl = l + 1; nr = S.rmax; sk.rightStreak = 0; msg = 'Promoted to ' + LEVEL_NAMES[nl] + '.';
+      nl = l + 1; nr = r; sk.rightStreak = 0; msg = 'Promoted to ' + LEVEL_NAMES[nl] + '.';   // a level-up keeps the current R
       tr.push({ kind: 'level_up', detail: { from: { l, r }, to: { l: nl, r: nr } } });
     }
   } else {
     sk.rightStreak = 0;
     if (sk.streak.key === ck) sk.streak.count++; else sk.streak = { key: ck, count: 1 };
-    if (l === 1 && r === start && r > 1) { nr = 1; st.drops++; msg = 'Down to R1 Low.'; tr.push({ kind: 'r_drop', detail: { level: l, from: r, to: 1 } }); }
-    else { st.retries++; msg = 'On to the next question type.'; }
+    // two misses in a row at the same R drop R by one (R3 → R2, R2 → R1); R1 is the floor
+    if (r > 1 && sk.streak.count >= 2) {
+      nr = r - 1; st.drops++; sk.streak = { key: null, count: 0 }; msg = 'Down to ' + R_NAMES[nr] + '.';
+      tr.push({ kind: 'r_drop', detail: { level: l, from: r, to: nr } });
+    } else { st.retries++; msg = r > 1 ? 'One more miss in a row drops to ' + R_NAMES[r - 1] + '.' : 'On to the next question type.'; }
   }
   if (nl !== l) { sk.pos[nl] = 0; sk.vb[nl] = 0; }   // each level starts at T1 V1
   sk.level = nl; sk.r = nr;
@@ -202,21 +206,22 @@ export function skillProgress(sk) {
 
 // What moves the student up from where they are now, read off the same inputs applyAnswer uses (level, r, rmax,
 // rightStreak, the starting R). Display only: it never changes the state. null for a skill that is not open.
-//   climb:     L1 only, the R values still to climb (each right answer raises R by one until rmax)
+//   climb:     the R values still to climb (each right answer raises R by one until rmax)
 //   streak/need: the two-in-a-row slots and how many are filled
 //   remaining: right answers still needed, if none are missed
-//   onMiss:    what a miss does here ("drop_r1" on L1 at the starting R above R1, else "streak_reset")
+//   onMiss:    what a miss does here ("drop_r" when it is the second miss in a row above R1, else "streak_reset")
 export function levelTrack(S, sk) {
   if (!S || !sk || sk.status !== 'open') return null;
-  const l = sk.level, r = sk.r || 1, rmax = S.rmax || 1, start = Math.min(2, rmax);
+  const l = sk.level, r = sk.r || 1, rmax = S.rmax || 1;
   const climb = [];
-  if (l === 1) for (let x = r + 1; x <= rmax; x++) climb.push(x);
+  for (let x = r + 1; x <= rmax; x++) climb.push(x);
+  const drop = r > 1 && !!sk.streak && sk.streak.key === l + '-' + r && sk.streak.count === 1;
   const streak = climb.length ? 0 : Math.min(1, sk.rightStreak || 0), need = 2;
   return {
     level: l, levelName: LEVEL_NAMES[l].slice(3), r, rmax, climb, streak, need,
     remaining: climb.length + need - streak,
     next: l < 4 ? { level: l + 1, name: LEVEL_NAMES[l + 1].slice(3) } : { skillDone: true },
-    onMiss: l === 1 && r === start && r > 1 ? 'drop_r1' : 'streak_reset'
+    onMiss: drop ? 'drop_r' : 'streak_reset', ...(drop ? { dropTo: r - 1 } : {})
   };
 }
 

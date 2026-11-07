@@ -1242,7 +1242,7 @@ function famePlausible(f){const c=+f.correct||0,a=+f.answered||0,w=+f.coins||0,b
 function podiumHTML(rows){const ini=n=>esc(String(n||"?").trim().charAt(0).toUpperCase()||"?");const at=i=>rows[i];const one=(i,cls)=>{const r=at(i);return `<div class="pod ${cls}${r?"":" empty"}"><div class="who"><span class="av">${r?ini(r.n):"?"}</span><span class="nm">${r?esc(r.n):"Your spot"}</span><span class="amt">${r?fmtR(r.coins||0):"—"}</span></div><div class="blk">${cls.slice(1)}</div></div>`};if(!rows.length)return "";return `<div class="podium" aria-label="Top three">${one(1,"p2")}${one(0,"p1")}${one(2,"p3")}</div>`}
 /* ================= Skill path: driven by the progression engine on the server =================
    Checkpoint › skill group (one prize rung) › skill › 4 levels (L1 Recognise … L4 Create) › R1–R3 difficulty › 25 variants.
-   Two right answers in a row clear a level (L1 first climbs R up to the skill's rmax). ID = C·G·S·L·T·R·V. */
+   Two right answers in a row clear a level (a right answer below rmax first climbs R; 2 misses in a row drop R by one). ID = C·G·S·L·T·R·V. */
 const LEVELS=[1,2,3,4].map(l=>({id:"L"+l,name:(GR.levels||{})[l]||"",types:GR.types.filter(t=>t.level===l).map(t=>t.name),keys:GR.types.filter(t=>t.level===l).map(t=>t.key)}));
 const DIFFS=[["R1","Low","this skill only"],["R2","Medium","+ 1–2 earlier skills"],["R3","Hard","+ 3 or more earlier skills"]],VARIANTS=25;
 const TSTART=(()=>{let t=0;return LEVELS.map(L=>{const a=t;t+=L.types.length;return a})})();
@@ -1355,7 +1355,7 @@ function progressDelta(){const I=S.info;if(S.phase!=="reveal"||!I||!I.tb)return 
  if(has("skill_done")){ic="🏆";cls="big";h="Topic cleared!";const un=T.filter(x=>x.kind==="unlock").map(x=>SK[x.skill]).filter(Boolean);p=un.length?`Unlocked: ${un.slice(0,3).map(s=>esc(s.name)).join(", ")}${un.length>3?` and ${un.length-3} more`:""}.`:"All 4 levels of this topic done."}
  else if(has("level_up")){const to=has("level_up").detail.to.l;ic="⬆";cls="big";h=`Level up! Welcome to Level ${to}`;p=esc(LVDO(to)||"New question types start now.")}
  else if(has("r_up")){ic="▲";cls="up";h="Warming up";p=ta?esc(lvGoal(ta)):""}
- else if(has("r_drop")){ic="↺";cls="soft";h="Back to warm-up";p="A couple of right answers warm you up again, then 2 in a row moves you up."}
+ else if(has("r_drop")){ic="↺";cls="soft";h="Back to warm-up";p="One right answer moves you back up, then 2 in a row moves you up a level."}
  else if(I.ok&&ta&&ta.streak>tb.streak){ic="⚡";cls="up";h="1 of 2 in a row";p=esc(lvGoal(ta))}
  else if(!I.ok&&tb.streak>0){ic="↺";cls="soft";h="Streak reset";p=`Your level is safe: 2 right in a row will still ${lvTo(tb)}.`}
  else if(!I.ok){ic="•";cls="soft";h=`Still Level ${tb.level}`;p="A miss never takes a level away. 2 right in a row moves you up."}

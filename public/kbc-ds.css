@@ -1,0 +1,440 @@
+/* ==========================================================================================
+   KBC design system (Nov 2026)
+   Loaded after kbc.css. One source for tokens, materials, motion and the screen layouts.
+   Brand: deep navy, gold = money and actions, teal = progress, green / red only for right / wrong.
+   Rules here are written once per component. Where kbc.css still forces a value with !important,
+   this file answers with !important on that property only.
+   ========================================================================================== */
+
+/* ---------- 1. Tokens ---------- */
+:root{
+  /* spacing: 4 / 8 pt grid */
+  --s-1:4px;--s-2:8px;--s-3:12px;--s-4:16px;--s-5:20px;--s-6:24px;--s-7:32px;--s-8:40px;--s-9:56px;--s-10:72px;
+  /* radii */
+  --r-xs:8px;--r-sm:12px;--r-md:16px;--r-lg:22px;--r-xl:28px;--r-pill:999px;
+  /* type */
+  --ff-body:"Plus Jakarta Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  --ff-display:"Unbounded","Plus Jakarta Sans",system-ui,sans-serif;
+  --ff-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+  --fs-cap:12px;--fs-sm:13.5px;--fs-body:15px;--fs-lg:17px;--fs-h3:clamp(18px,1.1vw + 10px,22px);
+  --fs-h2:clamp(22px,1.6vw + 12px,30px);--fs-h1:clamp(30px,3vw + 14px,52px);
+  /* colour */
+  --c-bg-0:#060918;--c-bg-1:#0A0F26;--c-bg-2:#121A3D;
+  --c-tx:#F4F6FF;--c-tx-2:#B4BCDD;--c-tx-3:#8A93B8;
+  --c-gold:#FFC83D;--c-gold-hi:#FFE08A;--c-gold-ink:#1A1300;--c-gold-soft:rgba(255,200,61,.12);
+  --c-teal:#5EEAD4;--c-teal-soft:rgba(94,234,212,.12);
+  --c-ok:#34D399;--c-ok-soft:rgba(52,211,153,.14);--c-bad:#F87171;--c-bad-soft:rgba(248,113,113,.14);
+  --c-line:rgba(255,255,255,.10);--c-line-2:rgba(255,255,255,.16);
+  /* materials: thin for controls, thick for big surfaces (bigger surface = more blur, deeper shadow) */
+  --mat-thin:rgba(255,255,255,.055);--mat-thick:rgba(20,26,56,.58);--mat-solid:#10163A;
+  --blur-thin:blur(14px) saturate(150%);--blur-thick:blur(28px) saturate(170%);
+  --edge:inset 0 1px 0 rgba(255,255,255,.09);
+  --e-1:0 1px 2px rgba(0,0,0,.35),0 4px 12px -6px rgba(0,0,0,.45);
+  --e-2:0 2px 6px rgba(0,0,0,.30),0 18px 40px -20px rgba(0,0,0,.70);
+  --e-3:0 8px 20px rgba(0,0,0,.35),0 40px 80px -30px rgba(0,0,0,.80);
+  --ring:0 0 0 3px rgba(94,234,212,.55);
+  /* motion: critically damped feel; never longer than it needs to be */
+  --ease-out:cubic-bezier(.32,.72,0,1);
+  --ease-in-out:cubic-bezier(.65,0,.35,1);
+  --ease-spring:linear(0,.009,.035 2.1%,.141 4.4%,.723 15.5%,.938 20.7%,1.017 24.3%,1.061 28.1%,1.067 31.9%,1.056 35.6%,1.013 45%,.998 50.4%,.994 56.4%,1 74.4%,1);
+  --d-1:120ms;--d-2:220ms;--d-3:360ms;--d-4:520ms;
+  /* layout */
+  --q-max:1000px;--board-w:clamp(264px,21vw,360px);--buddy-w:220px;--page-max:1240px;--gutter:clamp(16px,2.4vw,32px);
+}
+html[data-theme="light"]{
+  --c-bg-0:#EEF1FA;--c-bg-1:#F6F8FD;--c-bg-2:#FFFFFF;
+  --c-tx:#0E1430;--c-tx-2:#3C4566;--c-tx-3:#5F6888;
+  --c-gold:#B7791F;--c-gold-hi:#D69E2E;--c-gold-ink:#FFFFFF;--c-gold-soft:rgba(183,121,31,.10);
+  --c-teal:#0F766E;--c-teal-soft:rgba(15,118,110,.10);
+  --c-ok:#047857;--c-ok-soft:rgba(4,120,87,.10);--c-bad:#B91C1C;--c-bad-soft:rgba(185,28,28,.08);
+  --c-line:rgba(14,20,48,.10);--c-line-2:rgba(14,20,48,.18);
+  --mat-thin:rgba(255,255,255,.72);--mat-thick:rgba(255,255,255,.80);--mat-solid:#FFFFFF;
+  --edge:inset 0 1px 0 rgba(255,255,255,.9);
+  --e-1:0 1px 2px rgba(14,20,48,.06),0 4px 12px -6px rgba(14,20,48,.12);
+  --e-2:0 2px 6px rgba(14,20,48,.05),0 18px 40px -22px rgba(14,20,48,.22);
+  --e-3:0 8px 20px rgba(14,20,48,.08),0 40px 80px -30px rgba(14,20,48,.30);
+  --ring:0 0 0 3px rgba(15,118,110,.45);
+}
+
+/* the page never shifts sideways when a scrollbar comes or goes */
+html{scrollbar-gutter:stable}
+
+/* ---------- 2. Hot Seat layout (the only place it is defined) ----------
+   .play holds three children: .mcol (Pixel), .left (HUD, question, answers) and .side (money board).
+   Three tracks with equal side tracks keep the question column centred in the viewport whether the
+   money board is shown or folded (.play.board-off). Folding the board only widens the middle track,
+   symmetrically, so nothing moves sideways. */
+.play{display:grid!important;grid-template-columns:minmax(var(--board-w),1fr) minmax(0,var(--q-max)) minmax(var(--board-w),1fr)!important;
+  grid-template-areas:"buddy main board";column-gap:var(--s-6)!important;row-gap:0;align-items:start;
+  margin:var(--s-2) 0 0!important;padding:0!important;width:100%}
+.play.board-off{grid-template-columns:minmax(var(--buddy-w),1fr) minmax(0,var(--q-max)) minmax(var(--buddy-w),1fr)!important}
+.play>.mcol{grid-area:buddy;justify-self:end;width:min(100%,var(--buddy-w));display:flex!important;flex-direction:column;align-items:center;
+  position:sticky;top:96px;padding-top:var(--s-9)}
+.play>.mcol .say{max-width:210px}
+.play>.left{grid-area:main;min-width:0;width:100%;max-width:none!important;margin:0!important;display:flex;flex-direction:column;gap:var(--s-3)}
+.play>.side{grid-area:board;justify-self:start;width:min(100%,var(--board-w));min-width:0}
+.play.board-off>.side{display:none!important}
+.play .left pre,.play .left .code{max-width:100%;overflow-x:auto}
+.sheetx,.sheet-scrim{display:none}
+.mbtoggle{display:none!important}
+
+/* Compact (tablet and phone): one centred column, Pixel rests, and the board becomes a bottom sheet. */
+@media (max-width:1200px){
+  .play,.play.board-off{grid-template-columns:minmax(0,1fr)!important;grid-template-areas:"main";justify-items:center;padding-bottom:var(--s-10)!important}
+  .play>.left{max-width:var(--q-max)!important}
+  .play>.mcol{display:none!important}
+  .hud .bmax,.board .bmin{display:none!important}
+  .mbtoggle{display:inline-flex!important;align-items:center;gap:var(--s-2);position:fixed;z-index:94;
+    right:max(var(--s-4),env(safe-area-inset-right,0px));bottom:calc(var(--s-4) + env(safe-area-inset-bottom,0px));
+    min-height:44px;padding:0 var(--s-5);border-radius:var(--r-pill);font:700 var(--fs-sm)/1 var(--ff-body);letter-spacing:.01em;
+    background:var(--mat-thick)!important;color:var(--c-gold)!important;border:1px solid color-mix(in srgb,var(--c-gold) 45%,transparent)!important;
+    -webkit-backdrop-filter:var(--blur-thick);backdrop-filter:var(--blur-thick);box-shadow:var(--e-2)!important;
+    transition:transform var(--d-1) var(--ease-out),opacity var(--d-2) var(--ease-out)}
+  .mbtoggle:active{transform:scale(.96)}
+  body.boardopen .mbtoggle{opacity:0;pointer-events:none}
+  /* the sheet: always in the DOM, slides up from the bottom edge and back down the same way */
+  html body .play>.side,html body .play.board-off>.side{display:flex!important;flex-direction:column;position:fixed!important;z-index:96;
+    left:50%;right:auto;bottom:0;top:auto!important;width:min(560px,100%)!important;height:auto!important;max-height:min(82vh,720px)!important;min-height:0!important;
+    padding:var(--s-2) var(--s-4) calc(var(--s-4) + env(safe-area-inset-bottom,0px))!important;overflow:auto;overscroll-behavior:contain;
+    border-radius:var(--r-xl) var(--r-xl) 0 0;background:var(--mat-solid)!important;border:1px solid var(--c-line-2)!important;border-bottom:0!important;
+    box-shadow:var(--e-3)!important;transform:translate(-50%,100%);visibility:hidden;
+    transition:transform var(--d-3) var(--ease-out),visibility 0s linear var(--d-3)}
+  html body.boardopen .play>.side{transform:translate(-50%,0);visibility:visible;transition:transform var(--d-3) var(--ease-out),visibility 0s}
+  html body .play>.side::before{content:"";align-self:center;flex:none;width:40px;height:5px;margin:2px 0 var(--s-2);border-radius:3px;background:var(--c-line-2)}
+  .play>.side .sheetx{display:inline-flex;align-self:flex-end;align-items:center;min-height:36px;padding:0 var(--s-4);margin:calc(-1 * var(--s-5)) 0 var(--s-1);
+    border-radius:var(--r-pill);border:0;background:var(--c-gold-soft);color:var(--c-gold);font:700 var(--fs-sm)/1 var(--ff-body);cursor:pointer}
+  .play>.side .board{flex:none!important;height:auto!important;max-height:none!important;background:transparent!important;border:0!important;box-shadow:none!important;
+    -webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:0!important}
+  html[data-theme] body .play>.side .board.min .rung{display:grid!important}
+  html[data-theme] body.qscreen .play>.side .board .rung{flex:none!important;min-height:44px!important;height:auto!important;overflow:visible!important}
+  /* dim what is behind; tapping it closes the sheet */
+  .play>.sheet-scrim{display:block;position:fixed;inset:0;z-index:95;background:rgba(3,5,14,.55);opacity:0;pointer-events:none;transition:opacity var(--d-3) var(--ease-out)}
+  body.boardopen .play>.sheet-scrim{opacity:1;pointer-events:auto}
+  html[data-theme="light"] .play>.sheet-scrim{background:rgba(14,20,48,.30)}
+}
+@media (max-width:1200px) and (prefers-reduced-motion:reduce){
+  html body .play>.side,html body.boardopen .play>.side{transition:opacity var(--d-2) linear,visibility 0s linear var(--d-2)!important}
+  html body .play>.side{transform:translate(-50%,0)!important;opacity:0}
+  html body.boardopen .play>.side{opacity:1;transition:opacity var(--d-2) linear,visibility 0s!important}
+}
+
+/* ==========================================================================================
+   3. Base: canvas, type, focus
+   The prefix "html[data-theme] body" lifts these rules above the older skins in kbc.css
+   (including their light-theme rules) without needing an id.
+   ========================================================================================== */
+html[data-theme]{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+html[data-theme="dark"] body{background:
+  radial-gradient(1100px 620px at 50% -14%,rgba(64,80,190,.30) 0%,transparent 70%),
+  radial-gradient(900px 600px at 50% 120%,rgba(255,200,61,.06) 0%,transparent 70%),
+  linear-gradient(180deg,#0A0F28 0%,#070B1E 60%,#050816 100%) fixed!important;color:var(--c-tx)}
+html[data-theme="light"] body{background:
+  radial-gradient(1100px 620px at 50% -14%,rgba(99,120,255,.12) 0%,transparent 70%),
+  linear-gradient(180deg,#F6F8FD 0%,#EEF1FA 100%) fixed!important;color:var(--c-tx)}
+html[data-theme] body{font-family:var(--ff-body)}
+html[data-theme] body ::selection{background:rgba(255,200,61,.35);color:inherit}
+html[data-theme] body :focus-visible{outline:none!important;box-shadow:var(--ring)!important}
+html[data-theme] body .muted{color:var(--c-tx-2)!important}
+/* headings: weight + size + leading as a set; tracking tightens as size grows */
+html[data-theme] body .ghead,html[data-theme] body .fhead,html[data-theme] body .dhead{margin-bottom:var(--s-5)}
+html[data-theme] body .ghead h2,html[data-theme] body .fhead h2,html[data-theme] body .dhead h2{font:800 var(--fs-h2)/1.1 var(--ff-display)!important;letter-spacing:-.02em!important;color:var(--c-tx)!important;margin:0 0 var(--s-2)!important}
+html[data-theme] body .ghead p,html[data-theme] body .fhead p{font:500 var(--fs-body)/1.55 var(--ff-body);color:var(--c-tx-2);margin:0;max-width:62ch}
+
+/* ==========================================================================================
+   4. Surfaces: one card, one chip
+   ========================================================================================== */
+html[data-theme] body .card,html[data-theme] body .qcard,html[data-theme] body .board{
+  background:var(--mat-thick)!important;border:1px solid var(--c-line)!important;border-radius:var(--r-lg)!important;
+  -webkit-backdrop-filter:var(--blur-thick)!important;backdrop-filter:var(--blur-thick)!important;box-shadow:var(--e-2),var(--edge)!important}
+html[data-theme] body .chip{display:inline-flex;align-items:center;gap:6px;min-height:24px;padding:0 10px!important;border-radius:var(--r-pill)!important;
+  font:700 11.5px/1 var(--ff-body)!important;letter-spacing:.02em;background:var(--mat-thin)!important;color:var(--c-tx-2)!important;
+  border:1px solid var(--c-line)!important;box-shadow:none!important}
+html[data-theme] body .chip.gold{background:var(--c-gold-soft)!important;color:var(--c-gold)!important;border-color:color-mix(in srgb,var(--c-gold) 30%,transparent)!important}
+html[data-theme] body .chip.ok{background:var(--c-ok-soft)!important;color:var(--c-ok)!important;border-color:color-mix(in srgb,var(--c-ok) 30%,transparent)!important}
+
+/* ==========================================================================================
+   5. Buttons: primary (gold), secondary (glass), quiet (text). Feedback on press, not on release.
+   ========================================================================================== */
+html[data-theme] body .btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s-2);min-height:48px;padding:0 var(--s-6)!important;
+  border-radius:var(--r-md)!important;font:700 15px/1 var(--ff-body)!important;letter-spacing:.005em;text-transform:none!important;cursor:pointer;
+  background:var(--mat-thin)!important;color:var(--c-tx)!important;border:1px solid var(--c-line-2)!important;box-shadow:var(--edge)!important;
+  -webkit-backdrop-filter:var(--blur-thin);backdrop-filter:var(--blur-thin);
+  transition:transform var(--d-1) var(--ease-out),background-color var(--d-2) var(--ease-out),border-color var(--d-2) var(--ease-out),box-shadow var(--d-2) var(--ease-out),opacity var(--d-2)!important}
+html[data-theme] body .btn:hover:not(:disabled){transform:none!important;background:var(--c-line)!important;border-color:var(--c-line-2)!important}
+html[data-theme] body .btn:active:not(:disabled){transform:scale(.97)!important;transition-duration:60ms!important}
+html[data-theme] body .btn.gold,html[data-theme] body .btn.glow{background:linear-gradient(180deg,var(--c-gold-hi) 0%,var(--c-gold) 100%)!important;color:var(--c-gold-ink)!important;
+  border:0!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 8px 24px -10px color-mix(in srgb,var(--c-gold) 70%,transparent)!important}
+html[data-theme] body .btn.gold:hover:not(:disabled),html[data-theme] body .btn.glow:hover:not(:disabled){filter:brightness(1.05);background:linear-gradient(180deg,var(--c-gold-hi) 0%,var(--c-gold) 100%)!important}
+html[data-theme="light"] body .btn.gold,html[data-theme="light"] body .btn.glow,html[data-theme="light"] body .btn.gold:hover:not(:disabled){background:linear-gradient(180deg,#D99A2B 0%,#B7791F 100%)!important;color:#fff!important}
+html[data-theme] body .btn.quiet{background:transparent!important;border-color:transparent!important;box-shadow:none!important;color:var(--c-tx-2)!important;-webkit-backdrop-filter:none;backdrop-filter:none}
+html[data-theme] body .btn.quiet:hover:not(:disabled){background:var(--mat-thin)!important;color:var(--c-tx)!important;border-color:transparent!important}
+html[data-theme] body .btn.sm,html[data-theme] body .btn.small{min-height:36px;padding:0 var(--s-4)!important;font-size:13.5px!important;border-radius:var(--r-sm)!important}
+html[data-theme] body .btn:disabled{opacity:.42!important;cursor:not-allowed;filter:none}
+html[data-theme] body .ractions{display:flex;flex-wrap:wrap;gap:var(--s-3);justify-content:center;margin-top:var(--s-6)}
+
+/* ==========================================================================================
+   6. Top bar and menu
+   ========================================================================================== */
+html[data-theme] body header{top:var(--s-2)!important;z-index:70;min-height:60px;border-radius:var(--r-lg)!important;background:var(--mat-thick)!important;
+  border:1px solid var(--c-line)!important;-webkit-backdrop-filter:var(--blur-thick)!important;backdrop-filter:var(--blur-thick)!important;box-shadow:var(--e-1),var(--edge)!important}
+html[data-theme="dark"] body header{background:rgba(10,14,34,.72)!important}
+html[data-theme] body .livechip{border-radius:var(--r-pill)!important;background:var(--c-ok-soft)!important;border:1px solid color-mix(in srgb,var(--c-ok) 25%,transparent)!important;
+  color:var(--c-tx)!important;font:600 12px/1 var(--ff-body)!important;padding:6px 10px!important}
+html[data-theme] body .hbar .wchip{height:40px!important;border-radius:var(--r-pill)!important;background:var(--c-gold-soft)!important;border:1px solid color-mix(in srgb,var(--c-gold) 28%,transparent)!important;
+  transition:transform var(--d-1) var(--ease-out),background-color var(--d-2)}
+html[data-theme] body .hbar .wchip:active,html[data-theme] body .menubtn:active{transform:scale(.95)}
+html[data-theme] body .menubtn{width:40px!important;height:40px!important;border-radius:var(--r-sm)!important;border:1px solid var(--c-line)!important;background:var(--mat-thin)!important;transition:transform var(--d-1) var(--ease-out),background-color var(--d-2)}
+html[data-theme] body .menubtn i{background:var(--c-tx)!important;transition:transform var(--d-2) var(--ease-out),opacity var(--d-1)!important}
+/* the menu grows out of the button that opened it */
+html[data-theme] body header .tools#menu{top:calc(100% + var(--s-2))!important;right:0!important;width:min(300px,calc(100vw - 24px))!important;padding:var(--s-2)!important;
+  border-radius:var(--r-lg)!important;background:rgba(14,19,44,.94)!important;border:1px solid var(--c-line)!important;box-shadow:var(--e-3),var(--edge)!important;
+  -webkit-backdrop-filter:var(--blur-thick)!important;backdrop-filter:var(--blur-thick)!important;transform-origin:top right}
+html[data-theme="light"] body header .tools#menu{background:rgba(255,255,255,.95)!important}
+html[data-theme] body.menu-open header .tools#menu{animation:dsPopIn var(--d-2) var(--ease-out)!important}
+html[data-theme] body header .tools#menu .tbtn{min-height:44px;border-radius:var(--r-sm)!important;padding:0 var(--s-3)!important;font:600 14.5px/1 var(--ff-body)!important;color:var(--c-tx)!important;
+  transition:background-color var(--d-1) var(--ease-out)}
+html[data-theme] body header .tools#menu .tbtn svg{color:var(--c-tx-2)!important}
+html[data-theme] body header .tools#menu .tbtn:hover,html[data-theme] body header .tools#menu .tbtn:focus-visible{background:var(--mat-thin)!important}
+html[data-theme] body header .tools#menu .tbtn[aria-current]{background:var(--c-gold-soft)!important;color:var(--c-gold)!important}
+html[data-theme] body header .tools#menu .tbtn[aria-current] svg{color:var(--c-gold)!important}
+html[data-theme] body header .tools#menu #fsbtn{border-top:1px solid var(--c-line)!important;margin-top:var(--s-1)!important}
+@keyframes dsPopIn{from{opacity:0;transform:scale(.96) translateY(-4px)}to{opacity:1;transform:none}}
+
+/* ==========================================================================================
+   7. Hot Seat: HUD, question card, answers, action row, money board
+   ========================================================================================== */
+/* HUD: one calm bar with energy, the clock, the lifeline and the stake */
+html[data-theme] body .play .hud{display:flex!important;align-items:center;gap:var(--s-4)!important;min-height:64px;margin:0!important;padding:var(--s-2) var(--s-3) var(--s-2) var(--s-5)!important;
+  border-radius:var(--r-pill)!important;background:var(--mat-thick)!important;border:1px solid var(--c-line)!important;box-shadow:var(--e-1),var(--edge)!important;
+  -webkit-backdrop-filter:var(--blur-thick)!important;backdrop-filter:var(--blur-thick)!important}
+html[data-theme] body .play .hud .energy b{font:700 14px/1 var(--ff-body)!important;font-variant-numeric:tabular-nums;color:var(--c-tx)!important}
+html[data-theme] body .play .hud .stake .stk-t small{font:600 11px/1.2 var(--ff-body)!important;letter-spacing:.04em;text-transform:uppercase;color:var(--c-tx-3)!important}
+html[data-theme] body .play .hud .stake .stk-t b{font:800 18px/1.1 var(--ff-display)!important;color:var(--c-gold)!important;font-variant-numeric:tabular-nums}
+html[data-theme] body .play .hud .clock{width:48px!important;height:48px!important}
+html[data-theme] body .play .hud .clock span{font:800 18px/1 var(--ff-body)!important;font-variant-numeric:tabular-nums}
+html[data-theme] body .play .hud .clock.low{animation:dsTick 1s var(--ease-in-out) infinite}
+@keyframes dsTick{50%{transform:scale(1.06)}}
+html[data-theme] body .llsr{min-height:40px;border-radius:var(--r-pill)!important;padding:0 var(--s-4)!important;background:var(--c-gold-soft)!important;
+  border:1px solid color-mix(in srgb,var(--c-gold) 30%,transparent)!important;color:var(--c-tx)!important;font:700 13.5px/1 var(--ff-body)!important;
+  transition:transform var(--d-1) var(--ease-out),background-color var(--d-2)}
+html[data-theme] body .llsr:not(:disabled):active{transform:scale(.96)}
+html[data-theme] body .llsr.used{opacity:.5}
+html[data-theme] body .hud .bmax{min-height:36px;border-radius:var(--r-pill)!important}
+
+/* question card: the focal point */
+html[data-theme] body .play .qcard{padding:clamp(18px,2.2vw,28px)!important;gap:var(--s-3)!important;border-radius:var(--r-xl)!important}
+html[data-theme] body .play .qtop{display:flex;align-items:center;justify-content:space-between;gap:var(--s-3);flex-wrap:wrap}
+html[data-theme] body .play .qtext,html[data-theme] body .play .qtext.qask{font:750 clamp(19px,.8vw + 13px,26px)/1.3 var(--ff-body)!important;letter-spacing:-.012em!important;color:var(--c-tx)!important;margin:0!important;text-wrap:pretty}
+html[data-theme] body .play .qctx{font:500 var(--fs-body)/1.55 var(--ff-body)!important;color:var(--c-tx-2)!important}
+html[data-theme] body .play .qcard pre.code,html[data-theme] body .play .qcard .code{border-radius:var(--r-md)!important;background:rgba(3,6,18,.55)!important;border:1px solid var(--c-line)!important;
+  font-family:var(--ff-mono)!important;font-size:clamp(14px,.25vw + 12.5px,16px)!important;line-height:1.65!important;box-shadow:none!important}
+html[data-theme="light"] body .play .qcard pre.code,html[data-theme="light"] body .play .qcard .code{background:#F3F5FB!important}
+html[data-theme] body .lvhud{border-radius:var(--r-pill)!important;background:var(--mat-thin)!important;border:1px solid var(--c-line)!important;transition:transform var(--d-1) var(--ease-out),background-color var(--d-2)}
+html[data-theme] body .lvhud:active{transform:scale(.97)}
+
+/* answer options: even rows with a letter key. Rest, hover, chosen, locked, right / wrong */
+html[data-theme] body .play .opts{gap:var(--s-3)!important}
+html[data-theme] body .play .opts>.opt{position:relative;min-height:60px!important;padding:var(--s-3) var(--s-4)!important;border-radius:var(--r-md)!important;
+  background:var(--mat-thin)!important;border:1px solid var(--c-line)!important;box-shadow:var(--edge)!important;color:var(--c-tx)!important;text-align:left;
+  transition:transform var(--d-1) var(--ease-out),background-color var(--d-2) var(--ease-out),border-color var(--d-2) var(--ease-out),box-shadow var(--d-2) var(--ease-out),opacity var(--d-2)!important}
+html[data-theme] body .play .opts>.opt:hover:not(:disabled){background:var(--c-line)!important;border-color:var(--c-line-2)!important}
+html[data-theme] body .play .opts>.opt:active:not(:disabled){transform:scale(.985)}
+html[data-theme] body .play .opts>.opt .l{flex:none;width:32px!important;height:32px!important;border-radius:10px!important;font:800 14px/1 var(--ff-body)!important;
+  transition:background-color var(--d-2) var(--ease-out),color var(--d-2)}
+html[data-theme] body .play .opts>.opt.pending,html[data-theme] body .play .opts>.opt.on{background:var(--c-gold-soft)!important;border-color:var(--c-gold)!important;
+  box-shadow:inset 0 0 0 1px var(--c-gold),0 10px 28px -16px color-mix(in srgb,var(--c-gold) 80%,transparent)!important}
+html[data-theme] body .play .opts:has(>.opt.pending)>.opt:not(.pending){opacity:.72}
+html[data-theme] body .play .opts>.opt.locked{animation:dsBreath 1.2s var(--ease-in-out) infinite}
+@keyframes dsBreath{50%{box-shadow:inset 0 0 0 1px var(--c-gold),0 0 0 6px color-mix(in srgb,var(--c-gold) 18%,transparent)}}
+html[data-theme] body .play .opts>.opt.right{background:var(--c-ok-soft)!important;border-color:var(--c-ok)!important;color:var(--c-tx)!important;opacity:1!important;
+  box-shadow:inset 0 0 0 1px var(--c-ok),0 12px 32px -16px color-mix(in srgb,var(--c-ok) 80%,transparent)!important;animation:dsRight var(--d-4) var(--ease-out)}
+html[data-theme] body .play .opts>.opt.wrong{background:var(--c-bad-soft)!important;border-color:var(--c-bad)!important;color:var(--c-tx)!important;opacity:1!important;
+  box-shadow:inset 0 0 0 1px var(--c-bad)!important;animation:dsShake 260ms var(--ease-out)}
+@keyframes dsRight{0%{transform:scale(.98)}55%{transform:scale(1.012)}100%{transform:none}}
+@keyframes dsShake{20%{transform:translateX(-5px)}45%{transform:translateX(4px)}70%{transform:translateX(-2px)}100%{transform:none}}
+
+/* typed, tile and chip answers share the option look */
+html[data-theme] body .play textarea,html[data-theme] body .play input[type=text]{border-radius:var(--r-md)!important;
+  background:rgba(3,6,18,.45)!important;border:1px solid var(--c-line-2)!important;color:var(--c-tx)!important;font-family:var(--ff-mono)!important;
+  transition:border-color var(--d-2) var(--ease-out),box-shadow var(--d-2) var(--ease-out)}
+html[data-theme="light"] body .play textarea,html[data-theme="light"] body .play input[type=text]{background:#fff!important}
+html[data-theme] body .play textarea:focus,html[data-theme] body .play input[type=text]:focus{border-color:var(--c-teal)!important;box-shadow:var(--ring)!important;outline:none!important}
+html[data-theme] body .play .mchip,html[data-theme] body .play .tile,html[data-theme] body .play .hchip{border-radius:var(--r-sm)!important;
+  transition:transform var(--d-1) var(--ease-out),background-color var(--d-2) var(--ease-out),border-color var(--d-2) var(--ease-out)!important}
+html[data-theme] body .play .mchip:active:not(:disabled),html[data-theme] body .play .tile:active:not(:disabled){transform:scale(.97)}
+
+/* the action row: centred under the answers, verdict first */
+html[data-theme] body .play .dockrow{justify-content:center!important;gap:var(--s-3)!important}
+html[data-theme] body .play .actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:var(--s-3)!important}
+html[data-theme] body .play .actions .ask{font:700 var(--fs-lg)/1.2 var(--ff-body);color:var(--c-tx-2)}
+html[data-theme] body .play .actions .banner{font:800 var(--fs-lg)/1 var(--ff-body)!important;border-radius:var(--r-pill)!important;padding:10px 16px!important;animation:dsRise var(--d-3) var(--ease-out)}
+html[data-theme] body .play .actions .banner.win{background:var(--c-ok-soft)!important;color:var(--c-ok)!important;border:1px solid color-mix(in srgb,var(--c-ok) 35%,transparent)!important}
+html[data-theme] body .play .actions .banner.lose{background:var(--c-bad-soft)!important;color:var(--c-bad)!important;border:1px solid color-mix(in srgb,var(--c-bad) 35%,transparent)!important}
+html[data-theme] body .dockrow:has(.actions .banner){background:var(--mat-thick)!important;border:1px solid var(--c-line)!important;border-radius:var(--r-lg)!important;box-shadow:var(--e-2)!important;
+  -webkit-backdrop-filter:var(--blur-thick);backdrop-filter:var(--blur-thick)}
+html[data-theme] body .qstop{color:var(--c-tx-3)!important;font:600 13.5px/1 var(--ff-body)!important;border-radius:var(--r-pill)!important;padding:10px 14px!important}
+html[data-theme] body .qstop:hover{color:var(--c-tx)!important;background:var(--mat-thin)!important}
+@keyframes dsRise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* feedback after an answer arrives, it does not pop */
+html[data-theme] body .lvdelta,html[data-theme] body .rungup,html[data-theme] body .drop,html[data-theme] body .explain,html[data-theme] body .res-learn{
+  border-radius:var(--r-lg)!important;animation:dsRise var(--d-3) var(--ease-out) both}
+
+/* money board: a quiet list; the rung being played is the only bright thing on it */
+html[data-theme] body .play .side .board{padding:var(--s-4) var(--s-3) var(--s-3)!important;gap:2px!important}
+html[data-theme] body .board h2{font:800 16px/1 var(--ff-display)!important;letter-spacing:-.01em!important;color:var(--c-tx)!important;display:flex;align-items:center;justify-content:space-between;margin:0 var(--s-2) var(--s-3)!important}
+html[data-theme] body .board .bmin{width:32px!important;height:32px!important;border-radius:var(--r-xs)!important;background:var(--mat-thin)!important;border:1px solid var(--c-line)!important;color:var(--c-tx-2)!important}
+html[data-theme] body .board .rung{border-radius:var(--r-sm)!important;background:transparent!important;border:1px solid transparent!important;box-shadow:none!important;color:var(--c-tx-2)!important;
+  transition:background-color var(--d-2) var(--ease-out),color var(--d-2)}
+html[data-theme] body .board .rung .amtc{white-space:nowrap;font-variant-numeric:tabular-nums}
+html[data-theme] body .board .rung.ck{color:var(--c-tx)!important}
+html[data-theme] body .board .rung .tg{background:var(--mat-thin)!important;border:1px solid var(--c-line)!important;color:var(--c-tx-3)!important;border-radius:var(--r-pill)!important}
+html[data-theme] body .board .rung.done{color:var(--c-tx-3)!important;opacity:.75}
+html[data-theme] body .board .rung.next{background:var(--c-gold-soft)!important;border-color:color-mix(in srgb,var(--c-gold) 55%,transparent)!important;color:var(--c-gold)!important;
+  box-shadow:0 8px 24px -14px color-mix(in srgb,var(--c-gold) 80%,transparent)!important}
+html[data-theme] body .board .rung.soon{opacity:.45}
+/* the board adapts to its own width: on a narrow board the prize art steps aside so amounts and stage tags never collide */
+.play>.side{container-type:inline-size;container-name:board}
+@container board (max-width:330px){
+  html[data-theme] body .board .rung .bnote{display:none!important}
+  html[data-theme] body .board .rung{grid-template-columns:28px minmax(0,1fr) auto!important;column-gap:var(--s-2)!important}
+  html[data-theme] body .board .rung .tg{font-size:10.5px!important;padding:3px 8px!important}
+}
+
+/* Pixel's speech bubble */
+html[data-theme] body .say{border-radius:var(--r-md)!important;background:var(--mat-thick)!important;border:1px solid var(--c-line)!important;color:var(--c-tx)!important;
+  font:600 13.5px/1.45 var(--ff-body)!important;box-shadow:var(--e-1)!important;-webkit-backdrop-filter:var(--blur-thin);backdrop-filter:var(--blur-thin)}
+
+/* code always sits on a dark surface: the syntax colours are built for it, in both themes */
+html[data-theme="light"] body .play .qcard pre.code,html[data-theme="light"] body .play .qcard .code{background:#0F1530!important;border-color:rgba(14,20,48,.2)!important}
+
+/* compact HUD on phones: energy, the lifeline as an icon, the clock, all on one line */
+@media (max-width:600px){
+  html[data-theme] body .play .hud{flex-wrap:nowrap!important;gap:var(--s-2)!important;padding:var(--s-1) var(--s-1) var(--s-1) var(--s-4)!important;min-height:56px}
+  html[data-theme] body .play .hud .lls{flex:1 1 auto;min-width:0}
+  html[data-theme] body .play .hud .llsr{order:2;margin-left:0!important;padding:0 var(--s-3)!important;min-width:44px;min-height:44px}
+  html[data-theme] body .play .hud .llsr b{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  html[data-theme] body .play .hud .clock{order:3;width:44px!important;height:44px!important}
+  html[data-theme] body .play .hud .stake{display:none!important}
+  /* the lifeline tooltip opens towards the screen, not off its edge */
+  html[data-theme] body .play .hud .llsr .srtipx{left:auto!important;right:0!important;transform:translateY(-4px)!important}
+  html[data-theme] body .play .hud .llsr:hover .srtipx,html[data-theme] body .play .hud .llsr:focus-visible .srtipx{transform:none!important}
+}
+
+/* ==========================================================================================
+   8. Screens
+   ========================================================================================== */
+/* Home: one hero, one action. The Play button is a solid, pressable object. */
+html[data-theme] body .home4 .hplay{height:60px;padding:0 8px 0 28px;border-radius:var(--r-pill);font:800 18px/1 var(--ff-body)!important;letter-spacing:-.01em;
+  color:var(--c-gold-ink);background:linear-gradient(180deg,var(--c-gold-hi),var(--c-gold));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 1px 2px rgba(0,0,0,.25),0 16px 40px -14px color-mix(in srgb,var(--c-gold) 85%,transparent)!important;
+  transform:none;transition:transform var(--d-1) var(--ease-out),box-shadow var(--d-2) var(--ease-out),filter var(--d-2)}
+html[data-theme] body .home4 .hplay:hover{transform:translateY(-2px);filter:brightness(1.04)}
+html[data-theme] body .home4 .hplay:active{transform:scale(.97);transition-duration:60ms;box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 6px 18px -10px color-mix(in srgb,var(--c-gold) 85%,transparent)!important}
+html[data-theme] body .home4 .hplay i{width:44px;height:44px;background:rgba(20,13,2,.9);color:var(--c-gold-hi);transition:transform var(--d-2) var(--ease-out)}
+html[data-theme] body .home4 .hplay:hover i{transform:translateX(3px)}
+html[data-theme="light"] body .home4 .hplay{background:linear-gradient(180deg,#F3C25A,#D99A2B);color:#1A1300}
+html[data-theme] body .home4 .hhey{font:600 15px/1.4 var(--ff-body)!important;color:var(--c-tx-2)!important;letter-spacing:0}
+html[data-theme] body .hsimple .ctready{border-radius:var(--r-pill)!important;background:var(--mat-thick)!important;border:1px solid var(--c-line)!important;
+  -webkit-backdrop-filter:var(--blur-thin);backdrop-filter:var(--blur-thin)}
+html[data-theme] body .hsimple .ct-k{font:700 12px/1.2 var(--ff-body)!important;letter-spacing:.06em!important}
+
+/* Fastest Finger and the seat intro: the card is the stage */
+html[data-theme] body .fffw .qcard,html[data-theme] body .fffw.qcard{border-radius:var(--r-xl)!important}
+html[data-theme] body .fffhead .qtext{font:800 var(--fs-h2)/1.15 var(--ff-display)!important;letter-spacing:-.02em!important}
+html[data-theme] body .fi-steps>*,html[data-theme] body .fi-steps li{border-radius:var(--r-md)!important}
+html[data-theme] body .fffw .opt,html[data-theme] body .fffopts .opt{border-radius:var(--r-md)!important;background:var(--mat-thin)!important;border:1px solid var(--c-line)!important;
+  transition:transform var(--d-1) var(--ease-out),background-color var(--d-2) var(--ease-out),border-color var(--d-2) var(--ease-out)!important}
+html[data-theme] body .fffw .opt:active:not(:disabled){transform:scale(.985)}
+
+/* Result: the prize first, then the bill, then what to do next */
+html[data-theme] body .res-card{border-radius:var(--r-xl)!important}
+html[data-theme] body .res .ramt{font-family:var(--ff-display)!important;letter-spacing:-.03em!important;font-variant-numeric:tabular-nums}
+html[data-theme] body .res-line,html[data-theme] body .res-goal{border-radius:var(--r-md)!important}
+
+/* Wallet, Hall of Fame, Guide, Buddy, Account, Team: same cards, same rhythm */
+html[data-theme] body .wallet,html[data-theme] body .fame,html[data-theme] body .guide,html[data-theme] body .buddies,html[data-theme] body .acct,html[data-theme] body .dash{
+  max-width:var(--page-max);margin-inline:auto;padding-inline:var(--gutter)}
+html[data-theme] body .wstats>*,html[data-theme] body .kpis>*{border-radius:var(--r-lg)!important}
+html[data-theme] body .wamt{font-family:var(--ff-display)!important;letter-spacing:-.03em!important;font-variant-numeric:tabular-nums}
+html[data-theme] body .ftabs{display:inline-flex;gap:2px;padding:3px;border-radius:var(--r-pill);background:var(--mat-thin);border:1px solid var(--c-line)}
+html[data-theme] body .ftab{border-radius:var(--r-pill)!important;border:0!important;background:transparent!important;color:var(--c-tx-2)!important;font:700 13.5px/1 var(--ff-body)!important;
+  padding:0 var(--s-4)!important;box-shadow:none!important;transition:background-color var(--d-2) var(--ease-out),color var(--d-2)}
+html[data-theme] body .ftab[aria-selected="true"],html[data-theme] body .ftab.on,html[data-theme] body .ftab[aria-pressed="true"]{background:var(--c-gold)!important;color:var(--c-gold-ink)!important}
+html[data-theme] body .bcard{transition:transform var(--d-2) var(--ease-out),border-color var(--d-2),box-shadow var(--d-2)}
+html[data-theme] body .bcard:hover{transform:translateY(-2px)}
+html[data-theme] body .bcard:active{transform:scale(.98)}
+html[data-theme] body .gstep,html[data-theme] body .vrule{border-radius:var(--r-lg)!important}
+html[data-theme] body .acrow{border-radius:var(--r-md)!important}
+html[data-theme] body .acct input,html[data-theme] body .fbm input,html[data-theme] body .fbm textarea,html[data-theme] body .acctm input{min-height:44px;border-radius:var(--r-sm)!important;
+  background:rgba(3,6,18,.45)!important;border:1px solid var(--c-line-2)!important;color:var(--c-tx)!important;font:500 15px/1.3 var(--ff-body)!important;padding:0 var(--s-3)!important}
+html[data-theme="light"] body .acct input,html[data-theme="light"] body .fbm input,html[data-theme="light"] body .fbm textarea,html[data-theme="light"] body .acctm input{background:#fff!important}
+html[data-theme] body .fbm textarea{padding:var(--s-3)!important;min-height:96px}
+
+/* My path: the map keeps its own world; its top bar and sheets follow the system */
+html[data-theme] body .ptop .pnext,html[data-theme] body .phud{border-radius:var(--r-lg)!important}
+html[data-theme] body .msheet-in{border-radius:var(--r-xl) var(--r-xl) 0 0!important;animation:dsSheetUp var(--d-3) var(--ease-out)}
+@keyframes dsSheetUp{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+
+/* ==========================================================================================
+   9. Dialogs: a dimmed scrim and a surface that materialises (scale, blur and opacity together)
+   ========================================================================================== */
+html[data-theme] body .fbm:not([hidden]),html[data-theme] body .modalx:not([hidden]){animation:dsFade var(--d-2) var(--ease-out)}
+html[data-theme] body .fbm .fbbox,html[data-theme] body .modalx>div,html[data-theme] body .acctm .fbbox{border-radius:var(--r-xl)!important;background:var(--mat-solid)!important;
+  border:1px solid var(--c-line-2)!important;box-shadow:var(--e-3),var(--edge)!important;animation:dsMaterialise var(--d-3) var(--ease-out)}
+@keyframes dsFade{from{opacity:0}}
+@keyframes dsMaterialise{from{opacity:0;transform:scale(.96);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+html[data-theme] body .rf-s{border-radius:var(--r-sm)!important;transition:transform var(--d-1) var(--ease-out),background-color var(--d-2),border-color var(--d-2)}
+html[data-theme] body .rf-s:active{transform:scale(.92)}
+
+/* floating feedback button */
+html[data-theme] body .fbbtn,html[data-theme] body #fbbtn{border-radius:var(--r-pill)!important;background:var(--mat-thick)!important;border:1px solid var(--c-line)!important;
+  -webkit-backdrop-filter:var(--blur-thick);backdrop-filter:var(--blur-thick);box-shadow:var(--e-2)!important;transition:transform var(--d-1) var(--ease-out)}
+html[data-theme] body .fbbtn:active,html[data-theme] body #fbbtn:active{transform:scale(.95)}
+
+/* ==========================================================================================
+   10. Motion between screens
+   A new screen fades in and its cards rise into place (#app.scr-in is set by render() on a screen change).
+   ========================================================================================== */
+/* the page fades (opacity only, so fixed controls inside it keep their place); its cards rise a few pixels, one after another */
+html[data-theme] body #app.scr-in{animation:dsFadeOnly var(--d-2) var(--ease-out) backwards!important}
+html[data-theme] body #app.scr-in :is(.card,.qcard,.hud,.h-hero,.ghead,.fhead){animation:dsRise var(--d-3) var(--ease-out) backwards}
+html[data-theme] body #app.scr-in :is(.card,.qcard):nth-of-type(2){animation-delay:40ms}
+html[data-theme] body #app.scr-in :is(.card,.qcard):nth-of-type(3){animation-delay:80ms}
+html[data-theme] body #app.scr-in :is(.card,.qcard):nth-of-type(n+4){animation-delay:120ms}
+
+/* Reduced motion: gentle cross-fades instead of movement. Colour and opacity changes stay, because they carry meaning. */
+@media (prefers-reduced-motion:reduce){
+  html[data-theme] body *,html[data-theme] body *::before,html[data-theme] body *::after{animation-duration:1ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}
+  html[data-theme] body .btn,html[data-theme] body .opt,html[data-theme] body .rung{transition-property:background-color,border-color,color,opacity!important}
+  html[data-theme] body #app.scr-in{animation:dsFadeOnly 160ms linear backwards!important}
+}
+@keyframes dsFadeOnly{from{opacity:0}}
+/* Less transparency: solid surfaces */
+@media (prefers-reduced-transparency:reduce){
+  html[data-theme] body .card,html[data-theme] body .qcard,html[data-theme] body .board,html[data-theme] body header,html[data-theme] body .play .hud,html[data-theme] body .say{
+    background:var(--mat-solid)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+}
+/* More contrast: solid surfaces with clear edges */
+@media (prefers-contrast:more){
+  :root{--c-line:rgba(255,255,255,.35);--c-line-2:rgba(255,255,255,.5);--c-tx-2:#DCE1F5}
+  html[data-theme="light"]{--c-line:rgba(14,20,48,.45);--c-line-2:rgba(14,20,48,.6);--c-tx-2:#1E2542}
+  html[data-theme] body .card,html[data-theme] body .qcard,html[data-theme] body .board{background:var(--mat-solid)!important}
+}
+
+/* ==========================================================================================
+   11. Screen details found in review
+   ========================================================================================== */
+/* How to play: rule cards read as icon, title, one line */
+html[data-theme] body .vrule{gap:var(--s-2) var(--s-3)!important;align-content:start}
+html[data-theme] body .vrule b{font:800 16px/1.25 var(--ff-body)!important;letter-spacing:-.01em!important}
+html[data-theme] body .vrule small{font:500 13px/1.45 var(--ff-body)!important;color:var(--c-tx-2)!important}
+html[data-theme] body .gstep h3,html[data-theme] body .gstep b{letter-spacing:-.01em}
+/* form labels: quiet sentence-case captions, not shouting code */
+html[data-theme] body .acf label{font:600 13px/1.3 var(--ff-body)!important;letter-spacing:0!important;text-transform:none!important;color:var(--c-tx-2)!important}
+html[data-theme] body .acf input{min-height:44px;border-radius:var(--r-sm)!important;background:rgba(3,6,18,.45)!important;border:1px solid var(--c-line-2)!important;color:var(--c-tx)!important;
+  font:500 15px/1.3 var(--ff-body)!important;padding:0 var(--s-3)!important;transition:border-color var(--d-2) var(--ease-out),box-shadow var(--d-2) var(--ease-out)}
+html[data-theme="light"] body .acf input{background:#fff!important}
+html[data-theme] body .acf input:focus{border-color:var(--c-teal)!important;box-shadow:var(--ring)!important;outline:none!important}
+/* page headers on content screens share one measure */
+html[data-theme] body .ghead,html[data-theme] body .fhead{max-width:var(--page-max);margin-inline:auto}

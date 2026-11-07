@@ -1176,7 +1176,7 @@ function vNoQ(){const r=S.noQ||{},soon=(r.comingSoon||[]).map(id=>SK[id]).filter
  else body=`<div class="qcard card"><h2 class="qtext">${r.allDone?"You've cleared every skill on the path!":"You've cleared everything that's ready for you."}</h2>
   <p class="muted">${r.allDone?"There is nothing left to unlock. Legend.":`New questions are on their way for ${soon.length?soon.slice(0,4).map(s=>esc(s.name)).join(", ")+(soon.length>4?" and more":""):"your next skills"}. Your progress is saved, so come back soon.`}</p>
   <div class="ractions"><button class="btn gold" data-act="stop">Save progress & leave</button><button class="btn quiet" data-act="path">See my path</button></div></div>`;
- return `<div class="play">${dockHTML(S.phase==="loading"?"think":"chai","col")}<div class="left"><section class="mainc">${body}</section></div><div class="side">${boardHTML(rungOf())}</div></div>`}
+ return `<div class="play${boardMin()?" board-off":""}">${dockHTML(S.phase==="loading"?"think":"chai","col")}<div class="left"><section class="mainc">${body}</section></div><div class="sheet-scrim" aria-hidden="true"></div><div class="side" id="mboard" aria-label="Money board"><button class="sheetx" data-act="board" aria-label="Close the money board">Done</button>${boardHTML(rungOf())}</div></div>`}
 /* Question text, laid out in parts so labelled outputs never read as the question itself:
    line 1 = the instruction (small tag); line 2 = the situation, i.e. the question (bold);
    later plain lines = small notes; "Expected output:" / "Actual output:" / "Output:" blocks = side-by-side output boxes.
@@ -1204,10 +1204,10 @@ function seniorBtn(){const u=S.used.senior,dis=u||S.phase!=="ask";return `<butto
 function vPlay(){if(!S.q)return vNoQ();const q=S.q,r=rungOf(),st=rowSteps(Math.min(r,ROWS.length-1)),stake=r<OPEN?LADDER[r]:LADDER[OPEN-1];
  const pips="";
  const RV=S.run.answered||0,mood=S.phase==="reveal"?(S.ok?(S.info&&S.info.ck?"trophy":S.info&&S.info.lvup?"mindblown":S.info&&S.info.ta&&S.info.tb&&S.info.ta.streak>S.info.tb.streak&&RV%2?"streak":["cheer","clap","thumbsup","dance"][RV%4]):S.timeout?"shrug":["oops","fistbump"][RV%2]):S.phase==="locked"?"think":(S.run.en<=20?"tired":S.thinkLong?"think":(S.pick!=null||S.fill||(S.ord&&S.ord.length)?"pointa":"pointq"));
- return `<div class="play ${S.phase==="reveal"?"rev":""}">${dockHTML(mood,"col")}<div class="left"><div class="hud"><div class="lls">${energyHTML()}</div>${seniorBtn()}
+ return `<div class="play${S.phase==="reveal"?" rev":""}${boardMin()?" board-off":""}">${dockHTML(mood,"col")}<div class="left"><div class="hud"><div class="lls">${energyHTML()}</div>${seniorBtn()}
 <div class="clock ${S.time<=10?"low":""}" id="clock" style="--p:${S.time/(S.secsMax||CFG.secs)}" role="timer" aria-label="Seconds left"><span>${S.time}</span></div>
 <div class="stake one"><span class="stk-note" id="stknote">${noteThumb(stake)}</span><span class="stk-t"><small>Playing for</small><b>${fmtR(stake)}</b></span>${boardMin()?`<button class="bmax" data-act="board-min" aria-label="Show the money board">Money board <b aria-hidden="true">＋</b></button>`:""}</div></div>
-${stripHTML(r)}<button class="mbtoggle" data-act="board" aria-label="Show the money board">Money board</button>
+${stripHTML(r)}<button class="mbtoggle" data-act="board" aria-controls="mboard" aria-expanded="${document.body.classList.contains("boardopen")}" aria-label="Show the money board">Money board</button>
 <section class="mainc" id="mainc">
 <div class="${(q.ty==="mcq"||q.ty==="explain")&&q.code?"qsplit":"qone"}"><div class="qcard card"><div class="qtop"><span class="chip gold">Question ${S.run.answered+(S.phase==="reveal"?0:1)}</span>${pips?`<span class="rowprog">To the next prize <span class="pips" aria-label="${st.done} of ${st.total}">${pips}</span></span>`:""}${levelHUD(q)}</div>
 ${promptHTML(q)}${KBCQ.above(q,S)}
@@ -1218,7 +1218,7 @@ ${S.hint?`<div class="panel card srtip"><h3>${S.hintBy==="senior"?"🧑‍💻 T
 ${answerHTML()}</div>${fixHTML()}
 <div class="dockrow">${dockHTML(mood)}<div class="actions">${actHTML()}</div></div>
 ${feedbackHTML()}
-</section></div><div class="side">${boardHTML(r)}</div></div>`}
+</section></div><div class="sheet-scrim" aria-hidden="true"></div><div class="side" id="mboard" aria-label="Money board"><button class="sheetx" data-act="board" aria-label="Close the money board">Done</button>${boardHTML(r)}</div></div>`}
 function vResult(){const R=S.res,rc=R.reached||0,pay=R.payout||0;
  const msg=R.reason==="win"?`${fmtR(pay)} collected! You're a Crorepati Coder.`:R.reason==="stop"?(pay?`Smart move. You walked away with ${fmtR(pay)}.`:"You stopped here. Nothing banked this time, but your path progress is saved."):R.reason==="energy"?`Out of energy! Your path progress is saved${pay?` and ${fmtR(pay)} went to your wallet`:""}. Recharge with a new game.`:pay?`Game over, but you keep it all. ${fmtR(pay)} goes to your wallet.`:"Tough one. Nothing banked this time. Read why, then go again.";
  const mood=R.reason==="win"?"trophy":R.reason==="stop"?"chai":pay?"clap":R.reason==="timeout"?"shrug":"fistbump";
@@ -1666,7 +1666,7 @@ function noteZoomMaybe(){if(S.screen!=="play"||!S.run||S.phase!=="ask")return;co
 function resultCountUp(){if(S.screen!=="result"||!S.res||S.res.counted)return;S.res.counted=true;const el=$(".res .ramt"),to=S.res.payout||0;if(!el||!to||reduceMotion)return;
  const t0=performance.now(),d=1200,st=n=>{const k=Math.min(1,(n-t0)/d),e=1-Math.pow(1-k,3);el.textContent=fmtR(Math.round(to*e));if(k<1)requestAnimationFrame(st)};requestAnimationFrame(st)}
 function render(){const prev=render.scr;render.scr=S.screen;if(prev&&prev!==S.screen&&pingLive.at&&Date.now()-pingLive.at>8000)pingLive();const r=render0();guardSync();screenH1();setTimeout(()=>{noteZoomMaybe();resultCountUp();if(prev!==S.screen)pxRest()},60);
- if(prev!==S.screen){const app=$("#app");if(app&&prev){app.classList.remove("scr-in");void app.offsetWidth;app.classList.add("scr-in")}
+ if(prev!==S.screen){const app=$("#app");if(app&&prev){app.classList.remove("scr-in");void app.offsetWidth;app.classList.add("scr-in");clearTimeout(render.sct);render.sct=setTimeout(()=>app.classList.remove("scr-in"),700)}
   if(S.screen==="path")requestAnimationFrame(pauseOffscreen)}
  return r}
 /* My path draws hundreds of animated stars, coins and props down a very tall map. Only those near the screen keep moving. */
@@ -1682,7 +1682,7 @@ function render0(){if(SAFE_SCREENS.includes(S.screen)){if(S.graphChanged)return 
   const nf=nw.querySelector('[data-act="fff-add"]:not([disabled])')||nw.querySelector('[data-act="fff-submit"]:not([disabled])')||nw.querySelector("[data-act=hotseat],[data-act=fff-next]");nf&&nf.focus({preventScroll:true})}
  else app.innerHTML=S.screen==="home"?vHome():S.screen==="play"?vPlay():S.screen==="result"?vResult():S.screen==="fame"?vFame():S.screen==="team"?vTeam():S.screen==="path"?vPath():S.screen==="fff"?vFFF():S.screen==="seat"?vSeat():S.screen==="guide"?vGuide():S.screen==="wallet"?vWallet():S.screen==="buddy"?vBuddy():S.screen==="account"?vAccount():vHome();
  if(S.screen==="play"&&S.phase==="ask")startQ();syncChip();syncTeam();setTimeout(botTalk,250);
- document.body.classList.toggle("qscreen",S.screen==="play"||S.screen==="fff");if(S.screen!=="home")document.body.classList.remove("homespot");if(S.screen!=="fff")clearInterval(fInt);requestAnimationFrame(placeSpot);
+ document.body.classList.toggle("qscreen",S.screen==="play"||S.screen==="fff");if(S.screen!=="play")document.body.classList.remove("boardopen");if(S.screen!=="home")document.body.classList.remove("homespot");if(S.screen!=="fff")clearInterval(fInt);requestAnimationFrame(placeSpot);
  document.body.classList.toggle("inplay",S.screen==="play"||S.screen==="result");document.body.classList.toggle("inteam",S.screen==="team");document.body.classList.toggle("rscreen",S.screen==="result");
  window.KB3D&&KB3D.mode(S.screen==="result"||S.screen==="fff"||S.screen==="play"||S.screen==="guide"||S.screen==="buddy"||S.screen==="wallet"||S.screen==="account"?"hide":S.screen==="path"?"home":S.screen);
  if(S.screen==="home"){requestAnimationFrame(placeHomeCoin);[150,600,1500].forEach(t=>setTimeout(placeHomeCoin,t));typeHome()}else clearTimeout(typeT);syncLive();
@@ -1996,6 +1996,11 @@ setTimeout(()=>{try{M3D.warm(COSTUMES[CHAR]||COSTUMES.pixel,PX_MOODS.map(m=>m[0]
 /* Top bar: one menu button (three lines) holds every option */
 /* a tour step can point inside the menu; the tour opens the menu for it */
 const inMenu=st=>!!document.querySelector("#menu "+st.sel.replace(/^header /,"")),tourOK=st=>inMenu(st)||vis(document.querySelector(st.sel));
+function setBoard(on){const was=document.body.classList.contains("boardopen");document.body.classList.toggle("boardopen",on);
+ const t=$(".mbtoggle");if(t)t.setAttribute("aria-expanded",on);
+ if(on&&!was){const x=$("#mboard .sheetx");x&&x.focus({preventScroll:true})}else if(!on&&was&&t&&document.activeElement&&document.activeElement.closest&&document.activeElement.closest("#mboard"))t.focus({preventScroll:true})}
+document.addEventListener("click",e=>{if(document.body.classList.contains("boardopen")&&!e.target.closest("#mboard,.mbtoggle"))setBoard(false)},SIG);
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.body.classList.contains("boardopen")){setBoard(false)}},SIG);
 function setMenu(on){document.body.classList.toggle("menu-open",on);const b=$("#menubtn");if(b){b.setAttribute("aria-expanded",on);b.setAttribute("aria-label",on?"Close menu":"Menu")}}
 document.addEventListener("click",e=>{if(document.body.classList.contains("menu-open")&&!e.target.closest("#menu,#menubtn,#tour"))setMenu(false)});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.body.classList.contains("menu-open")){setMenu(false);$("#menubtn")?.focus()}});
@@ -2127,7 +2132,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
  if(a==="quit"){endRun("stop");return}
  if(a==="next"){leaveReveal();newQ();render();scrollTo({top:0});return}
  if(a==="second"&&S.screen==="play"){logEv({kind:"retry",rung:rungOf(),sk:S.q&&S.q.sk});S.retryOf=S.q&&S.q.sk;leaveReveal();newQ();render();scrollTo({top:0});say("A new question on the same topic.");return}
- if(a==="board"){document.body.classList.toggle("boardopen");return}
+ if(a==="board"){setBoard(!document.body.classList.contains("boardopen"));return}
  if(a==="stop"){endRun("stop");return}
  if(a==="end"){endRun(S.run&&S.run.en<=0?"energy":S.timeout?"timeout":"wrong");return}
  if(a==="ll"){const k=b.dataset.k;if(S.used[k]||S.phase!=="ask"||!S.q)return;S.used[k]=true;const q0=S.q;

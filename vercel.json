@@ -41,7 +41,7 @@
       ]
     },
     {
-      "source": "/(game.js|bank-ui.js|bank-ui.css|kbc.css|intro.js|intro.css|pyrun.worker.js)",
+      "source": "/(game.js|bank-ui.js|bank-ui.css|kbc.css|kbc-ds.css|intro.js|intro.css|pyrun.worker.js)",
       "headers": [
         {
           "key": "Cache-Control",
